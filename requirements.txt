@@ -6,5 +6,7 @@ huggingface_hub==2.3.0
 wandb==0.31.0
 python-dotenv==1.2.4
 requests
+numpy==2.5.4
+pyarrow==26.0.0
 pytest==9.1.1
 # Added in later sessions: datasets, liger-kernel, lm_eval, gguf (llama.cpp commit pinned in docs/PROGRESS.md)

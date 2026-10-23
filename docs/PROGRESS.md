@@ -5,7 +5,7 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 
 ## Now
 
-- **Current session:** Session 1 · Set up (code done; human steps left)
+- **Current session:** Session 2 · Data, ready to run on Colab
 - **Who's on what:**
   - Adi: —
   - Partner: —
@@ -18,12 +18,11 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
    - [x] Hugging Face token and W&B key work (checked by `scripts/check_setup.py`)
    - [x] Model config + size test: 180,925,056 params, tests pass
    - [ ] Both: rewrite `prompts/test_prompts.md` in your own words
-   - [ ] Pick a GPU provider; load prepaid credit / set a spend limit
-   - [ ] Create a 100 GB persistent volume in a region with on-demand H100s in stock
+   - [ ] (Postponed to before Session 5) pick the H100 provider and volume; see DECISIONS.md
    - [ ] Partner: get collaborator access, clone, make own `.env`, run `python scripts/check_setup.py`
    - [ ] Partner: set up Colab per `docs/COLAB.md` and run `notebooks/colab_setup.ipynb` (Adi: done, 4/4 checks OK)
    - [ ] Partner: agree or object to the Colab proposal in `docs/DECISIONS.md`
-2. Session 2: data (FineWeb-Edu sample-10BT → shards).
+2. Session 2 on Colab: open `notebooks/session2_data.ipynb`, run all, read the report (needs ~22 GB free on Google Drive).
 
 ## Open questions
 
@@ -38,6 +37,12 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Next:
 - Notes for the other person:
 -->
+
+### 2026-10-23 · Adi · Session 2 code
+- Did: `scripts/prepare_data.py` (tokenizer checks, uint16 shards with end-of-text per doc, deterministic 0.5% val split by doc id, one train+val shard per source file, resumable via .done markers, Drive space check, report with 10 samples), `tests/test_data.py`, `notebooks/session2_data.ipynb`.
+- Result: test mode (2 files × 1,000 docs) passed: all tokenizer checks OK, 2.18M tokens, samples clean. 4/4 tests pass. Speed ~0.1M tok/s per CPU core, so the full run takes a few hours depending on Colab's cores.
+- Next: run the notebook on Colab; gate = ~10B train tokens + samples read clean.
+- Notes for the other person: two new proposals in DECISIONS.md (Colab for data, H100 provider postponed); please agree or object.
 
 ### 2026-10-23 · Adi · Colab setup
 - Did: added `notebooks/colab_setup.ipynb` (GPU/bf16 check, keys from Colab Secrets, Drive storage, pulls latest code, runs setup check, pushes notes) and `docs/COLAB.md` (incl. optional Colab MCP for Claude on your Mac).

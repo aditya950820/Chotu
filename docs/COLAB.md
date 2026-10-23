@@ -1,6 +1,6 @@
 # Using Google Colab
 
-Colab replaces the rented cheap GPU for the **rehearsals (Sessions 3–4)**. The H100 run (Session 5) stays on a rented machine: Colab sessions time out and disconnect, which breaks a 15–25 hour unattended run.
+Colab runs **data prep (Session 2, `notebooks/session2_data.ipynb`)** and the **rehearsals (Sessions 3–4)**. The H100 run (Session 5) stays on a rented machine: Colab sessions time out and disconnect, which breaks a 15–25 hour unattended run.
 
 ## How it stays in sync
 
