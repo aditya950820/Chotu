@@ -21,7 +21,7 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
    - [ ] Pick a GPU provider; load prepaid credit / set a spend limit
    - [ ] Create a 100 GB persistent volume in a region with on-demand H100s in stock
    - [ ] Partner: get collaborator access, clone, make own `.env`, run `python scripts/check_setup.py`
-   - [ ] Both: set up Colab per `docs/COLAB.md` (Secrets, L4/A100 runtime, run `notebooks/colab_setup.ipynb`)
+   - [ ] Partner: set up Colab per (Adi done 2026-10-23: 4/4 checks OK) `docs/COLAB.md` (Secrets, L4/A100 runtime, run `notebooks/colab_setup.ipynb`)
    - [ ] Partner: agree or object to the Colab proposal in `docs/DECISIONS.md`
 2. Session 2: data (FineWeb-Edu sample-10BT → shards).
 
