@@ -21,6 +21,8 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
    - [ ] Pick a GPU provider; load prepaid credit / set a spend limit
    - [ ] Create a 100 GB persistent volume in a region with on-demand H100s in stock
    - [ ] Partner: get collaborator access, clone, make own `.env`, run `python scripts/check_setup.py`
+   - [ ] Both: set up Colab per `docs/COLAB.md` (Secrets, L4/A100 runtime, run `notebooks/colab_setup.ipynb`)
+   - [ ] Partner: agree or object to the Colab proposal in `docs/DECISIONS.md`
 2. Session 2: data (FineWeb-Edu sample-10BT → shards).
 
 ## Open questions
@@ -36,6 +38,10 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Next:
 - Notes for the other person:
 -->
+
+### 2026-10-23 · Adi · Colab setup
+- Did: added `notebooks/colab_setup.ipynb` (GPU/bf16 check, keys from Colab Secrets, Drive storage, pulls latest code, runs setup check, pushes notes) and `docs/COLAB.md` (incl. optional Colab MCP for Claude on your Mac).
+- Next: each of us runs the notebook once; partner reviews the Colab decision.
 
 ### 2026-10-23 · Adi · Session 1 (part)
 - Did: model config (`chotu/config.py`), size test, pinned requirements, `scripts/check_setup.py`, draft prompts, `.env.example`.

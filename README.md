@@ -7,3 +7,4 @@ A ~181M-parameter English chat LLM built from scratch by two people, to learn ho
 - `docs/DECISIONS.md`: changes to frozen decisions
 - `docs/LEARNING.md`: shared learning notes
 - `docs/PROJECT_SETUP.md`: how each of us sets up Claude with the same context
+- `docs/COLAB.md` and `notebooks/colab_setup.ipynb`: running on Google Colab
