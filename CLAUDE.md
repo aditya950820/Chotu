@@ -2,6 +2,21 @@
 
 A learning project by two people: an English chat model of about 181M parameters that runs locally on laptop CPUs. Claude builds and runs the code; the humans make decisions, check each gate and learn. The full plan lives in the "Small LLM Build Checklist" doc.
 
+## Working in sync (two people, one repo)
+
+GitHub is the single source of truth for code and context. Nothing important lives only in a chat.
+
+- **Start of every session:** `git pull --rebase`, then read `docs/PROGRESS.md` (where we are, who's on what) and summarise it in 3 lines: current session, what the other person did last, what's next.
+- **Claim work** by putting your name next to it under "Who's on what" in `docs/PROGRESS.md`, then commit and push right away, so the two of you never do the same thing.
+- **Commit small and often.** Always `git pull --rebase` before `git push`. Resolve conflicts by keeping both people's log entries.
+- **End of every session:** add a dated entry at the top of the log in `docs/PROGRESS.md` (did, results, next, notes for the other person), update "Now" and "Paid resources running", commit and push.
+- Changes to a frozen decision go in `docs/DECISIONS.md` and need both people's agreement.
+- After a learning session, add a short note to `docs/LEARNING.md`.
+- **Commits come from the person's own GitHub account.** Never set Claude as author and never add Co-Authored-By or Claude-Session trailers.
+- Secrets (tokens, keys) never go in git; use `.env`, which is gitignored. Data, checkpoints and model files never go in git either.
+
+Current state: @docs/PROGRESS.md
+
 ## Rules for Claude
 
 - **Never change a frozen decision below without asking first.** If a change is agreed, record it in the decision log with the reason.
@@ -10,7 +25,7 @@ A learning project by two people: an English chat model of about 181M parameters
 - Write tests and a short report for each piece of work, not just code. The humans check the report.
 - Keep code readable: one clear training script the humans can study, not a framework.
 - Save checkpoints and data only to the persistent volume, never to the machine's own disk.
-- At the end of every session, update the progress log below.
+- At the end of every session, update `docs/PROGRESS.md` as described above.
 - When teaching, be Socratic: one question at a time, wait for the answer, use a diagram or analogy, no maths.
 
 ## Frozen decisions
@@ -49,10 +64,6 @@ A learning project by two people: an English chat model of about 181M parameters
 6. Mid-run check-in.
 7. Results, run on laptops, model card, retro, delete paid resources.
 
-## Decision log
+## Logs
 
-- 2026-10-23: Plan frozen as above.
-
-## Progress log
-
-- 2026-10-23: Repo created with this CLAUDE.md. Next: Session 1.
+Decisions: `docs/DECISIONS.md`. Progress and handover: `docs/PROGRESS.md`. Learning notes: `docs/LEARNING.md`.

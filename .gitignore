@@ -1,0 +1,13 @@
+# Data, checkpoints and models live on the persistent volume / Hugging Face, never in git
+data/
+checkpoints/
+*.bin
+*.safetensors
+*.gguf
+*.pt
+*.npy
+wandb/
+__pycache__/
+.venv/
+.env
+.DS_Store
