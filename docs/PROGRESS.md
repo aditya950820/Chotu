@@ -30,6 +30,11 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 
 ## Log
 
+### 2026-10-24 · Adi · Tokenizer notebook
+- Did: `notebooks/eda_tokenizer.ipynb`, a deep dive into the SmolLM2 tokenizer on live data (train_000 shard, 14k FineWeb-Edu docs, our test prompts, one smol-smoltalk conversation), in 14 parts with explainers and questions: bytes → symbols, real text as tokens, BPE merge-by-merge replay, vocabulary map, real usage, words, numbers, case/spaces, compression, vs GPT-2, round trip, ChatML.
+- Results (ran end to end, 0 errors): 49,152 ids = 17 special + 235 single bytes + 48,900 merges; 459 ids never used in 300M tokens; top 1,000 tokens cover 67% of text; 1.06 tokens per word as words appear; 4.55 bytes/token; 1.015× GPT-2's token count; 100% exact round trip on 14k docs. **Surprise:** special token `<filename>` (id 6) appears 5 times in our shards (literal text in web pages became the special token); chat markers appear 0 times.
+- Next: both read it and answer the questions in `docs/LEARNING.md`.
+
 <!-- Template:
 ### YYYY-MM-DD · Name · Session N
 - Did:
