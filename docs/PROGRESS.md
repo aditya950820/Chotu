@@ -41,7 +41,7 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 ### 2026-10-24 · Adi · X-ray 01 (learning visuals)
 - Did: `chotu/xray.py` (tokenizer lens, shard microscope, token frequency, parameter map, forward-pass X-ray: attention per head, logit lens, per-layer signal) + `notebooks/xray_01_data_and_model.ipynb` with think-about-it questions. Reads real tokenizer/shards/model, never changes them; reusable on checkpoints after Session 3.
 - Result: runs end to end (0 errors). Untrained model's top next-token guess ≈0.014% (chance is 0.002%); top 10 tokens cover ~24% of real text; params: MLP 60.9%, attention 21.7%, embeddings 17.4%.
-- Also: Session 2 local notebook now stores data in `chotu-data` next to the repo (`~/apps/chotu-data`). The sandbox run had died before writing data, so no conflict.
+- Also: Session 2 full run started natively on the Mac (12 cores, ~2 h estimate, data in `~/chotu-data`). The earlier sandbox run had died before writing data.
 - Next: run Session 2 cell 3 (quick test), open X-ray 01, then cell 4 (full run). Answers to the questions → `docs/LEARNING.md`.
 
 ### 2026-10-24 · Adi · Session 2 started on Mac (Claude's sandbox)
