@@ -28,6 +28,16 @@ Current state: @docs/PROGRESS.md
 - At the end of every session, update `docs/PROGRESS.md` as described above.
 - When teaching, be Socratic: one question at a time, wait for the answer, use a diagram or analogy, no maths.
 
+## Rules for every notebook
+
+Every notebook is a learning tool, not only a runner. For each step:
+- **Show it visually**: a chart, heatmap, coloured tokens or live progress, so you can see what is happening, not just that it ran.
+- **Live data only**: every picture comes from the real objects (our tokenizer, shards, model, checkpoints, training logs). Never dummy, random or mock-up data. Random weights are allowed only when the point is "the untrained model", and are labelled as such.
+- **A few-line explainer** above each visual: what you're looking at, and what to notice.
+- **A "think about it" question or two** after it, to answer before reading on (answers go in `docs/LEARNING.md`).
+- **Long jobs run in the background** with a live monitor (progress, speed, time left, resources), and the learning cells run alongside them.
+- Reuse `chotu/xray.py` for visuals so the same picture can be compared before and after training. Run the notebook end to end before pushing.
+
 ## Frozen decisions
 
 | Decision | Choice |
