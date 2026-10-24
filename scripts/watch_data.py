@@ -5,25 +5,24 @@ Run it next to prepare_data.py (e.g. in a second tmux window). It only reads fil
     python scripts/watch_data.py --storage ~/chotu-data --log ~/data.log
 
 Every minute it logs: files done (of 14), tokens written, speed, hours left, CPU load, free disk,
-plus the newest log lines. It stops by itself when all 14 files are done or the report appears.
+plus the newest log lines. It stops by itself once the final report appears.
 Needs WANDB_API_KEY (and WANDB_ENTITY / WANDB_PROJECT) in .env.
 """
 import argparse
 import glob
-import json
+import html
 import os
 import shutil
 import socket
 import time
 
 TARGET_TOKENS = 10.0e9
-N_FILES = 14
 
 
 def snapshot(storage):
     """What's on disk right now: finished files, tokens written (incl. the file in progress)."""
     shard_dir = os.path.join(storage, "shards")
-    done = [json.load(open(f)) for f in sorted(glob.glob(os.path.join(shard_dir, "*.done")))]
+    done = glob.glob(os.path.join(shard_dir, "*.done"))  # count only: a marker may be mid-write
     bins = glob.glob(os.path.join(shard_dir, "*.bin")) + glob.glob(os.path.join(shard_dir, "*.bin.tmp"))
     tokens = sum(os.path.getsize(b) for b in bins) // 2  # uint16 = 2 bytes per token
     finished = os.path.exists(os.path.join(storage, "reports", "data_report.md"))
@@ -76,13 +75,12 @@ def main():
             "hours_left": eta_h if eta_h is not None else float("nan"),
             "hours_running": (now - t0) / 3600,
             "cpu_load_1min": os.getloadavg()[0],
-            "disk_free_GB": shutil.disk_usage(a.storage).free / 1e9,
-            "last_log_lines": wandb.Html(f"<pre>{tail(a.log)}</pre>"),
+            "disk_free_GB": shutil.disk_usage(a.storage if os.path.isdir(a.storage) else os.path.dirname(a.storage)).free / 1e9,
+            "last_log_lines": wandb.Html(f"<pre>{html.escape(tail(a.log))}</pre>"),
         })
-        if s["report_written"] or s["files_done"] >= N_FILES:
-            report = os.path.join(a.storage, "reports", "data_report.md")
-            if os.path.exists(report):
-                wandb.log({"data_report": wandb.Html(f"<pre>{open(report).read()}</pre>")})
+        if s["report_written"]:  # written after the last file, so wait for it rather than counting files
+            with open(os.path.join(a.storage, "reports", "data_report.md")) as f:
+                wandb.log({"data_report": wandb.Html(f"<pre>{html.escape(f.read())}</pre>")})
             run.summary["finished"] = True
             break
         time.sleep(a.every)
