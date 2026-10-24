@@ -9,7 +9,11 @@ H100 SXM 80 GB ₹330, A100 80 GB ₹141, A100 40 GB ₹84, L4 ₹41. Storage �
 - **Every GPU job ends with `python scripts/stop_machine.py`**, which pauses the instance through the [Jarvis SDK](https://docs.jarvislabs.ai/sdk). Test it with `--dry-run` first, then for real in the Session 4 dry run.
 - Record every running or paused instance under "Paid resources running" in `docs/PROGRESS.md`.
 
-## First-time setup on the instance (JupyterLab terminal)
+## Easiest: one notebook
+
+Open `notebooks/session2_jarvis_live.ipynb` in the instance's JupyterLab. It does the setup, starts the data run in the background, shows live progress, and has the learning visuals on the real shards, then the gate and the pause. To get it on a fresh instance, open a terminal and run `git clone https://github.com/aditya950820/Chotu.git`, then open `Chotu/notebooks/session2_jarvis_live.ipynb`.
+
+## First-time setup by hand (JupyterLab terminal)
 
 ```bash
 git clone https://github.com/aditya950820/Chotu.git && cd Chotu

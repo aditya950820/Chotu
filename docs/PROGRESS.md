@@ -38,6 +38,10 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Notes for the other person:
 -->
 
+### 2026-10-24 · Adi · Live notebook for Jarvis
+- Did: `notebooks/session2_jarvis_live.ipynb`: setup (keys typed in hidden fields into .env), data run in the background (won't start twice), live monitor (files, tokens, speed, ETA, CPU, disk, chart), learning cells on the newest finished shard, gate, push, pause.
+- Tested: monitor and learning cells against test shards; all cells parse.
+
 ### 2026-10-24 · Adi · Jarvis Labs
 - Did: `docs/JARVIS.md` (prices, pause rules, first-time setup, Session 2 on Jarvis), `scripts/stop_machine.py` (pauses the instance via the Jarvis SDK; `--dry-run`, `--list`), `.env.example` gains JL_API_KEY / JL_MACHINE_ID.
 - Note: the Mac data run is still going (download ~6 MB/s). Running Session 2 on Jarvis instead puts the shards next to the GPU and avoids a 20 GB upload later.
