@@ -38,6 +38,11 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Notes for the other person:
 -->
 
+### 2026-10-24 · Adi · EDA notebook
+- Did: `notebooks/eda_data.ipynb`, an end-to-end EDA on live data (our HF shards + 42k sampled source documents), with explainers and questions in 7 parts: totals and split, document quality/sources/years/length, text→tokens and the 2,048 window, vocabulary, junk check, train vs val, training implications.
+- Results (ran end to end, 0 errors): 4.54 bytes/token (needed for bits-per-byte); median doc 630 tokens; **9.4% of docs exceed 2,048 tokens but hold 41.5% of tokens**; 474 vocab ids unseen in 300M tokens; chat markers absent (good); exact duplicates 0.03%; boilerplate lines exist (e.g. "1 Answer | Add Yours") but are rare; val matches train (median 633 vs 630 tokens); 19,181 steps for one pass; 56 tokens/param.
+- Next: both read the notebook and answer the questions in `docs/LEARNING.md`; Session 2 gate (read the 10 samples), then Session 3.
+
 ### 2026-10-24 · pranay · Session 2 data done on a rented CPU VM
 - Did: ran `scripts/prepare_data.py` on a rented 8 vCPU / 32 GB CPU VM (₹17/hr, no GPU) in tmux, without an HF token. Live W&B dashboard (`scripts/watch_data.py`, PR #1) plus Adi's Jarvis notebook in Jupyter, both reading the same run.
 - Result: 14/14 files, 9,672,101 docs, **10,056,669,371 train tokens**, 50,147,762 val tokens (0.50%), 20.21 GB of shards, all tokenizer checks OK. Took 50.6 min (~3.3M tok/s, much faster than the ~0.1M tok/s per core estimate).
