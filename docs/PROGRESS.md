@@ -22,7 +22,7 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
    - [ ] Partner: get collaborator access, clone, make own `.env`, run `python scripts/check_setup.py`
    - [ ] Partner: set up Colab per `docs/COLAB.md` and run `notebooks/colab_setup.ipynb` (Adi: done, 4/4 checks OK)
    - [ ] Partner: agree or object to the Colab proposal in `docs/DECISIONS.md`
-2. Session 2 on Colab: open `notebooks/session2_data.ipynb`, run all, read the report (needs ~22 GB free on Google Drive).
+2. Session 2: run on your Mac (`bash scripts/setup_mac.sh`, then `notebooks/session2_data_local.ipynb`, ~25 GB free disk) or on Colab (`notebooks/session2_data.ipynb`, ~22 GB free Drive). Read the report.
 
 ## Open questions
 
@@ -37,6 +37,11 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Next:
 - Notes for the other person:
 -->
+
+### 2026-10-24 · Adi · Mac option for Session 2
+- Did: `scripts/setup_mac.sh` (venv, packages, Jupyter kernel, tests) and `notebooks/session2_data_local.ipynb` (shards to `~/chotu-data`, `caffeinate` keeps the Mac awake, resumable).
+- Why: Colab gave only 2 CPU cores (~14 h); the Mac has more.
+- Note: shards on the Mac must be uploaded to a private HF dataset before Session 5.
 
 ### 2026-10-24 · Adi · Fix Colab notebooks
 - Problem: `can't open file '/content/scripts/prepare_data.py'`. Installing pinned numpy/pyarrow made Colab restart the session, which reset the folder to /content and cleared the settings.
