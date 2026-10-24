@@ -19,12 +19,20 @@ import time
 TARGET_TOKENS = 10.0e9
 
 
+def _size(path):
+    """File size, or 0 if the file was renamed (.bin.tmp -> .bin) between listing and reading."""
+    try:
+        return os.path.getsize(path)
+    except FileNotFoundError:
+        return 0
+
+
 def snapshot(storage):
     """What's on disk right now: finished files, tokens written (incl. the file in progress)."""
     shard_dir = os.path.join(storage, "shards")
     done = glob.glob(os.path.join(shard_dir, "*.done"))  # count only: a marker may be mid-write
     bins = glob.glob(os.path.join(shard_dir, "*.bin")) + glob.glob(os.path.join(shard_dir, "*.bin.tmp"))
-    tokens = sum(os.path.getsize(b) for b in bins) // 2  # uint16 = 2 bytes per token
+    tokens = sum(_size(b) for b in bins) // 2  # uint16 = 2 bytes per token
     finished = os.path.exists(os.path.join(storage, "reports", "data_report.md"))
     return {"files_done": len(done), "tokens": tokens, "report_written": finished}
 
@@ -79,6 +87,7 @@ def main():
             "last_log_lines": wandb.Html(f"<pre>{html.escape(tail(a.log))}</pre>"),
         })
         if s["report_written"]:  # written after the last file, so wait for it rather than counting files
+            time.sleep(10)  # the report is written in place; give the writer time to finish
             with open(os.path.join(a.storage, "reports", "data_report.md")) as f:
                 wandb.log({"data_report": wandb.Html(f"<pre>{html.escape(f.read())}</pre>")})
             run.summary["finished"] = True

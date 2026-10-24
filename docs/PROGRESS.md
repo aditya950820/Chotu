@@ -22,7 +22,7 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
    - [ ] Partner: get collaborator access, clone, make own `.env`, run `python scripts/check_setup.py`
    - [ ] Partner: set up Colab per `docs/COLAB.md` and run `notebooks/colab_setup.ipynb` (Adi: done, 4/4 checks OK)
    - [ ] Partner: agree or object to the Colab proposal in `docs/DECISIONS.md`
-2. Session 2: run on your Mac (`bash scripts/setup_mac.sh`, then `notebooks/session2_data_local.ipynb`, ~25 GB free disk) or on Colab (`notebooks/session2_data.ipynb`, ~22 GB free Drive). Read the report.
+2. Session 2 gate: both read the 10 samples in `reports/data_report.md` (in the private HF dataset `magnateadi/chotu-fineweb-edu-10bt-tokens`). Don't start another data run; the shards are done. Then Session 3.
 
 ## Open questions
 

@@ -24,3 +24,7 @@ def test_rate_and_eta():
     assert rate == 10_000
     assert abs(eta - (10e9 - 1e6) / 10_000 / 3600) < 1e-9
     assert watch.rate_and_eta([(0, 0)], 0) == (0.0, None)
+
+
+def test_size_of_vanished_file_is_zero(tmp_path):
+    assert watch._size(str(tmp_path / "renamed_away.bin.tmp")) == 0
