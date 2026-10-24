@@ -38,6 +38,10 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Notes for the other person:
 -->
 
+### 2026-10-24 · Adi · Session 2 started on Mac (Claude's sandbox)
+- Did: cloned repo to `~/apps/Chotu`, Python 3.12 env in the Claude app's Linux sandbox (4 cores, 3 GB RAM, no torch needed), test mode passed (7/7 tokenizer checks OK), launched full run in background → `~/apps/chotu-data` (log: `~/apps/chotu-data/run.log`).
+- Status: Mac disconnected right after launch; unknown whether the run is still going. Sandbox speed ~0.1–0.3M tok/s, so 10–25 h there; running natively on the Mac (`notebooks/session2_data_local.ipynb`) is several times faster. Resumable either way.
+
 ### 2026-10-24 · Adi · Mac option for Session 2
 - Did: `scripts/setup_mac.sh` (venv, packages, Jupyter kernel, tests) and `notebooks/session2_data_local.ipynb` (shards to `~/chotu-data`, `caffeinate` keeps the Mac awake, resumable).
 - Why: Colab gave only 2 CPU cores (~14 h); the Mac has more.
