@@ -9,4 +9,5 @@ requests
 numpy==2.5.4
 pyarrow==26.0.0
 pytest==9.1.1
+matplotlib==3.11.2  # X-ray notebooks
 # Added in later sessions: datasets, liger-kernel, lm_eval, gguf (llama.cpp commit pinned in docs/PROGRESS.md)

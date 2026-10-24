@@ -38,6 +38,12 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Notes for the other person:
 -->
 
+### 2026-10-24 · Adi · X-ray 01 (learning visuals)
+- Did: `chotu/xray.py` (tokenizer lens, shard microscope, token frequency, parameter map, forward-pass X-ray: attention per head, logit lens, per-layer signal) + `notebooks/xray_01_data_and_model.ipynb` with think-about-it questions. Reads real tokenizer/shards/model, never changes them; reusable on checkpoints after Session 3.
+- Result: runs end to end (0 errors). Untrained model's top next-token guess ≈0.014% (chance is 0.002%); top 10 tokens cover ~24% of real text; params: MLP 60.9%, attention 21.7%, embeddings 17.4%.
+- Also: Session 2 local notebook now stores data in `chotu-data` next to the repo (`~/apps/chotu-data`). The sandbox run had died before writing data, so no conflict.
+- Next: run Session 2 cell 3 (quick test), open X-ray 01, then cell 4 (full run). Answers to the questions → `docs/LEARNING.md`.
+
 ### 2026-10-24 · Adi · Session 2 started on Mac (Claude's sandbox)
 - Did: cloned repo to `~/apps/Chotu`, Python 3.12 env in the Claude app's Linux sandbox (4 cores, 3 GB RAM, no torch needed), test mode passed (7/7 tokenizer checks OK), launched full run in background → `~/apps/chotu-data` (log: `~/apps/chotu-data/run.log`).
 - Status: Mac disconnected right after launch; unknown whether the run is still going. Sandbox speed ~0.1–0.3M tok/s, so 10–25 h there; running natively on the Mac (`notebooks/session2_data_local.ipynb`) is several times faster. Resumable either way.
