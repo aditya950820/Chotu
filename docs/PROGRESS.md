@@ -5,7 +5,7 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 
 ## Now
 
-- **Current session:** Session 2 · Data, ready to run on Colab
+- **Current session:** Session 2 · Data done (10.06B tokens on HF); next: read samples, then Session 3
 - **Who's on what:**
   - Adi: —
   - Partner: —
@@ -37,6 +37,13 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Next:
 - Notes for the other person:
 -->
+
+### 2026-10-24 · pranay · Session 2 data done on a rented CPU VM
+- Did: ran `scripts/prepare_data.py` on a rented 8 vCPU / 32 GB CPU VM (₹17/hr, no GPU) in tmux, without an HF token. Live W&B dashboard (`scripts/watch_data.py`, PR #1) plus Adi's Jarvis notebook in Jupyter, both reading the same run.
+- Result: 14/14 files, 9,672,101 docs, **10,056,669,371 train tokens**, 50,147,762 val tokens (0.50%), 20.21 GB of shards, all tokenizer checks OK. Took 50.6 min (~3.3M tok/s, much faster than the ~0.1M tok/s per core estimate).
+- Backup: uploaded to the **private** HF dataset `magnateadi/chotu-fineweb-edu-10bt-tokens` and checked (14 train + 14 val shards, 20.21 GB, matches local). Later machines download from there.
+- Next: both read the 10 samples in `reports/data_report.md` (the gate); delete the VM; Session 3.
+- Notes for Adi: your Mac run for Session 2 isn't needed any more, so you can stop it. Provider and H100 choice are still open (see thread notes: H100 ₹330/hr recommended, A100-80GB as fallback, L4 for rehearsals). The W&B key used on the VM was shared in chat, so please rotate it.
 
 ### 2026-10-24 · Adi · Live notebook for Jarvis
 - Did: `notebooks/session2_jarvis_live.ipynb`: setup (keys typed in hidden fields into .env), data run in the background (won't start twice), live monitor (files, tokens, speed, ETA, CPU, disk, chart), learning cells on the newest finished shard, gate, push, pause.
