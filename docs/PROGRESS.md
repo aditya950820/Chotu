@@ -10,7 +10,7 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
   - Adi: —
   - Partner: —
 - **Blocked on:** nothing
-- **Paid resources running:** none (list every GPU instance and volume here while it exists)
+- **Paid resources running:** Jarvis Labs instance (GPU type: TODO), started 2026-10-24. Pause it when not in use.
 
 ## Next up
 
@@ -18,7 +18,7 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
    - [x] Hugging Face token and W&B key work (checked by `scripts/check_setup.py`)
    - [x] Model config + size test: 180,925,056 params, tests pass
    - [ ] Both: rewrite `prompts/test_prompts.md` in your own words
-   - [ ] (Postponed to before Session 5) pick the H100 provider and volume; see DECISIONS.md
+   - [ ] Provider: Jarvis Labs proposed (`docs/JARVIS.md`); run its first-time setup and `stop_machine.py --dry-run`
    - [ ] Partner: get collaborator access, clone, make own `.env`, run `python scripts/check_setup.py`
    - [ ] Partner: set up Colab per `docs/COLAB.md` and run `notebooks/colab_setup.ipynb` (Adi: done, 4/4 checks OK)
    - [ ] Partner: agree or object to the Colab proposal in `docs/DECISIONS.md`
@@ -37,6 +37,10 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Next:
 - Notes for the other person:
 -->
+
+### 2026-10-24 · Adi · Jarvis Labs
+- Did: `docs/JARVIS.md` (prices, pause rules, first-time setup, Session 2 on Jarvis), `scripts/stop_machine.py` (pauses the instance via the Jarvis SDK; `--dry-run`, `--list`), `.env.example` gains JL_API_KEY / JL_MACHINE_ID.
+- Note: the Mac data run is still going (download ~6 MB/s). Running Session 2 on Jarvis instead puts the shards next to the GPU and avoids a 20 GB upload later.
 
 ### 2026-10-24 · Adi · X-ray 01 (learning visuals)
 - Did: `chotu/xray.py` (tokenizer lens, shard microscope, token frequency, parameter map, forward-pass X-ray: attention per head, logit lens, per-layer signal) + `notebooks/xray_01_data_and_model.ipynb` with think-about-it questions. Reads real tokenizer/shards/model, never changes them; reusable on checkpoints after Session 3.
