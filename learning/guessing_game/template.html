@@ -1,0 +1,262 @@
+<title>The Guessing Game</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout concept: a card table. Text runs along the top, six cards sit on the felt, four players' surprise meters react to every reveal. */
+:root{
+  --bg:#f3f5f9; --surface:#fff; --felt:#e8edf5; --ink:#151a2d; --muted:#5b6380; --line:#d9deea;
+  --you:#c27b12; --you-soft:#fbeed6; --raw:#8a90a6; --freq:#6d4fc2; --smol:#0f8f86; --hot:#d23c3c; --chip-ink:#fff;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif; --body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f1220;--surface:#171b2e;--felt:#1d2238;--ink:#e7eaf5;--muted:#9aa2c0;--line:#2a3050;--you:#f0b14c;--you-soft:#3a2c12;--raw:#8a90a6;--freq:#a58bff;--smol:#3cc7bc;--hot:#ff6b6b;--chip-ink:#1b1405;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1220;--surface:#171b2e;--felt:#1d2238;--ink:#e7eaf5;--muted:#9aa2c0;--line:#2a3050;--you:#f0b14c;--you-soft:#3a2c12;--raw:#8a90a6;--freq:#a58bff;--smol:#3cc7bc;--hot:#ff6b6b;--chip-ink:#1b1405;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 60px}
+.wrap{max-width:1000px;margin:0 auto;display:grid;gap:22px}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.1;text-wrap:balance}
+h1{font-size:clamp(2.1rem,5.5vw,3.4rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:clamp(1.3rem,2.6vw,1.7rem);font-weight:800}
+p{margin:0;max-width:68ch}
+.muted{color:var(--muted)}
+.eyebrow{font-family:var(--mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--smol)}
+header{padding-top:40px;display:grid;gap:12px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+/* players */
+.players{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.pl{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;gap:6px;min-width:0;border-top:4px solid var(--c)}
+.pl h3{font-size:1rem;color:var(--c)}
+.pl small{color:var(--muted);font-size:.8rem;line-height:1.35}
+.pl .avg{font-family:var(--mono);font-size:.82rem;color:var(--muted)}
+.pl .avg b{font-family:var(--display);font-size:1.5rem;color:var(--ink);font-variant-numeric:tabular-nums}
+@media (max-width:760px){.players{grid-template-columns:repeat(2,1fr)}}
+/* rounds */
+.rounds{display:flex;flex-wrap:wrap;gap:6px}
+.rounds button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:.88rem}
+.rounds button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.rounds button .done{color:var(--smol);margin-left:4px}
+/* table */
+.table{background:var(--felt);border-radius:18px;padding:18px;display:grid;gap:16px}
+.text{background:var(--surface);border-radius:12px;padding:14px 16px;font-size:1.02rem;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere;min-height:6em}
+.text .ctx{color:var(--muted)}
+.text .tk{border-bottom:2px solid var(--line);color:var(--ink)}
+.text .tk.new{background:var(--you-soft);border-bottom-color:var(--you)}
+.slot{display:inline-block;min-width:2.2em;text-align:center;border:2px dashed var(--you);border-radius:6px;color:var(--you);font-family:var(--mono);font-weight:600;animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.45}}
+@media (prefers-reduced-motion:reduce){.slot{animation:none}}
+.cards{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+@media (max-width:760px){.cards{grid-template-columns:repeat(3,1fr)}}
+.card{position:relative;background:var(--surface);border:2px solid var(--line);border-radius:12px;display:grid;min-width:0}
+.card .add{border:0;background:none;padding:14px 8px 10px;display:grid;gap:8px;justify-items:center;border-radius:10px}
+.card .lab{font-family:var(--mono);font-size:1.05rem;font-weight:600;overflow-wrap:anywhere;text-align:center}
+.card .lab i{color:var(--muted);font-style:normal}
+.card .key{position:absolute;top:6px;left:8px;font-family:var(--mono);font-size:.7rem;color:var(--muted)}
+.card .minus{position:absolute;top:4px;right:4px;border:1px solid var(--line);background:var(--bg);border-radius:999px;width:24px;height:24px;line-height:1;font-size:.9rem;padding:0}
+.stack{display:flex;flex-wrap:wrap;justify-content:center;gap:3px;min-height:18px}
+.chip{width:16px;height:16px;border-radius:50%;background:var(--you);box-shadow:inset 0 0 0 3px color-mix(in srgb,var(--chip-ink) 35%,transparent)}
+.card.right{border-color:var(--smol);box-shadow:0 0 0 3px color-mix(in srgb,var(--smol) 30%,transparent)}
+.card.wrong{opacity:.55}
+.card .tag{font-family:var(--mono);font-size:.72rem;color:var(--muted)}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.btn{border:0;border-radius:999px;padding:10px 18px;font-weight:600}
+.btn.primary{background:var(--you);color:var(--chip-ink)}
+.btn.ghost{background:var(--surface);border:1px solid var(--line)}
+.chipcount{font-family:var(--mono);font-size:.85rem;color:var(--muted);margin-left:auto}
+/* reveal */
+.reveal{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px}
+.reveal .head{font-size:1.05rem}
+.reveal .head b{font-family:var(--mono);background:var(--you-soft);padding:2px 8px;border-radius:6px}
+.row{display:grid;grid-template-columns:150px 64px 1fr;gap:10px;align-items:center}
+.row .who{font-weight:600;color:var(--c)}
+.row .num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;font-weight:600}
+.meter{position:relative;height:12px;border-radius:999px;background:var(--felt)}
+.meter span{position:absolute;inset:0 auto 0 0;border-radius:999px;background:var(--c)}
+.meter .tick{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--muted);left:calc(10.8/18*100%)}
+.row .bets{grid-column:2/-1;font-size:.84rem;color:var(--muted);font-family:var(--mono);overflow-wrap:anywhere}
+@media (max-width:640px){.row{grid-template-columns:1fr 60px}.row .meter{grid-column:1/-1}.row .bets{grid-column:1/-1}}
+.scale{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.72rem;color:var(--muted);margin-left:224px}
+@media (max-width:640px){.scale{margin-left:0}}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.summary div{border-radius:10px;background:var(--felt);padding:10px;display:grid;gap:2px}
+.summary b{font-family:var(--display);font-size:1.4rem;color:var(--c)}
+@media (max-width:640px){.summary{grid-template-columns:repeat(2,1fr)}}
+/* landmarks */
+section{display:grid;gap:14px;padding-top:24px;border-top:1px solid var(--line)}
+.track{position:relative;height:150px;margin:0 8px}
+.track .line{position:absolute;left:0;right:0;top:74px;height:4px;border-radius:2px;background:linear-gradient(90deg,var(--raw),var(--freq) 40%,var(--smol))}
+.mk{position:absolute;transform:translateX(-50%);display:grid;justify-items:center;gap:2px;text-align:center;width:max-content;max-width:120px}
+.mk .dot{width:16px;height:16px;border-radius:50%;background:var(--c);border:3px solid var(--bg)}
+.mk .t{font-size:.78rem;font-weight:600;color:var(--c);line-height:1.2}
+.mk .n{font-family:var(--mono);font-size:.75rem;color:var(--muted)}
+.mk.up{bottom:68px}.mk.down{top:68px}
+.mk.kill .dot{width:3px;height:40px;border-radius:0;border:0;background:var(--hot)}
+.ends{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.75rem;color:var(--muted)}
+.q{background:var(--you-soft);border-radius:12px;padding:14px 16px;display:grid;gap:8px}
+.q ol{margin:0;padding-left:20px;display:grid;gap:6px}
+.note{font-size:.88rem}
+</style>
+
+<div class="wrap">
+<header>
+  <span class="eyebrow">Chotu · Pretraining flight school · Lesson 1 game</span>
+  <h1>The Guessing Game</h1>
+  <p class="muted" style="font-size:1.08rem">Real text from Chotu's held-out pages, one token at a time. You get <b>10 chips</b> to bet on what comes next. Three real models bet too. When the token is revealed, everyone gets a <b>surprise score</b>: low if you bet a lot on the right card, high if you didn't. Chotu's training loss is exactly this score, averaged.</p>
+</header>
+
+<div class="players" id="players"></div>
+<div class="rounds" id="rounds" role="group" aria-label="Choose a passage"></div>
+
+<div class="table">
+  <div class="text" id="text" aria-live="polite"></div>
+  <div class="cards" id="cards"></div>
+  <div class="controls">
+    <button class="btn primary" id="go">Reveal</button>
+    <button class="btn ghost" id="clear">Clear chips</button>
+    <span class="chipcount" id="count"></span>
+  </div>
+  <p class="note muted">Tap a card to add a chip (or press 1–6), then Reveal (Enter). Chips you don't place are spread thinly over all 49,152 tokens, so revealing with no chips is the same as blind guessing. A · means the token starts with a space. You pick from a shortlist of 6; the models pick from all 49,152.</p>
+</div>
+
+<div class="reveal" id="reveal" hidden></div>
+
+<section>
+  <span class="eyebrow">Where each player sits</span>
+  <h2>The training run travels from left to right</h2>
+  <p class="muted">The models' average surprise over 16,384 held-out tokens they never saw counted. The whole 15–25 hour H100 run is the journey from the grey dot to somewhere near the green one, and the kill rule's red line sits between them.</p>
+  <div class="track" id="track"><div class="line"></div></div>
+  <div class="ends"><span>← clueless (start of training)</span><span>trained →</span></div>
+</section>
+
+<section>
+  <span class="eyebrow">Think about it</span>
+  <div class="q">
+    <ol>
+      <li><b>Lesson 1's answer is on the board.</b> "Common words only" never reads the sentence, yet it lands far left of untrained Chotu. Why does knowing just which tokens are common remove so much surprise?</li>
+      <li>The kill rule says the loss must be below about 6 by step 300. Common words only gets <span id="fq"></span>. What must Chotu have learned by step 300 that this player never will?</li>
+      <li>Play "A famous document". Why is SmolLM2 almost never surprised there, yet surprised much more by the Kevlar story?</li>
+    </ol>
+  </div>
+  <p class="note muted">All bets and scores were computed for this page from Chotu's own data: the passages and the common-word counts come from the held-out shards (49M tokens counted from 13 shards; passages and the 16,384 scored tokens from the 14th). Untrained Chotu is the real 180,925,056-knob model with random starting values. SmolLM2-135M is a trained model of almost the same size that uses the same tokenizer; it read about 200 times more text than Chotu will, so treat it as a rough finish line, not a promise.</p>
+</section>
+</div>
+
+<script>
+const R = __DATA__, L = __LAND__;
+const V = 49152, CHIPS = 10, SLIVER = 0.01;
+const P = [
+  {k:'you', name:'You', who:'10 chips, a shortlist of 6', c:'--you'},
+  {k:'untrained', name:'Untrained Chotu', who:'random knobs, step 0', c:'--raw'},
+  {k:'freq', name:'Common words only', who:'knows which tokens are frequent, never reads the sentence', c:'--freq'},
+  {k:'smol', name:'SmolLM2-135M', who:'a trained model of Chotu’s size', c:'--smol'}];
+const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+const lab = t => t === '\n' ? '<i>↵</i>' : t.startsWith(' ') ? '<i>·</i>' + esc(t.slice(1)) : esc(t);
+const plain = t => t === '\n' ? '↵' : t.startsWith(' ') ? '·' + t.slice(1) : t;
+const pct = p => p >= .995 ? '99%+' : p >= .01 ? Math.round(p * 100) + '%' : p >= .001 ? (p * 100).toFixed(1) + '%' : '<0.1%';
+const fmt = s => s.toFixed(2);
+let st = {r: 0, i: 0, chips: [0,0,0,0,0,0], revealed: false, hist: R.map(() => [])};
+
+function youP(step, chips){
+  const k = step.card_ids.indexOf(step.id), used = chips.reduce((a, b) => a + b, 0);
+  return (chips[k] + (CHIPS - used + SLIVER) / V) / (CHIPS + SLIVER);
+}
+const avg = (arr, k) => arr.length ? arr.reduce((a, h) => a + h[k], 0) / arr.length : null;
+
+function renderPlayers(){
+  const h = st.hist[st.r];
+  document.getElementById('players').innerHTML = P.map(p => {
+    const a = avg(h, p.k);
+    return `<div class="pl" style="--c:var(${p.c})"><h3>${p.name}</h3><small>${p.who}</small><span class="avg">this passage <b>${a == null ? '–' : fmt(a)}</b></span></div>`;
+  }).join('');
+}
+function renderRounds(){
+  document.getElementById('rounds').innerHTML = R.map((r, j) =>
+    `<button aria-pressed="${j === st.r}" data-r="${j}">${j + 1}. ${esc(r.title)}${st.hist[j].length === r.steps.length ? '<span class="done">✓</span>' : ''}</button>`).join('');
+}
+function renderText(){
+  const r = R[st.r];
+  let ctx = r.context; if (ctx.length > 260) ctx = '…' + ctx.slice(-260);
+  let html = `<span class="ctx">${esc(ctx)}</span>`;
+  const upto = st.revealed ? st.i + 1 : st.i;
+  for (let j = 0; j < upto; j++) html += `<span class="tk${st.revealed && j === st.i ? ' new' : ''}">${esc(r.steps[j].actual)}</span>`;
+  if (st.i >= r.steps.length) html += `<span class="ctx">${esc(r.after)}…</span>`;
+  else if (!st.revealed) html += ' <span class="slot">?</span>';
+  document.getElementById('text').innerHTML = html;
+}
+function renderCards(){
+  const r = R[st.r], s = r.steps[st.i], el = document.getElementById('cards');
+  const used = st.chips.reduce((a, b) => a + b, 0);
+  document.getElementById('count').textContent = s ? `${used} of ${CHIPS} chips placed` : '';
+  if (!s){ el.innerHTML = ''; return; }
+  el.innerHTML = s.cards.map((c, k) => {
+    const cls = st.revealed ? (s.card_ids[k] === s.id ? ' right' : ' wrong') : '';
+    const chips = Array.from({length: st.chips[k]}, () => '<span class="chip"></span>').join('');
+    return `<div class="card${cls}"><span class="key">${k + 1}</span>
+      <button class="add" data-k="${k}" ${st.revealed ? 'disabled' : ''} aria-label="Add a chip on ${esc(plain(c))}"><span class="lab">${lab(c)}</span><span class="stack">${chips}</span>${st.chips[k] ? `<span class="tag">${st.chips[k]} chip${st.chips[k] > 1 ? 's' : ''}</span>` : '<span class="tag">&nbsp;</span>'}</button>
+      ${st.chips[k] && !st.revealed ? `<button class="minus" data-m="${k}" aria-label="Remove a chip from ${esc(plain(c))}">−</button>` : ''}</div>`;
+  }).join('');
+}
+function betText(pl){ return 'top bets: ' + pl.top.map(([t, p]) => `${plain(t)} ${pct(p)}`).join(' · '); }
+function renderReveal(){
+  const box = document.getElementById('reveal'), r = R[st.r], h = st.hist[st.r];
+  if (!st.revealed && st.i < r.steps.length){ box.hidden = true; return; }
+  box.hidden = false;
+  if (st.i >= r.steps.length){
+    box.innerHTML = `<h2>Passage done</h2><p class="muted">Average surprise over ${r.steps.length} tokens. Lower is better.</p>
+      <div class="summary">${P.map(p => `<div style="--c:var(${p.c})"><span class="muted">${p.name}</span><b>${fmt(avg(h, p.k))}</b></div>`).join('')}</div>
+      <div class="controls"><button class="btn primary" id="nextr">${st.r < R.length - 1 ? 'Next passage' : 'Play passage 1 again'}</button><button class="btn ghost" id="again">Replay this passage</button></div>`;
+    return;
+  }
+  const s = r.steps[st.i], last = h[h.length - 1], k = s.card_ids.indexOf(s.id);
+  const rows = P.map(p => {
+    const sur = last[p.k], w = Math.min(sur, 18) / 18 * 100;
+    const bets = p.k === 'you' ? `you put ${st.chips[k]} of ${CHIPS} chips on it` + (sur > 12 ? ' — confidently wrong costs the most' : '') : betText(s[p.k]) + ` · on the right token: ${pct(s[p.k].p)}`;
+    return `<div class="row" style="--c:var(${p.c})"><span class="who">${p.name}</span><span class="num">${fmt(sur)}</span><span class="meter"><span style="width:${w}%"></span><i class="tick"></i></span><span class="bets">${esc(bets)}</span></div>`;
+  }).join('');
+  box.innerHTML = `<div class="head">The next token was <b>${esc(plain(s.actual))}</b></div>
+    <div class="scale"><span>0 · not surprised</span><span>10.8 · blind guess</span><span>18 · very wrong</span></div>${rows}
+    <div class="controls"><button class="btn primary" id="next">${st.i < r.steps.length - 1 ? 'Next token' : 'See passage score'}</button><span class="chipcount">token ${st.i + 1} of ${r.steps.length}</span></div>`;
+}
+function renderTrack(){
+  const all = st.hist.flat(), you = avg(all, 'you');
+  const x = v => (12 - v) / 12 * 100;
+  const M = [
+    {t:'Untrained Chotu', n:fmt(L.untrained_chotu), v:L.untrained_chotu, c:'--raw', pos:'up'},
+    {t:'Common words only', n:fmt(L.frequency_only), v:L.frequency_only, c:'--freq', pos:'up'},
+    {t:'Kill line by step 300', n:'about 6', v:6, c:'--hot', pos:'down', kill:true},
+    {t:'SmolLM2-135M', n:fmt(L.smollm2_135m), v:L.smollm2_135m, c:'--smol', pos:'up'}];
+  if (you != null) M.push({t:'You', n:`${fmt(you)} (${all.length} token${all.length > 1 ? 's' : ''})`, v:Math.max(0, Math.min(12, you)), c:'--you', pos:'down'});
+  document.getElementById('track').innerHTML = '<div class="line"></div>' + M.map(m =>
+    `<div class="mk ${m.pos}${m.kill ? ' kill' : ''}" style="left:${x(m.v)}%;--c:var(${m.c})">${m.pos === 'up' ? `<span class="t">${m.t}</span><span class="n">${m.n}</span><span class="dot"></span>` : `<span class="dot"></span><span class="t">${m.t}</span><span class="n">${m.n}</span>`}</div>`).join('');
+}
+function render(){ renderPlayers(); renderRounds(); renderText(); renderCards(); renderReveal(); renderTrack();
+  const go = document.getElementById('go'), cl = document.getElementById('clear'), done = st.i >= R[st.r].steps.length;
+  go.disabled = cl.disabled = st.revealed || done; go.style.opacity = cl.style.opacity = go.disabled ? .45 : 1; }
+
+function reveal(){
+  const r = R[st.r], s = r.steps[st.i]; if (st.revealed || !s) return;
+  st.hist[st.r].push({you: -Math.log(youP(s, st.chips)), untrained: -Math.log(s.untrained.p), freq: -Math.log(s.freq.p), smol: -Math.log(s.smol.p)});
+  st.revealed = true; render(); document.getElementById('next')?.focus();
+}
+function next(){ st.i++; st.revealed = false; st.chips = [0,0,0,0,0,0]; render(); }
+function pickRound(j){ st.r = j; st.hist[j] = []; st.i = 0; st.revealed = false; st.chips = [0,0,0,0,0,0]; render(); }
+function add(k){ if (st.revealed) return; if (st.chips.reduce((a, b) => a + b, 0) < CHIPS){ st.chips[k]++; render(); } }
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.k != null) add(+t.dataset.k);
+  else if (t.dataset.m != null){ st.chips[+t.dataset.m]--; render(); }
+  else if (t.dataset.r != null) pickRound(+t.dataset.r);
+  else if (t.id === 'go') reveal();
+  else if (t.id === 'clear'){ st.chips = [0,0,0,0,0,0]; render(); }
+  else if (t.id === 'next') next();
+  else if (t.id === 'nextr') pickRound((st.r + 1) % R.length);
+  else if (t.id === 'again') pickRound(st.r);
+});
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea')) return;
+  if (/^[1-6]$/.test(e.key)) add(+e.key - 1);
+  else if (e.key === 'Enter' && !e.target.closest('button')){ if (!st.revealed) reveal(); else next(); e.preventDefault(); }
+});
+document.getElementById('fq').textContent = fmt(L.frequency_only);
+render();
+</script>

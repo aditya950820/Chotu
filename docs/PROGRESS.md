@@ -38,6 +38,12 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Notes for the other person:
 -->
 
+### 2026-10-28 · Adi · Learning: pretraining (no training run)
+- Did: started a "pretraining flight school" (8 lessons, Socratic) to prepare for watching the real run; lessons 1–2 done (loss = average surprise; three phases of a healthy loss curve and the sick shapes). Built two learning pages and `learning/guessing_game/` (scripts that rebuild the Guessing Game from our real val shards).
+- Results: on 16,384 held-out tokens, untrained Chotu 10.91, common-words-only 7.53, SmolLM2-135M 2.77. So the "below ~6 by step 300" kill rule means Chotu must already use context, not just word frequency.
+- Next: answer the open questions in `docs/LEARNING.md`; lessons 3–8; Session 2 gate (read the 10 samples); choose where Session 3 runs (Jarvis L4 or Colab).
+- Notes for Pranay: ask Adi to share the "Guessing Game" page with you, or rebuild it with the commands in `learning/guessing_game/build.py`.
+
 ### 2026-10-24 · Adi · EDA notebook
 - Did: `notebooks/eda_data.ipynb`, an end-to-end EDA on live data (our HF shards + 42k sampled source documents), with explainers and questions in 7 parts: totals and split, document quality/sources/years/length, text→tokens and the 2,048 window, vocabulary, junk check, train vs val, training implications.
 - Results (ran end to end, 0 errors): 4.54 bytes/token (needed for bits-per-byte); median doc 630 tokens; **9.4% of docs exceed 2,048 tokens but hold 41.5% of tokens**; 474 vocab ids unseen in 300M tokens; chat markers absent (good); exact duplicates 0.03%; boilerplate lines exist (e.g. "1 Answer | Add Yours") but are rare; val matches train (median 633 vs 630 tokens); 19,181 steps for one pass; 56 tokens/param.
