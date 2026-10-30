@@ -38,6 +38,11 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Notes for the other person:
 -->
 
+### 2026-10-30 · Adi · Learning: lesson 3 (learning rate lab)
+- Did: lesson 3 of the pretraining course. Wrote `learning/nudge_size/experiment.py` (tiny-twin CPU training at a chosen learning rate, logs loss, gradient size, update size, exam every 25 steps) and ran 8 runs (~1 h on 2 CPU cores). Logs in `learning/nudge_size/runs/`, page built by `build.py`.
+- Results: best exam 3e-3 (6.56); U-shape on both sides; too-big strides show up as gradient clipping and wobble long before NaN. The experiment script is a first draft of the Session 3 training loop (AdamW 0.9/0.95, wd 0.1, clip 1.0, warm-up/hold/slow-down).
+- Next: answer the lesson 3 questions in `docs/LEARNING.md`; lesson 4 (batch); Session 2 gate; choose where Session 3 runs.
+
 ### 2026-10-28 · Adi · Learning: pretraining (no training run)
 - Did: started a "pretraining flight school" (8 lessons, Socratic) to prepare for watching the real run; lessons 1–2 done (loss = average surprise; three phases of a healthy loss curve and the sick shapes). Built two learning pages and `learning/guessing_game/` (scripts that rebuild the Guessing Game from our real val shards).
 - Results: on 16,384 held-out tokens, untrained Chotu 10.91, common-words-only 7.53, SmolLM2-135M 2.77. So the "below ~6 by step 300" kill rule means Chotu must already use context, not just word frequency.

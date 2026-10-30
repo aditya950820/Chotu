@@ -1,0 +1,234 @@
+<title>Nudge Size Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout concept: a lab notebook. Six identical experiments side by side, then the run-day dashboard, then the verdict. */
+:root{
+  --bg:#f3f5f9; --surface:#fff; --ink:#151a2d; --muted:#5b6380; --faint:#c9cfdd; --line:#e1e5ee;
+  --run:#0f8f86; --run-soft:#d6f1ee; --val:#c27b12; --hot:#d23c3c; --ref:#6d4fc2;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif; --body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f1220;--surface:#171b2e;--ink:#e7eaf5;--muted:#9aa2c0;--faint:#3a4166;--line:#262c48;--run:#3cc7bc;--run-soft:#12302f;--val:#f0b14c;--hot:#ff6b6b;--ref:#a58bff;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1220;--surface:#171b2e;--ink:#e7eaf5;--muted:#9aa2c0;--faint:#3a4166;--line:#262c48;--run:#3cc7bc;--run-soft:#12302f;--val:#f0b14c;--hot:#ff6b6b;--ref:#a58bff;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 60px}
+.wrap{max-width:1040px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.1;text-wrap:balance}
+h1{font-size:clamp(2.1rem,5.5vw,3.4rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:clamp(1.3rem,2.6vw,1.8rem);font-weight:800}
+h3{font-size:1.02rem;font-weight:600}
+p{margin:0;max-width:68ch}
+.muted{color:var(--muted)}
+.eyebrow{font-family:var(--mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--run)}
+header{padding-block:40px 20px;display:grid;gap:12px}
+section{padding-block:32px;border-top:1px solid var(--line);display:grid;gap:16px}
+.facts{display:flex;flex-wrap:wrap;gap:8px}
+.facts span{font-family:var(--mono);font-size:.8rem;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:860px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 12px 10px;display:grid;gap:6px;min-width:0}
+.panel .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.lr{font-family:var(--mono);font-weight:600;font-size:1.05rem}
+.pill{font-family:var(--mono);font-size:.72rem;padding:2px 8px;border-radius:999px;background:var(--run-soft);color:var(--ink)}
+.pill.bad{background:color-mix(in srgb,var(--hot) 18%,transparent)}
+.panel p{font-size:.86rem;color:var(--muted)}
+.score{font-family:var(--mono);font-size:.8rem;color:var(--muted)}
+.score b{color:var(--ink);font-size:.95rem}
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart text{font-family:var(--mono);font-size:10px;fill:var(--muted)}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-family:var(--mono);font-size:.74rem;padding:5px 8px;border-radius:6px;white-space:nowrap;transform:translate(-50%,-110%);z-index:2}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.84rem;color:var(--muted)}
+.legend i{display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{font:inherit;font-family:var(--mono);font-size:.85rem;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--run);border-color:var(--run);color:var(--surface)}
+button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.dash{display:grid;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+.dash h3 span{font-family:var(--body);font-weight:400;font-size:.85rem;color:var(--muted);margin-left:6px}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.two{grid-template-columns:minmax(0,1fr)}}
+.q{background:color-mix(in srgb,var(--val) 16%,var(--surface));border-radius:12px;padding:14px 16px}
+.q ol{margin:0;padding-left:20px;display:grid;gap:8px}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
+td.n{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.tablewrap{overflow-x:auto}
+details summary{cursor:pointer;color:var(--muted);font-size:.88rem}
+</style>
+
+<div class="wrap">
+<header>
+  <span class="eyebrow">Chotu · Pretraining flight school · Lesson 3 lab</span>
+  <h1>Nudge Size Lab</h1>
+  <p class="muted" style="font-size:1.08rem">Six real training runs of Chotu's tiny twin. Same model, same text, same batches, same exam. The only thing that changes is the stride: how big each nudge to the knobs is. Read the curves the way you'll read the H100 dashboard.</p>
+  <div class="facts" id="facts"></div>
+</header>
+
+<section>
+  <span class="eyebrow">The six experiments</span>
+  <h2>Same walk, six stride lengths</h2>
+  <p class="muted">Teal is that run's training loss (average surprise per step). Grey lines are the other five runs, for comparison. Amber dots are the held-out exam every 25 steps. Hover or tap a chart to read values.</p>
+  <div class="grid" id="grid"></div>
+</section>
+
+<section>
+  <span class="eyebrow">Run-day rehearsal</span>
+  <h2>The three lines you'll watch</h2>
+  <p class="muted">On the H100 dashboard you'll see these same three lines for Chotu. Pick a run and look for the early warning signs <b>before</b> anything turns into NaN.</p>
+  <div class="seg" id="pick" role="group" aria-label="Choose a run"></div>
+  <div class="dash">
+    <h3>Loss<span>average surprise this step; lower is better</span></h3><div class="chart" id="d1"></div>
+    <h3>Gradient size<span>how steep the ground felt; above the dashed line it gets clipped to 1.0</span></h3><div class="chart" id="d2"></div>
+    <h3>How far the knobs moved<span>size of this step's nudge compared with the knobs' own size</span></h3><div class="chart" id="d3"></div>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">The LR test, in miniature</span>
+  <h2>Who scored best on the exam?</h2>
+  <p class="muted">Final held-out exam score after 250 steps, one dot per stride. This is the same question Chotu's real LR test asks (1.5e-3 vs 3e-3 on 0.5B tokens): which stride leaves the lowest surprise on text the model never trained on?</p>
+  <div class="chart" id="u" style="max-width:720px"></div>
+  <details><summary>Show as a table</summary><div class="tablewrap"><table id="tbl"></table></div></details>
+</section>
+
+<section>
+  <span class="eyebrow">Warm up and slow down</span>
+  <h2>Why the stride changes during a run</h2>
+  <div class="two">
+    <div class="dash"><h3 id="w-title"></h3><p class="muted" id="w-text" style="font-size:.88rem"></p><div class="legend" id="w-leg"></div><div class="chart" id="w"></div></div>
+    <div class="dash"><h3 id="s-title"></h3><p class="muted" id="s-text" style="font-size:.88rem"></p><div class="legend" id="s-leg"></div><div class="chart" id="s"></div></div>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">Chotu's real plan</span>
+  <h2>The stride across all 19,181 steps</h2>
+  <p class="muted">The plan's schedule, drawn to scale for both LR-test candidates: warm up over about 700 steps, hold, then shrink to zero over the final 20% (3,836 steps).</p>
+  <div class="legend"><span><i style="background:var(--run)"></i>3e-3 candidate</span><span><i style="background:var(--ref)"></i>1.5e-3 candidate</span></div>
+  <div class="chart" id="plan"></div>
+</section>
+
+<section>
+  <span class="eyebrow">Think about it</span>
+  <div class="q"><ol id="qs"></ol></div>
+  <p class="muted" style="font-size:.86rem" id="note"></p>
+</section>
+</div>
+
+<script>
+const RUNS = __RUNS__, V = __VERDICTS__;
+const MAIN = V.order.map(n => RUNS[n]);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const f = (v, d = 2) => v == null ? 'NaN' : (Math.abs(v) >= 100 ? v.toFixed(0) : v.toFixed(d));
+const NS = 'http://www.w3.org/2000/svg';
+const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent && parent.append(e); return e; };
+
+/* one small line-chart helper: series [{y:[...], color, width, dash, label, x0}], dots [{x,y,color}] */
+function chart(host, o){
+  host.innerHTML = ''; const W = o.w || 320, H = o.h || 170, L = 34, R = 8, T = 8, B = 22;
+  const svg = el('svg', {viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': o.label || 'chart'}, host);
+  const xmax = o.xmax, lo = o.ymin, hi = o.ymax, log = o.log;
+  const tx = v => L + v / xmax * (W - L - R);
+  const ty = v => { const a = log ? Math.log10(Math.max(v, lo)) : v, b = log ? Math.log10(lo) : lo, c = log ? Math.log10(hi) : hi; return T + (1 - (Math.min(Math.max(a, b), c) - b) / (c - b)) * (H - T - B); };
+  for (const t of o.yticks){ el('line', {x1: L, x2: W - R, y1: ty(t), y2: ty(t), stroke: css('--line'), 'stroke-width': 1}, svg); el('text', {x: L - 4, y: ty(t) + 3, 'text-anchor': 'end'}, svg).textContent = o.yfmt ? o.yfmt(t) : t; }
+  for (const t of o.xticks){ el('text', {x: tx(t), y: H - 6, 'text-anchor': 'middle'}, svg).textContent = o.xfmt ? o.xfmt(t) : t; }
+  for (const r of (o.refs || [])) el('line', {x1: L, x2: W - R, y1: ty(r.y), y2: ty(r.y), stroke: r.color, 'stroke-width': 1.2, 'stroke-dasharray': '4 3'}, svg);
+  for (const s of o.series){
+    let d = '', pen = false;
+    s.y.forEach((v, i) => { if (v == null || !isFinite(v)){ pen = false; return; } const X = tx((s.x0 || 0) + i * (s.dx || 1)), Y = ty(v); d += (pen ? 'L' : 'M') + X.toFixed(1) + ' ' + Y.toFixed(1); pen = true; });
+    el('path', {d, fill: 'none', stroke: s.color, 'stroke-width': s.width || 2, 'stroke-dasharray': s.dash || '', 'stroke-linejoin': 'round', 'stroke-linecap': 'round', opacity: s.op || 1}, svg);
+  }
+  for (const p of (o.dots || [])) if (p.y != null) el('circle', {cx: tx(p.x), cy: ty(p.y), r: p.r || 3, fill: p.color, stroke: css('--surface'), 'stroke-width': 1.5}, svg);
+  for (const m of (o.marks || [])){ el('line', {x1: tx(m.x), x2: tx(m.x), y1: T, y2: H - B, stroke: css('--hot'), 'stroke-width': 1.5}, svg); el('text', {x: tx(m.x) - 3, y: T + 10, 'text-anchor': 'end', style: `fill:${css('--hot')}`}, svg).textContent = m.text; }
+  if (!o.hover) return;
+  const cross = el('line', {y1: T, y2: H - B, stroke: css('--muted'), 'stroke-width': 1, opacity: 0}, svg);
+  const tip = document.createElement('div'); tip.className = 'tip'; tip.hidden = true; host.append(tip);
+  const move = ev => { const r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) / r.width * W;
+    const i = Math.round((px - L) / (W - L - R) * xmax); if (i < 0 || i > xmax){ leave(); return; }
+    cross.setAttribute('x1', tx(i)); cross.setAttribute('x2', tx(i)); cross.setAttribute('opacity', .6);
+    tip.hidden = false; tip.textContent = o.hover(i); tip.style.left = (tx(i) / W * 100) + '%'; tip.style.top = '0px'; };
+  const leave = () => { cross.setAttribute('opacity', 0); tip.hidden = true; };
+  svg.addEventListener('pointermove', move); svg.addEventListener('pointerdown', move); svg.addEventListener('pointerleave', leave);
+}
+const at = (arr, i) => i < arr.length ? arr[i] : undefined;
+const steps = MAIN[0].steps, XT = [0, 50, 100, 150, 200, 250];
+const lossMax = 11.5;
+
+function facts(){
+  const r = MAIN[0];
+  document.getElementById('facts').innerHTML = [`${r.params.toLocaleString()} knobs (tiny twin)`, `${steps} steps each`, `${r.tokens_per_step.toLocaleString()} tokens per step`, `warm-up ${r.warmup} steps`, `exam: 32 held-out windows`, `real CPU training, ${Math.round(MAIN.reduce((a, x) => a + x.seconds, 0) / 60)} min total`].map(s => `<span>${s}</span>`).join('');
+}
+function grid(){
+  const g = document.getElementById('grid'); g.innerHTML = '';
+  MAIN.forEach(run => {
+    const v = V.runs[run.name], last = run.val.filter(p => p[1] != null).pop();
+    const p = document.createElement('div'); p.className = 'panel';
+    p.innerHTML = `<div class="top"><span class="lr">${run.name.replace('lr_', '')}</span><span class="pill${v.bad ? ' bad' : ''}">${v.tag}</span></div><div class="chart"></div>
+      <span class="score">${run.blew_up_at ? `<b>NaN at step ${run.blew_up_at}</b>` : `exam after ${steps} steps <b>${f(last[1])}</b>`}</span><p>${v.text}</p>`;
+    g.append(p);
+    chart(p.querySelector('.chart'), {xmax: steps, ymin: 0, ymax: lossMax, yticks: [0, 2, 4, 6, 8, 10], xticks: XT, label: `Loss for stride ${run.name}`,
+      series: [...MAIN.filter(o => o !== run).map(o => ({y: o.loss, color: css('--faint'), width: 1.2})), {y: run.loss, color: css('--run'), width: 2}],
+      dots: run.val.map(([x, y]) => ({x, y, color: css('--val')})),
+      marks: run.blew_up_at ? [{x: run.blew_up_at, text: 'NaN'}] : [],
+      hover: i => `step ${i} · loss ${f(at(run.loss, i))}`});
+  });
+}
+let pick = V.dashDefault;
+function dash(){
+  document.getElementById('pick').innerHTML = MAIN.map(r => `<button aria-pressed="${r.name === pick}" data-n="${r.name}">${r.name.replace('lr_', '')}</button>`).join('');
+  const r = RUNS[pick], hov = (arr, name, d) => i => `step ${i} · ${name} ${arr[i] == null ? '–' : d(arr[i])}`;
+  chart(document.getElementById('d1'), {w: 900, h: 150, xmax: steps, ymin: 0, ymax: lossMax, yticks: [0, 4, 8], xticks: XT, series: [{y: r.loss, color: css('--run')}], dots: r.val.map(([x, y]) => ({x, y, color: css('--val')})), marks: r.blew_up_at ? [{x: r.blew_up_at, text: 'NaN'}] : [], hover: hov(r.loss, 'loss', v => v.toFixed(2)), label: 'loss'});
+  chart(document.getElementById('d2'), {w: 900, h: 150, xmax: steps, ymin: .05, ymax: 100, log: true, yticks: [.1, 1, 10, 100], yfmt: t => t, xticks: XT, refs: [{y: 1, color: css('--hot')}], series: [{y: r.grad, color: css('--ref')}], hover: hov(r.grad, 'gradient', v => v.toFixed(2)), label: 'gradient size'});
+  chart(document.getElementById('d3'), {w: 900, h: 150, xmax: steps, ymin: 1e-3, ymax: 1e-1, log: true, yticks: [1e-3, 1e-2, 1e-1], yfmt: t => ({0.001: '0.1%', 0.01: '1%', 0.1: '10%'})[t], xticks: XT, series: [{y: r.update, color: css('--val')}], hover: hov(r.update, 'moved', v => (v * 100).toPrecision(2) + '%'), label: 'update size'});
+}
+document.getElementById('pick').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; pick = b.dataset.n; dash(); });
+
+function ucurve(){
+  const host = document.getElementById('u'); host.innerHTML = '';
+  const pts = MAIN.map(r => ({lr: r.lr, name: r.name, v: (r.val.filter(p => p[1] != null).pop() || [0, null])[1], nan: !!r.blew_up_at, last: r.val[r.val.length - 1][0]}));
+  const W = 720, H = 240, L = 40, R = 20, T = 14, B = 34;
+  const svg = el('svg', {viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Final exam score by stride'}, host);
+  const lx = Math.log10(pts[0].lr) - .25, hx = Math.log10(pts[pts.length - 1].lr) + .25;
+  const ok = pts.filter(p => !p.nan && p.v != null), lo = Math.floor(Math.min(...ok.map(p => p.v)) - .5), hi = Math.ceil(Math.max(...pts.map(p => p.v ?? 0)) + .3);
+  const tx = v => L + (Math.log10(v) - lx) / (hx - lx) * (W - L - R), ty = v => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+  for (let t = lo; t <= hi; t++){ el('line', {x1: L, x2: W - R, y1: ty(t), y2: ty(t), stroke: css('--line')}, svg); el('text', {x: L - 6, y: ty(t) + 3, 'text-anchor': 'end'}, svg).textContent = t; }
+  const best = ok.reduce((a, b) => b.v < a.v ? b : a);
+  let d = ''; ok.forEach((p, i) => d += (i ? 'L' : 'M') + tx(p.lr) + ' ' + ty(p.v)); el('path', {d, fill: 'none', stroke: css('--faint'), 'stroke-width': 2}, svg);
+  for (const p of pts){
+    el('text', {x: tx(p.lr), y: H - 10, 'text-anchor': 'middle'}, svg).textContent = p.name.replace('lr_', '');
+    if (p.v == null) continue;
+    el('circle', {cx: tx(p.lr), cy: ty(p.v), r: p === best ? 8 : 6, fill: p === best ? css('--run') : p.nan ? css('--hot') : css('--muted'), stroke: css('--bg'), 'stroke-width': 2}, svg);
+    el('text', {x: tx(p.lr), y: ty(p.v) - 13, 'text-anchor': 'middle', style: `font-size:12px;fill:${css('--ink')}`}, svg).textContent = f(p.v) + (p === best ? '  best' : '') + (p.nan ? ` (step ${p.last}, then NaN)` : '');
+  }
+  document.getElementById('tbl').innerHTML = '<tr><th>Stride</th><th>Exam after 250 steps</th><th>What happened</th></tr>' + pts.map(p => `<tr><td>${p.name.replace('lr_', '')}</td><td class="n">${p.nan ? 'NaN' : f(p.v)}</td><td>${V.runs[p.name].tag}</td></tr>`).join('');
+}
+function pair(id, A, B, labA, labB, title, text){
+  document.getElementById(id + '-title').textContent = title; document.getElementById(id + '-text').textContent = text;
+  document.getElementById(id + '-leg').innerHTML = `<span><i style="background:var(--run)"></i>${labA}</span><span><i style="background:var(--muted)"></i>${labB}</span>`;
+  const uv = V[id].useVal, dx = uv ? 25 : 1, ser = r => uv ? r.val.map(p => p[1]) : r.loss, ya = ser(A), yb = ser(B);
+  const ix = i => uv ? Math.round(i / 25) : i, sx = i => uv ? ix(i) * 25 : i;
+  chart(document.getElementById(id), {w: 460, h: 220, xmax: steps, ymin: V[id].ymin, ymax: V[id].ymax, yticks: V[id].yticks, xticks: XT,
+    series: [{y: yb, color: css('--muted'), width: 1.6, dash: '5 3', dx}, {y: ya, color: css('--run'), width: 2, dx}],
+    dots: uv ? [...yb.map((y, i) => ({x: i * 25, y, color: css('--muted')})), ...ya.map((y, i) => ({x: i * 25, y, color: css('--run')}))] : [],
+    marks: [A, B].filter(r => r.blew_up_at).map(r => ({x: r.blew_up_at, text: 'NaN'})),
+    hover: i => `${uv ? 'exam at ' : ''}step ${sx(i)} · ${labA} ${f(at(ya, ix(i)))} · ${labB} ${f(at(yb, ix(i)))}`});
+}
+function plan(){
+  const N = 19181, wu = 700, d0 = N - 3836, sched = (lr, s) => s < wu ? lr * (s + 1) / wu : s >= d0 ? lr * (N - s) / (N - d0) : lr;
+  const xs = Array.from({length: 401}, (_, i) => Math.round(i / 400 * N));
+  chart(document.getElementById('plan'), {w: 900, h: 190, xmax: 400, ymin: 0, ymax: 3.3e-3, yticks: [0, 1e-3, 2e-3, 3e-3], yfmt: t => t ? t.toExponential(0) : '0', xticks: [0, 100, 200, 300, 400], xfmt: t => Math.round(t / 400 * N).toLocaleString(),
+    series: [{y: xs.map(s => sched(1.5e-3, s)), color: css('--ref')}, {y: xs.map(s => sched(3e-3, s)), color: css('--run')}],
+    hover: i => `step ${xs[i].toLocaleString()} · ${sched(3e-3, xs[i]).toExponential(2)} / ${sched(1.5e-3, xs[i]).toExponential(2)}`, label: 'Chotu learning-rate schedule'});
+}
+function render(){ facts(); grid(); dash(); ucurve();
+  pair('w', RUNS[V.w.a], RUNS[V.w.b], V.w.la, V.w.lb, V.w.title, V.w.text);
+  pair('s', RUNS[V.s.a], RUNS[V.s.b], V.s.la, V.s.lb, V.s.title, V.s.text);
+  plan();
+  document.getElementById('qs').innerHTML = V.questions.map(q => `<li>${q}</li>`).join('');
+  document.getElementById('note').textContent = V.note; }
+render();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
+new MutationObserver(render).observe(document.documentElement, {attributes: true, attributeFilter: ['data-theme']});
+</script>

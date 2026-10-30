@@ -1,0 +1,25 @@
+{
+ "order": ["lr_3e-4", "lr_1e-3", "lr_3e-3", "lr_1e-2", "lr_3e-2", "lr_1e-1"],
+ "dashDefault": "lr_1e-1",
+ "runs": {
+  "lr_3e-4": {"tag": "too small", "text": "Safe but slow. At step 25 it was still at 10.3, while the others were already near 8. Second-worst exam."},
+  "lr_1e-3": {"tag": "a bit small", "text": "Steady and smooth, and it keeps catching up. Given more steps it could close the gap."},
+  "lr_3e-3": {"tag": "best here", "text": "A fast early drop, then a steady slope. The lowest exam score of the six."},
+  "lr_1e-2": {"tag": "a bit big", "text": "Just as fast at the start, but it learned less per step afterwards and finished behind 3e-3."},
+  "lr_3e-2": {"tag": "too big", "bad": true, "text": "It overshot early: down to 8.0 by step 10, then back up to about 8.6, with the gradient hitting 16.6 during warm-up."},
+  "lr_1e-1": {"tag": "far too big", "bad": true, "text": "Clipping kept it from blowing up, but the gradient hit the clip in 114 of the 225 steps after warm-up, and the exam got worse mid-run (7.29 to 7.64 at step 175). Worst exam."}
+ },
+ "w": {"a": "nowarm_3e-2", "b": "lr_3e-2", "la": "no warm-up", "lb": "25-step warm-up", "useVal": false, "ymin": 6.5, "ymax": 11, "yticks": [7, 8, 9, 10, 11],
+       "title": "Warm-up: did baby steps help?",
+       "text": "At stride 3e-2, both versions bounced back towards blind guessing early: without warm-up to 10.2 at step 6, with a short warm-up to 9.9 at step 18, just as the stride reached full size. On this tiny model, skipping warm-up did not hurt the final exam (6.81 vs 6.99). A real result that goes against the textbook."},
+ "s": {"a": "decay_3e-3", "b": "lr_3e-3", "la": "slow down over the last 20%", "lb": "full stride to the end", "useVal": true, "ymin": 6.4, "ymax": 7.9, "yticks": [6.5, 7, 7.5],
+       "title": "Slow-down: settling at the end",
+       "text": "These are exam scores at stride 3e-3. The two runs are identical until step 200, when one starts shrinking its stride. It finishes at 6.52 instead of 6.56. That's a small gain, because 250 steps is far from settled; on Chotu's 19,181-step run, this final phase gets 3,836 steps."},
+ "questions": [
+  "<b>Check your Lesson 3 answer:</b> in the run-day rehearsal, pick 1e-1. What warned you long before any NaN? Now compare it with 3e-3.",
+  "1e-1 never blew up, and it finished only about 0.65 worse than the best. If Chotu's H100 run used a stride that was too big but never crashed, how would you even know? (This is why the plan has an LR test.)",
+  "Warm-up didn't help this tiny model. Should we drop warm-up from Chotu's plan? What would you want to know before deciding?",
+  "This lab tried six strides. Chotu's plan tries only two, 1.5e-3 and 3e-3. Why so few, and why those two?"
+ ],
+ "note": "What this is: real training of the 7,079,552-knob tiny twin on CPU, 250 steps per run, 8 windows of 256 tokens per step (512,000 tokens per run, from train shard 000). The exam is 32 held-out windows (8,192 tokens) from val shard 013, the same for every run. Chotu is 25 times bigger and reads 20,000 times more text, and small models usually tolerate bigger strides, so 3e-3 winning here does not choose Chotu's stride. The real LR test does that."
+}
