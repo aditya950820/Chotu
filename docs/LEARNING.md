@@ -11,6 +11,13 @@ Newest at the top.
 - Still unclear:
 -->
 
+### 2026-10-31 · Adi · Lesson 4: batch size (ask the crowd), with Claude
+- Analogy: each window is a stranger you ask for directions; the batch is the crowd you ask before each stride; the reading budget is fixed, so a bigger crowd means fewer strides.
+- Compasses (real gradients of the tiny twin): typical miss vs a 768-window reference. 1 window 75°, 8 windows 53°, 32 windows 33°, 256 windows 15° at the start. After 256 strides, small crowds disagree more (1 window 86°, 32 windows 41°).
+- Race (same 2,048 windows each, LR 3e-3): exam 2/stride 6.61 · **8/stride 6.56** · 32/stride 6.95 · 128/stride 7.52 (only 16 strides).
+- Open questions: why do small crowds disagree more after training? Who wins a 10× longer race? Why can Chotu afford 256? Twice-as-big GPU: change the crowd or the rounds?
+- Still unclear:
+
 ### 2026-10-30 · Adi · Lesson 3: nudge size (learning rate), with Claude
 - Lab: 8 real CPU runs of the 7M tiny twin, 250 steps each, same batches, only the stride changed (`learning/nudge_size/`, page "Nudge Size Lab").
 - Exam after 250 steps: 3e-4 7.00 · 1e-3 6.60 · **3e-3 6.56** · 1e-2 6.82 · 3e-2 6.99 · 1e-1 7.21 (a U-shape). 1e-1 never hit NaN; it showed gradients clipping in 114/225 steps and a mid-run exam bump.

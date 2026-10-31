@@ -16,6 +16,9 @@ ap.add_argument("data"); ap.add_argument("out"); ap.add_argument("name"); ap.add
 ap.add_argument("--steps", type=int, default=300); ap.add_argument("--warmup", type=int, default=30)
 ap.add_argument("--decay", type=float, default=0.0, help="fraction of steps at the end where the nudge shrinks to 0")
 ap.add_argument("--batch", type=int, default=16); ap.add_argument("--seq", type=int, default=256)
+ap.add_argument("--eval-every-windows", type=int, default=0, help="exam every N windows read (0 = every 25 steps)")
+ap.add_argument("--micro", type=int, default=0, help="read the batch in rounds of this many windows (gradient accumulation); 0 = all at once")
+ap.add_argument("--save", default="", help="save the trained knobs here at the end")
 a = ap.parse_args()
 torch.manual_seed(0); torch.set_num_threads(2)
 train = np.memmap(f"{a.data}/shards/train_000.bin", dtype=np.uint16, mode="r")
@@ -50,8 +53,10 @@ t0 = time.time()
 for s in range(a.steps):
     for g in opt.param_groups: g["lr"] = lr_at(s)
     x, y = batch(train, s, a.batch)
-    loss = torch.nn.functional.cross_entropy(model(x).logits.flatten(0, 1), y.flatten())
-    opt.zero_grad(); loss.backward()
+    opt.zero_grad(); m = a.micro or a.batch; loss = 0.0
+    for i in range(0, a.batch, m):  # rounds of m windows; adding up their nudges = one big batch
+        part = torch.nn.functional.cross_entropy(model(x[i:i+m]).logits.flatten(0, 1), y[i:i+m].flatten()) * len(x[i:i+m]) / a.batch
+        part.backward(); loss = loss + part.detach()
     gn = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0).item()
     before = [p.detach().clone() for p in model.parameters()]
     opt.step()
@@ -61,10 +66,12 @@ for s in range(a.steps):
     l = loss.item()
     log["loss"].append(l if math.isfinite(l) else None); log["grad"].append(gn if math.isfinite(gn) else None)
     log["update"].append((num / den).item() if math.isfinite(l) else None); log["lr_sched"].append(lr_at(s))
-    if (s + 1) % 25 == 0 or s + 1 == a.steps:
+    ew = a.eval_every_windows
+    if ((s + 1) * a.batch % ew == 0) if ew else ((s + 1) % 25 == 0 or s + 1 == a.steps):
         log["val"].append([s + 1, val_loss() if math.isfinite(l) else None])
         print(f"{a.name} step {s+1} loss {l:.3f} grad {gn:.2f} {time.time()-t0:.0f}s", flush=True)
     if not math.isfinite(l):
         log["blew_up_at"] = s + 1; print(a.name, "NaN at step", s + 1); break
-log["seconds"] = time.time() - t0
+log["seconds"] = time.time() - t0; log["batch"] = a.batch
+if a.save: torch.save(model.state_dict(), a.save)
 json.dump(log, open(f"{a.out}/{a.name}.json", "w"))

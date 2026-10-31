@@ -38,6 +38,12 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Notes for the other person:
 -->
 
+### 2026-10-31 · Adi · Learning: lesson 4 (batch size lab)
+- Did: lesson 4. `learning/batch_size/compass.py` measures how much gradient directions from 1–256 windows agree (at the random start and after 256 strides); race of 4 batch sizes on the same 2,048 windows. Page "Ask the Crowd" built by `learning/batch_size/build.py`; logs in `learning/batch_size/runs/`.
+- Results: miss angle falls from ~75° (1 window) to ~15° (256); small crowds get noisier after training; race winner 8/stride (6.56), 128/stride lost with only 16 strides (7.52).
+- Code: `learning/nudge_size/experiment.py` gained `--micro` (gradient accumulation; the 128-window run ran out of memory without it), `--eval-every-windows` and `--save`. This is the same accumulation the H100 run needs (32 × 8).
+- Next: lesson 5 (train vs validation, bits-per-byte); Session 2 gate; choose where Session 3 runs.
+
 ### 2026-10-30 · Adi · Learning: lesson 3 (learning rate lab)
 - Did: lesson 3 of the pretraining course. Wrote `learning/nudge_size/experiment.py` (tiny-twin CPU training at a chosen learning rate, logs loss, gradient size, update size, exam every 25 steps) and ran 8 runs (~1 h on 2 CPU cores). Logs in `learning/nudge_size/runs/`, page built by `build.py`.
 - Results: best exam 3e-3 (6.56); U-shape on both sides; too-big strides show up as gradient clipping and wobble long before NaN. The experiment script is a first draft of the Session 3 training loop (AdamW 0.9/0.95, wd 0.1, clip 1.0, warm-up/hold/slow-down).

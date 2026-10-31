@@ -1,0 +1,15 @@
+{
+ "when": {
+  "start": "Random knobs, before any training (loss 10.82). Each needle is one real crowd of fresh windows, compared with the answer from 768 other windows.",
+  "trained": "The same twin after 256 strides of training (loss 6.75). Look at the small crowds: they disagree even more now, and some single windows point more than 90° off, which means slightly uphill."
+ },
+ "compassNote": "How to read a needle: the tiny twin has 7 million knobs, so 'a direction' means a direction across 7 million dials at once. The tilt is the real angle between one crowd's suggested nudge and the nudge suggested by 768 other windows. Left or right is only for drawing; only the size of the tilt was measured. There are six crowds per size, all fresh windows from train shard 000.",
+ "race": "<b>What happened:</b> the 2-window walker led early, because by 256 windows it had taken 128 strides while the 8-window walker had taken 32. Later its shaky directions cost more, and the 8-window walker caught up and finished best (6.56 vs 6.61). The 128-window walker took only 16 very steady strides and was still dropping fast when the reading ran out (7.52). Too few strides lose, and so do strides that are too shaky. All four used the same stride length (3e-3); in real training a bigger crowd can usually afford a longer stride, which narrows the gap.",
+ "questions": [
+  "<b>Check your Lesson 4 answer:</b> after training, small crowds disagree <i>more</i> than at the start. Why? Think about the city: at first everyone agrees \"downtown is that way\". What happens to their advice once you're near your own street?",
+  "The 2-window walker led for most of the race, then got caught. If the race had been ten times longer, who do you think would win, and why?",
+  "Chotu takes 19,181 strides with 256 windows each. The winner here took 256 strides with 8 windows each. Why can Chotu afford a much bigger crowd?",
+  "The H100 asks 32 windows at a time, 8 rounds, then takes one stride. If you rented a GPU twice as big, what would you change: the crowd size (256) or the number of rounds (8)?"
+ ],
+ "note": "What this is: real CPU runs of the 7,079,552-knob tiny twin with 256-token windows (Chotu uses 2,048-token windows). Compasses: six crowds per size, compared with a 768-window reference, at the random start and after 256 strides of training. Race: 2,048 windows each, same stride length 3e-3, warm-up for the first 10% of strides, and an exam on the same 32 held-out windows from val shard 013. The 128-window walker ran out of memory reading all 128 at once, so it reads in rounds of 16 and adds up the nudges (gradient accumulation). That gives the same nudge, and it's exactly what the H100 will do with 32 × 8."
+}
