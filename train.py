@@ -41,7 +41,7 @@ ap.add_argument("--kind", default="train", help="what this run is for: train, ov
 ap.add_argument("--tokens", type=float, default=140e6, help="total tokens to read (twin: 140M = 20 per knob)")
 ap.add_argument("--batch-tokens", type=int, default=0, help="tokens per nudge (default: twin 65,536, chotu 524,288)")
 ap.add_argument("--seq", type=int, default=2048)
-ap.add_argument("--micro", type=int, default=0, help="windows per forward pass (gradient accumulation); default 8 twin / 32 chotu")
+ap.add_argument("--micro", type=int, default=0, help="windows per forward pass (gradient accumulation); default 8")
 ap.add_argument("--lr", type=float, default=3e-3)
 ap.add_argument("--warmup", type=int, default=0, help="warm-up steps (default: 5%% of steps, at most 700)")
 ap.add_argument("--decay", type=float, default=0.2, help="fraction of steps at the end where the stride shrinks to 0")
@@ -115,7 +115,7 @@ fwd = torch.compile(model) if a.compile else model
 
 batch_tokens = a.batch_tokens or (65_536 if a.model == "twin" else 524_288)
 bsz = max(1, batch_tokens // a.seq)
-micro = min(a.micro or (8 if a.model == "twin" else 32), bsz)
+micro = min(a.micro or 8, bsz)  # 8 windows per pass: 32 ran out of memory on an 80 GB H100 for the 181M model
 total_steps = max(1, int(a.tokens // (bsz * a.seq)))
 warmup = a.warmup or min(700, max(10, total_steps // 20))
 decay_start = int(total_steps * (1 - a.decay))

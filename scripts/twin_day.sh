@@ -9,6 +9,7 @@
 # On the GPU machine, from the repo root (branch twin-day):
 #   export HF_TOKEN=hf_...  GH_TOKEN=github_pat_...  GPU_PRICE=330      # or put them in .env
 #   bash scripts/twin_day.sh 2>&1 | tee ~/twin_day.log
+#   ONLY="speed" bash scripts/twin_day.sh ...    # setup, data, then only the listed steps (overfit firedrill main speed)
 set -uo pipefail
 cd "$(dirname "$0")/.."
 REPO=$PWD
@@ -21,7 +22,8 @@ STATUS=$RUNS/status.jsonl
 PY=$(command -v python || command -v python3)   # Jarvis images keep CUDA torch under `python`
 NAME="aditya950820"; EMAIL="202965202+aditya950820@users.noreply.github.com"
 mkdir -p "$DATA/shards" "$RUNS"
-: > "$STATUS"   # a fresh status list for this attempt
+[ -n "${ONLY:-}" ] || : > "$STATUS"   # a fresh status list, unless re-running single steps
+want() { [ -z "${ONLY:-}" ] || [[ " $ONLY " == *" $1 "* ]]; }   # ONLY="speed" re-runs just those steps
 
 status() {  # id, status (running/pass/fail/info), note
   $PY -c 'import json,sys,time; print(json.dumps({"id":sys.argv[1],"status":sys.argv[2],"note":sys.argv[3],"time":round(time.time())}))' "$1" "$2" "${3:-}" >> "$STATUS"
@@ -110,12 +112,15 @@ then status data pass "$(ls "$DATA"/shards | tr '\n' ' ')"; else status data fai
 T="$PY train.py --data $DATA --gpu-price $PRICE"
 
 # ---------- 3. overfit one batch: the loop must be able to memorise ----------
+if want overfit; then
 status overfit running "150 steps on one batch"
 $T --model twin --out "$RUNS/overfit" --kind overfit --overfit --tokens 9830400 --eval-every 50 --ckpt-every 1000
 L=$($PY -c "import json; print(json.load(open('$RUNS/overfit/summary.json'))['final_loss'])" 2>/dev/null || echo 99)
 $PY -c "import sys; sys.exit(0 if float('$L') < 1.0 else 1)" && status overfit pass "final loss $L (< 1.0)" || status overfit fail "final loss $L (should be < 1.0)"
+fi
 
 # ---------- 4. fire drill: crash at step 70, resume, compare with an uninterrupted run ----------
+if want firedrill; then
 status firedrill running "reference run, crash at 70, resume"
 D="--model twin --tokens 7864320 --eval-every 60 --ckpt-every 25 --kind firedrill"
 $T $D --out "$RUNS/drill-ref" --name drill-ref
@@ -127,16 +132,21 @@ L=lambda p:{r['step']:r['loss'] for r in map(json.loads,open(p)) if r['t']=='ste
 a,b=L('$RUNS/drill-ref/metrics.jsonl'),L('$RUNS/drill/metrics.jsonl')
 print(round(max(abs(a[s]-b[s]) for s in range(51,121)),4))" 2>/dev/null || echo 99)
 $PY -c "import sys; sys.exit(0 if float('$DIFF') < 0.05 else 1)" && status firedrill pass "resumed run matches, max loss gap $DIFF" || status firedrill fail "resumed run differs, max loss gap $DIFF"
+fi
 
 # ---------- 5. main twin run: 140M tokens (20 per knob), compiled, exams and samples ----------
+if want main; then
 status main running "140M tokens, compile, samples"
 $T --model twin --out "$RUNS/main" --kind train --tokens 140e6 --eval-every 100 --ckpt-every 250 --compile --samples
 $PY -c "import json; s=json.load(open('$RUNS/main/summary.json')); exit(0 if s['reason']=='finished' else 1)" 2>/dev/null \
   && status main pass "$($PY -c "import json; s=json.load(open('$RUNS/main/summary.json')); print(f\"val {s['val_bpb']} bpb, {s['tok_s']:,} tok/s, {s['minutes']} min\")")" \
   || status main fail "did not finish (see alerts)"
+fi
 
 # ---------- 6. speed test of the real 181M model: 30 steps at the real batch ----------
+if want speed; then
 status speed running "181M, 30 steps x 524,288 tokens"
 $T --model chotu --out "$RUNS/speed-181m" --name speed-181m --kind speed --tokens 10.06e9 --max-steps 30 --compile --eval-windows 16 --eval-every 1000 --ckpt-every 1000
 $PY -c "import json; s=json.load(open('$RUNS/speed-181m/summary.json')); print(f\"{s['tok_s']:,} tok/s, MFU {s.get('mfu',0):.1%}, full run {s.get('full_run_hours')} h ≈ ₹{s.get('full_run_cost_inr',0):,}\")" > /tmp/speed.txt 2>/dev/null \
   && status speed pass "$(cat /tmp/speed.txt)" || status speed fail "speed test did not finish"
+fi
