@@ -8,15 +8,15 @@ Every run writes <out>/metrics.jsonl, one JSON object per line:
     {"t": "eval"}    held-out loss and bits-per-byte         {"t": "ckpt"}  a checkpoint was saved
     {"t": "sample"}  what the model writes from a prompt     {"t": "alert"} a kill rule or warning fired
     {"t": "copy"}    the copying test                        {"t": "end"}   why the run stopped
-plus <out>/summary.json. With --live-push the logs are pushed to the `live-runs` branch every N seconds,
-so the shared dashboard can follow the run.
+plus <out>/summary.json. scripts/twin_day.sh pushes these logs to GitHub while the run goes,
+so the shared dashboard can follow it.
 
 Examples (from the repo root):
     python train.py --model twin --data ~/chotu-data --out ~/chotu-runs/twin-main --tokens 140e6 --compile
     python train.py --model twin ... --resume                 # continue from the newest checkpoint
     python train.py --model chotu ... --max-steps 30          # speed test of the real model
 """
-import argparse, glob, json, math, os, pathlib, shutil, subprocess, sys, threading, time
+import argparse, glob, json, math, os, pathlib, sys, time
 
 import numpy as np
 import torch
@@ -57,7 +57,6 @@ ap.add_argument("--compile", action="store_true")
 ap.add_argument("--samples", action="store_true", help="write from fixed prompts at every exam")
 ap.add_argument("--strict", action="store_true", help="enforce the kill rules (stop the run), not just alert")
 ap.add_argument("--gpu-price", type=float, default=float(os.getenv("GPU_PRICE", "140")), help="rupees per GPU-hour")
-ap.add_argument("--live-push", type=int, default=0, help="push logs to the live-runs branch every N seconds (0 = off)")
 ap.add_argument("--seed", type=int, default=1234)
 a = ap.parse_args()
 
@@ -201,61 +200,6 @@ def save(step, extra):
     log(t="ckpt", step=step, path=str(path), mb=round(path.stat().st_size / 1e6, 1))
 
 
-# ---------- live push of the logs (never blocks or breaks training) ----------
-class LivePush:
-    def __init__(self, every):
-        self.every, self.stop_ = every, threading.Event()
-        self.repo = pathlib.Path(__file__).resolve().parent
-        self.dir = pathlib.Path("~/chotu-live").expanduser()
-        self.warned = False
-        if every:
-            threading.Thread(target=self.loop, daemon=True).start()
-
-    def git(self, *args, cwd=None):
-        return subprocess.run(["git", *args], cwd=cwd or self.dir, capture_output=True, text=True, timeout=60)
-
-    def push(self):
-        try:
-            if not (self.dir / ".git").exists():
-                self.dir.mkdir(parents=True, exist_ok=True)
-                url = self.git("remote", "get-url", "origin", cwd=self.repo).stdout.strip()
-                self.git("init", "-q", "-b", "live-runs")
-                self.git("remote", "add", "origin", url)
-                for k in ("user.name", "user.email"):
-                    v = self.git("config", k, cwd=self.repo).stdout.strip()
-                    if v:
-                        self.git("config", k, v)
-                fetched = self.git("fetch", "-q", "--depth", "1", "origin", "live-runs")
-                if fetched.returncode == 0:
-                    self.git("reset", "-q", "--soft", "FETCH_HEAD")
-            dest = self.dir / "runs" / name
-            dest.mkdir(parents=True, exist_ok=True)
-            for f in ("metrics.jsonl", "summary.json"):
-                if (out / f).exists():
-                    shutil.copy(out / f, dest / f)
-            self.git("add", "-A")
-            has_head = self.git("rev-parse", "-q", "--verify", "HEAD").returncode == 0
-            self.git("commit", "-q", "--amend", "--no-edit") if has_head else self.git("commit", "-q", "-m", "Live run logs")
-            r = self.git("push", "-q", "-f", "origin", "live-runs")
-            if r.returncode and not self.warned:
-                self.warned = True
-                print("live push failed (training continues):", r.stderr.strip()[:300], flush=True)
-        except Exception as e:  # noqa: BLE001
-            if not self.warned:
-                self.warned = True
-                print("live push failed (training continues):", e, flush=True)
-
-    def loop(self):
-        while not self.stop_.wait(self.every):
-            self.push()
-
-    def finish(self):
-        if self.every:
-            self.stop_.set()
-            self.push()
-
-
-live = LivePush(a.live_push)
 
 # ---------- start or resume ----------
 step0, tokens_seen, spent_s = 0, 0, 0.0
@@ -359,7 +303,6 @@ try:
             save(step, {"tokens_seen": tokens_seen, "spent_s": spent_s})
         if a.crash_at and step == a.crash_at:
             log(t="end", step=step, reason="simulated crash (fire drill)")
-            live.finish()
             print(f"FIRE DRILL: machine 'dies' after step {step}", flush=True)
             os._exit(3)
 except KeyboardInterrupt:
@@ -381,6 +324,5 @@ if a.model == "chotu" and summary["tok_s"]:  # what the whole 10B-token run woul
     hours = 10.06e9 / summary["tok_s"] / 3600
     summary.update(full_run_hours=round(hours, 1), full_run_cost_inr=round(hours * a.gpu_price))
 json.dump(summary, open(out / "summary.json", "w"), indent=1)
-log(t="end", step=step, reason=end_reason, **{k: v for k, v in summary.items() if k not in ("name", "kind", "model", "step")})
-live.finish()
+log(t="end", step=step, reason=end_reason, **{k: v for k, v in summary.items() if k not in ("name", "kind", "model", "step", "reason")})
 print(json.dumps(summary, indent=1), flush=True)
