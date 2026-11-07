@@ -1,3 +1,3 @@
-{"id": "setup", "status": "running", "note": "GPU check, packages, size test", "time": 1794070902}
-{"id": "setup", "status": "fail", "note": "no CUDA or size test failed", "time": 1794070902}
-{"id": "end", "status": "info", "note": "script finished", "time": 1794070902}
+{"id": "setup", "status": "running", "note": "GPU check, packages, size test", "time": 1794071360}
+{"id": "setup", "status": "fail", "note": "no CUDA or size test failed", "time": 1794071360}
+{"id": "end", "status": "info", "note": "script finished", "time": 1794071360}
