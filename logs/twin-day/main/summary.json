@@ -1,0 +1,20 @@
+{
+ "name": "main",
+ "kind": "train",
+ "model": "twin",
+ "params": 7079552,
+ "gpu": "NVIDIA H100 80GB HBM3",
+ "reason": "finished",
+ "step": 2136,
+ "steps": 2136,
+ "run_steps": 2136,
+ "tokens": 139984896,
+ "minutes": 2.97,
+ "cost_inr": 16.3,
+ "tok_s": 909337,
+ "final_loss": 4.3197,
+ "val_bpb": 1.3881,
+ "copy_first": 14.31879997253418,
+ "copy_second": 13.742250442504883,
+ "mfu": 0.0506
+}

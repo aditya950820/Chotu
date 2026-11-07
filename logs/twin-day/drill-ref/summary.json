@@ -1,0 +1,20 @@
+{
+ "name": "drill-ref",
+ "kind": "firedrill",
+ "model": "twin",
+ "params": 7079552,
+ "gpu": "NVIDIA H100 80GB HBM3",
+ "reason": "finished",
+ "step": 120,
+ "steps": 120,
+ "run_steps": 120,
+ "tokens": 7864320,
+ "minutes": 0.19,
+ "cost_inr": 1.1,
+ "tok_s": 739470,
+ "final_loss": 6.4559,
+ "val_bpb": 2.0672,
+ "copy_first": null,
+ "copy_second": null,
+ "mfu": 0.0412
+}

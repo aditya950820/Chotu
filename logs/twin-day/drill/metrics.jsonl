@@ -1,0 +1,155 @@
+{"t": "meta", "name": "drill", "kind": "firedrill", "model": "twin", "params": 7079552, "device": "cuda", "gpu": "NVIDIA H100 80GB HBM3", "peak_tflops": 989, "gpu_price": 330.0, "steps": 120, "run_steps": 120, "batch_tokens": 65536, "seq": 2048, "micro": 8, "lr": 0.003, "warmup": 10, "decay_start": 96, "tokens": 7864320, "compile": false, "overfit": false, "crash_at": 70, "resumed": false, "torch": "2.14.1+cu130", "time": 1794071861.1}
+{"t": "eval", "step": 0, "val_loss": 10.8298, "val_bpb": 3.4414, "time": 1794071861.4}
+{"t": "step", "step": 1, "tokens": 65536, "loss": 10.8317, "lr": 0.00030000000000000003, "grad": 1.5, "tok_s": 235094, "mfu": 0.0131, "dt": 0.279, "elapsed": 0.3, "cost": 0.03, "time": 1794071861.7}
+{"t": "step", "step": 2, "tokens": 131072, "loss": 10.7314, "lr": 0.0006000000000000001, "grad": 1.388, "tok_s": 728601, "mfu": 0.0406, "dt": 0.09, "elapsed": 0.4, "cost": 0.03, "time": 1794071861.8}
+{"t": "step", "step": 3, "tokens": 196608, "loss": 10.6061, "lr": 0.0009000000000000001, "grad": 1.1963, "tok_s": 729396, "mfu": 0.0406, "dt": 0.09, "elapsed": 0.5, "cost": 0.04, "time": 1794071861.9}
+{"t": "step", "step": 4, "tokens": 262144, "loss": 10.4941, "lr": 0.0012000000000000001, "grad": 1.1649, "tok_s": 733710, "mfu": 0.0408, "dt": 0.089, "elapsed": 0.5, "cost": 0.05, "time": 1794071862.0}
+{"t": "step", "step": 5, "tokens": 327680, "loss": 10.3316, "lr": 0.0015, "grad": 1.0568, "tok_s": 735101, "mfu": 0.0409, "dt": 0.089, "elapsed": 0.6, "cost": 0.06, "time": 1794071862.1}
+{"t": "step", "step": 6, "tokens": 393216, "loss": 10.1418, "lr": 0.0018000000000000002, "grad": 1.0409, "tok_s": 735993, "mfu": 0.041, "dt": 0.089, "elapsed": 0.7, "cost": 0.07, "time": 1794071862.2}
+{"t": "step", "step": 7, "tokens": 458752, "loss": 9.9201, "lr": 0.0021000000000000003, "grad": 1.0362, "tok_s": 736602, "mfu": 0.041, "dt": 0.089, "elapsed": 0.8, "cost": 0.07, "time": 1794071862.3}
+{"t": "step", "step": 8, "tokens": 524288, "loss": 9.6791, "lr": 0.0024000000000000002, "grad": 1.0064, "tok_s": 737343, "mfu": 0.041, "dt": 0.089, "elapsed": 0.9, "cost": 0.08, "time": 1794071862.4}
+{"t": "step", "step": 9, "tokens": 589824, "loss": 9.4185, "lr": 0.0027, "grad": 0.9848, "tok_s": 735885, "mfu": 0.041, "dt": 0.089, "elapsed": 1.0, "cost": 0.09, "time": 1794071862.4}
+{"t": "step", "step": 10, "tokens": 655360, "loss": 9.1066, "lr": 0.003, "grad": 0.9751, "tok_s": 734326, "mfu": 0.0409, "dt": 0.089, "elapsed": 1.1, "cost": 0.1, "time": 1794071862.5}
+{"t": "step", "step": 11, "tokens": 720896, "loss": 8.8519, "lr": 0.003, "grad": 0.9918, "tok_s": 738792, "mfu": 0.0411, "dt": 0.089, "elapsed": 1.2, "cost": 0.11, "time": 1794071862.6}
+{"t": "step", "step": 12, "tokens": 786432, "loss": 8.6002, "lr": 0.003, "grad": 0.9537, "tok_s": 738112, "mfu": 0.0411, "dt": 0.089, "elapsed": 1.3, "cost": 0.12, "time": 1794071862.7}
+{"t": "step", "step": 13, "tokens": 851968, "loss": 8.4356, "lr": 0.003, "grad": 0.985, "tok_s": 735885, "mfu": 0.041, "dt": 0.089, "elapsed": 1.4, "cost": 0.12, "time": 1794071862.8}
+{"t": "step", "step": 14, "tokens": 917504, "loss": 8.2066, "lr": 0.003, "grad": 0.9388, "tok_s": 729338, "mfu": 0.0406, "dt": 0.09, "elapsed": 1.4, "cost": 0.13, "time": 1794071862.9}
+{"t": "step", "step": 15, "tokens": 983040, "loss": 8.0508, "lr": 0.003, "grad": 0.9159, "tok_s": 735589, "mfu": 0.041, "dt": 0.089, "elapsed": 1.5, "cost": 0.14, "time": 1794071863.0}
+{"t": "step", "step": 16, "tokens": 1048576, "loss": 7.9197, "lr": 0.003, "grad": 0.8632, "tok_s": 736233, "mfu": 0.041, "dt": 0.089, "elapsed": 1.6, "cost": 0.15, "time": 1794071863.1}
+{"t": "step", "step": 17, "tokens": 1114112, "loss": 7.8166, "lr": 0.003, "grad": 0.8018, "tok_s": 737676, "mfu": 0.0411, "dt": 0.089, "elapsed": 1.7, "cost": 0.16, "time": 1794071863.2}
+{"t": "step", "step": 18, "tokens": 1179648, "loss": 7.7815, "lr": 0.003, "grad": 0.7085, "tok_s": 737935, "mfu": 0.0411, "dt": 0.089, "elapsed": 1.8, "cost": 0.16, "time": 1794071863.2}
+{"t": "step", "step": 19, "tokens": 1245184, "loss": 7.6035, "lr": 0.003, "grad": 0.5983, "tok_s": 735690, "mfu": 0.041, "dt": 0.089, "elapsed": 1.9, "cost": 0.17, "time": 1794071863.3}
+{"t": "step", "step": 20, "tokens": 1310720, "loss": 7.5844, "lr": 0.003, "grad": 0.8407, "tok_s": 737993, "mfu": 0.0411, "dt": 0.089, "elapsed": 2.0, "cost": 0.18, "time": 1794071863.4}
+{"t": "alert", "kind": "mfu", "msg": "MFU 4.1% is under 10% (expected for the 7M twin: too small to keep a big GPU busy; the rule is for the 181M run)", "step": 20, "time": 1794071863.4}
+{"t": "step", "step": 21, "tokens": 1376256, "loss": 7.5197, "lr": 0.003, "grad": 0.495, "tok_s": 737266, "mfu": 0.041, "dt": 0.089, "elapsed": 2.1, "cost": 0.19, "time": 1794071863.5}
+{"t": "step", "step": 22, "tokens": 1441792, "loss": 7.5227, "lr": 0.003, "grad": 0.3887, "tok_s": 737003, "mfu": 0.041, "dt": 0.089, "elapsed": 2.2, "cost": 0.2, "time": 1794071863.6}
+{"t": "step", "step": 23, "tokens": 1507328, "loss": 7.5946, "lr": 0.003, "grad": 0.5383, "tok_s": 736182, "mfu": 0.041, "dt": 0.089, "elapsed": 2.2, "cost": 0.21, "time": 1794071863.7}
+{"t": "step", "step": 24, "tokens": 1572864, "loss": 7.5941, "lr": 0.003, "grad": 0.5731, "tok_s": 735950, "mfu": 0.041, "dt": 0.089, "elapsed": 2.3, "cost": 0.21, "time": 1794071863.8}
+{"t": "step", "step": 25, "tokens": 1638400, "loss": 7.4726, "lr": 0.003, "grad": 0.3578, "tok_s": 735204, "mfu": 0.0409, "dt": 0.089, "elapsed": 2.4, "cost": 0.22, "time": 1794071863.9}
+{"t": "ckpt", "step": 25, "path": "/home/ubuntu/chotu-runs/twin-day/drill/ckpt/step_000025.pt", "mb": 85.0, "time": 1794071864.0}
+{"t": "step", "step": 26, "tokens": 1703936, "loss": 7.5734, "lr": 0.003, "grad": 0.4906, "tok_s": 733928, "mfu": 0.0409, "dt": 0.089, "elapsed": 2.6, "cost": 0.24, "time": 1794071864.0}
+{"t": "step", "step": 27, "tokens": 1769472, "loss": 7.4856, "lr": 0.003, "grad": 0.5978, "tok_s": 738375, "mfu": 0.0411, "dt": 0.089, "elapsed": 2.7, "cost": 0.25, "time": 1794071864.1}
+{"t": "step", "step": 28, "tokens": 1835008, "loss": 7.4367, "lr": 0.003, "grad": 0.3257, "tok_s": 738139, "mfu": 0.0411, "dt": 0.089, "elapsed": 2.8, "cost": 0.25, "time": 1794071864.2}
+{"t": "step", "step": 29, "tokens": 1900544, "loss": 7.3849, "lr": 0.003, "grad": 0.3742, "tok_s": 735103, "mfu": 0.0409, "dt": 0.089, "elapsed": 2.9, "cost": 0.26, "time": 1794071864.3}
+{"t": "step", "step": 30, "tokens": 1966080, "loss": 7.4444, "lr": 0.003, "grad": 0.4845, "tok_s": 736924, "mfu": 0.041, "dt": 0.089, "elapsed": 2.9, "cost": 0.27, "time": 1794071864.4}
+{"t": "step", "step": 31, "tokens": 2031616, "loss": 7.4217, "lr": 0.003, "grad": 0.7367, "tok_s": 736320, "mfu": 0.041, "dt": 0.089, "elapsed": 3.0, "cost": 0.28, "time": 1794071864.5}
+{"t": "step", "step": 32, "tokens": 2097152, "loss": 7.4437, "lr": 0.003, "grad": 0.3976, "tok_s": 736650, "mfu": 0.041, "dt": 0.089, "elapsed": 3.1, "cost": 0.29, "time": 1794071864.6}
+{"t": "step", "step": 33, "tokens": 2162688, "loss": 7.4229, "lr": 0.003, "grad": 0.4705, "tok_s": 739358, "mfu": 0.0412, "dt": 0.089, "elapsed": 3.2, "cost": 0.29, "time": 1794071864.7}
+{"t": "step", "step": 34, "tokens": 2228224, "loss": 7.2552, "lr": 0.003, "grad": 0.3883, "tok_s": 739060, "mfu": 0.0411, "dt": 0.089, "elapsed": 3.3, "cost": 0.3, "time": 1794071864.8}
+{"t": "step", "step": 35, "tokens": 2293760, "loss": 7.2798, "lr": 0.003, "grad": 0.5184, "tok_s": 737725, "mfu": 0.0411, "dt": 0.089, "elapsed": 3.4, "cost": 0.31, "time": 1794071864.8}
+{"t": "step", "step": 36, "tokens": 2359296, "loss": 7.1964, "lr": 0.003, "grad": 0.4185, "tok_s": 738502, "mfu": 0.0411, "dt": 0.089, "elapsed": 3.5, "cost": 0.32, "time": 1794071864.9}
+{"t": "step", "step": 37, "tokens": 2424832, "loss": 7.2491, "lr": 0.003, "grad": 0.4043, "tok_s": 738433, "mfu": 0.0411, "dt": 0.089, "elapsed": 3.6, "cost": 0.33, "time": 1794071865.0}
+{"t": "step", "step": 38, "tokens": 2490368, "loss": 7.2295, "lr": 0.003, "grad": 0.5923, "tok_s": 739325, "mfu": 0.0412, "dt": 0.089, "elapsed": 3.7, "cost": 0.34, "time": 1794071865.1}
+{"t": "step", "step": 39, "tokens": 2555904, "loss": 7.2316, "lr": 0.003, "grad": 0.5559, "tok_s": 739563, "mfu": 0.0412, "dt": 0.089, "elapsed": 3.7, "cost": 0.34, "time": 1794071865.2}
+{"t": "step", "step": 40, "tokens": 2621440, "loss": 7.137, "lr": 0.003, "grad": 0.4335, "tok_s": 738005, "mfu": 0.0411, "dt": 0.089, "elapsed": 3.8, "cost": 0.35, "time": 1794071865.3}
+{"t": "step", "step": 41, "tokens": 2686976, "loss": 7.2055, "lr": 0.003, "grad": 0.4252, "tok_s": 736103, "mfu": 0.041, "dt": 0.089, "elapsed": 3.9, "cost": 0.36, "time": 1794071865.4}
+{"t": "step", "step": 42, "tokens": 2752512, "loss": 7.1571, "lr": 0.003, "grad": 0.7618, "tok_s": 738838, "mfu": 0.0411, "dt": 0.089, "elapsed": 4.0, "cost": 0.37, "time": 1794071865.5}
+{"t": "step", "step": 43, "tokens": 2818048, "loss": 7.1564, "lr": 0.003, "grad": 0.6583, "tok_s": 739070, "mfu": 0.0411, "dt": 0.089, "elapsed": 4.1, "cost": 0.38, "time": 1794071865.6}
+{"t": "step", "step": 44, "tokens": 2883584, "loss": 7.0716, "lr": 0.003, "grad": 0.3895, "tok_s": 738804, "mfu": 0.0411, "dt": 0.089, "elapsed": 4.2, "cost": 0.38, "time": 1794071865.6}
+{"t": "step", "step": 45, "tokens": 2949120, "loss": 7.0744, "lr": 0.003, "grad": 0.4832, "tok_s": 737888, "mfu": 0.0411, "dt": 0.089, "elapsed": 4.3, "cost": 0.39, "time": 1794071865.7}
+{"t": "step", "step": 46, "tokens": 3014656, "loss": 7.0623, "lr": 0.003, "grad": 0.9763, "tok_s": 738959, "mfu": 0.0411, "dt": 0.089, "elapsed": 4.4, "cost": 0.4, "time": 1794071865.8}
+{"t": "step", "step": 47, "tokens": 3080192, "loss": 7.1706, "lr": 0.003, "grad": 0.9458, "tok_s": 735865, "mfu": 0.041, "dt": 0.089, "elapsed": 4.5, "cost": 0.41, "time": 1794071865.9}
+{"t": "step", "step": 48, "tokens": 3145728, "loss": 7.0474, "lr": 0.003, "grad": 0.3482, "tok_s": 736433, "mfu": 0.041, "dt": 0.089, "elapsed": 4.5, "cost": 0.42, "time": 1794071866.0}
+{"t": "step", "step": 49, "tokens": 3211264, "loss": 7.0117, "lr": 0.003, "grad": 0.4388, "tok_s": 737664, "mfu": 0.0411, "dt": 0.089, "elapsed": 4.6, "cost": 0.42, "time": 1794071866.1}
+{"t": "step", "step": 50, "tokens": 3276800, "loss": 7.0945, "lr": 0.003, "grad": 0.4275, "tok_s": 736954, "mfu": 0.041, "dt": 0.089, "elapsed": 4.7, "cost": 0.43, "time": 1794071866.2}
+{"t": "ckpt", "step": 50, "path": "/home/ubuntu/chotu-runs/twin-day/drill/ckpt/step_000050.pt", "mb": 85.0, "time": 1794071866.2}
+{"t": "step", "step": 51, "tokens": 3342336, "loss": 7.0706, "lr": 0.003, "grad": 0.2391, "tok_s": 732848, "mfu": 0.0408, "dt": 0.089, "elapsed": 4.9, "cost": 0.45, "time": 1794071866.3}
+{"t": "step", "step": 52, "tokens": 3407872, "loss": 7.0185, "lr": 0.003, "grad": 0.5525, "tok_s": 735825, "mfu": 0.041, "dt": 0.089, "elapsed": 5.0, "cost": 0.46, "time": 1794071866.4}
+{"t": "step", "step": 53, "tokens": 3473408, "loss": 7.024, "lr": 0.003, "grad": 0.333, "tok_s": 738197, "mfu": 0.0411, "dt": 0.089, "elapsed": 5.1, "cost": 0.46, "time": 1794071866.5}
+{"t": "step", "step": 54, "tokens": 3538944, "loss": 6.9549, "lr": 0.003, "grad": 0.5, "tok_s": 736251, "mfu": 0.041, "dt": 0.089, "elapsed": 5.1, "cost": 0.47, "time": 1794071866.6}
+{"t": "step", "step": 55, "tokens": 3604480, "loss": 6.981, "lr": 0.003, "grad": 0.942, "tok_s": 735959, "mfu": 0.041, "dt": 0.089, "elapsed": 5.2, "cost": 0.48, "time": 1794071866.7}
+{"t": "step", "step": 56, "tokens": 3670016, "loss": 6.9711, "lr": 0.003, "grad": 0.5221, "tok_s": 734424, "mfu": 0.0409, "dt": 0.089, "elapsed": 5.3, "cost": 0.49, "time": 1794071866.8}
+{"t": "step", "step": 57, "tokens": 3735552, "loss": 6.9061, "lr": 0.003, "grad": 0.4969, "tok_s": 730146, "mfu": 0.0406, "dt": 0.09, "elapsed": 5.4, "cost": 0.5, "time": 1794071866.9}
+{"t": "step", "step": 58, "tokens": 3801088, "loss": 6.9454, "lr": 0.003, "grad": 0.4059, "tok_s": 736186, "mfu": 0.041, "dt": 0.089, "elapsed": 5.5, "cost": 0.5, "time": 1794071867.0}
+{"t": "step", "step": 59, "tokens": 3866624, "loss": 6.8981, "lr": 0.003, "grad": 0.2952, "tok_s": 735308, "mfu": 0.0409, "dt": 0.089, "elapsed": 5.6, "cost": 0.51, "time": 1794071867.0}
+{"t": "step", "step": 60, "tokens": 3932160, "loss": 6.906, "lr": 0.003, "grad": 0.4097, "tok_s": 736174, "mfu": 0.041, "dt": 0.089, "elapsed": 5.7, "cost": 0.52, "time": 1794071867.1}
+{"t": "eval", "step": 60, "val_loss": 6.9509, "val_bpb": 2.2088, "time": 1794071867.2}
+{"t": "step", "step": 61, "tokens": 3997696, "loss": 6.8949, "lr": 0.003, "grad": 0.3132, "tok_s": 738405, "mfu": 0.0411, "dt": 0.089, "elapsed": 5.9, "cost": 0.54, "time": 1794071867.3}
+{"t": "step", "step": 62, "tokens": 4063232, "loss": 6.8448, "lr": 0.003, "grad": 0.5347, "tok_s": 735640, "mfu": 0.041, "dt": 0.089, "elapsed": 6.0, "cost": 0.55, "time": 1794071867.4}
+{"t": "step", "step": 63, "tokens": 4128768, "loss": 6.7866, "lr": 0.003, "grad": 0.2588, "tok_s": 736802, "mfu": 0.041, "dt": 0.089, "elapsed": 6.0, "cost": 0.55, "time": 1794071867.5}
+{"t": "step", "step": 64, "tokens": 4194304, "loss": 6.8007, "lr": 0.003, "grad": 0.6314, "tok_s": 738437, "mfu": 0.0411, "dt": 0.089, "elapsed": 6.1, "cost": 0.56, "time": 1794071867.6}
+{"t": "step", "step": 65, "tokens": 4259840, "loss": 6.8036, "lr": 0.003, "grad": 0.3088, "tok_s": 738417, "mfu": 0.0411, "dt": 0.089, "elapsed": 6.2, "cost": 0.57, "time": 1794071867.7}
+{"t": "step", "step": 66, "tokens": 4325376, "loss": 6.8997, "lr": 0.003, "grad": 0.4432, "tok_s": 735349, "mfu": 0.0409, "dt": 0.089, "elapsed": 6.3, "cost": 0.58, "time": 1794071867.8}
+{"t": "step", "step": 67, "tokens": 4390912, "loss": 6.7459, "lr": 0.003, "grad": 0.3126, "tok_s": 735847, "mfu": 0.041, "dt": 0.089, "elapsed": 6.4, "cost": 0.59, "time": 1794071867.8}
+{"t": "step", "step": 68, "tokens": 4456448, "loss": 6.8033, "lr": 0.003, "grad": 0.3597, "tok_s": 734785, "mfu": 0.0409, "dt": 0.089, "elapsed": 6.5, "cost": 0.59, "time": 1794071867.9}
+{"t": "step", "step": 69, "tokens": 4521984, "loss": 6.7709, "lr": 0.003, "grad": 0.3526, "tok_s": 735900, "mfu": 0.041, "dt": 0.089, "elapsed": 6.6, "cost": 0.6, "time": 1794071868.0}
+{"t": "step", "step": 70, "tokens": 4587520, "loss": 6.914, "lr": 0.003, "grad": 0.2669, "tok_s": 737511, "mfu": 0.0411, "dt": 0.089, "elapsed": 6.7, "cost": 0.61, "time": 1794071868.1}
+{"t": "end", "step": 70, "reason": "simulated crash (fire drill)", "time": 1794071868.1}
+{"t": "resume", "step": 50, "path": "/home/ubuntu/chotu-runs/twin-day/drill/ckpt/step_000050.pt", "time": 1794071871.4}
+{"t": "meta", "name": "drill", "kind": "firedrill", "model": "twin", "params": 7079552, "device": "cuda", "gpu": "NVIDIA H100 80GB HBM3", "peak_tflops": 989, "gpu_price": 330.0, "steps": 120, "run_steps": 120, "batch_tokens": 65536, "seq": 2048, "micro": 8, "lr": 0.003, "warmup": 10, "decay_start": 96, "tokens": 7864320, "compile": false, "overfit": false, "crash_at": 0, "resumed": true, "torch": "2.14.1+cu130", "time": 1794071871.4}
+{"t": "step", "step": 51, "tokens": 3342336, "loss": 7.0706, "lr": 0.003, "grad": 0.2391, "tok_s": 80007, "mfu": 0.0045, "dt": 0.819, "elapsed": 0.8, "cost": 0.08, "time": 1794071872.2}
+{"t": "step", "step": 52, "tokens": 3407872, "loss": 7.0185, "lr": 0.003, "grad": 0.5526, "tok_s": 730221, "mfu": 0.0407, "dt": 0.09, "elapsed": 0.9, "cost": 0.08, "time": 1794071872.3}
+{"t": "step", "step": 53, "tokens": 3473408, "loss": 7.024, "lr": 0.003, "grad": 0.3331, "tok_s": 732112, "mfu": 0.0408, "dt": 0.09, "elapsed": 1.0, "cost": 0.09, "time": 1794071872.4}
+{"t": "step", "step": 54, "tokens": 3538944, "loss": 6.9549, "lr": 0.003, "grad": 0.4997, "tok_s": 735093, "mfu": 0.0409, "dt": 0.089, "elapsed": 1.1, "cost": 0.1, "time": 1794071872.5}
+{"t": "step", "step": 55, "tokens": 3604480, "loss": 6.9809, "lr": 0.003, "grad": 0.9413, "tok_s": 734233, "mfu": 0.0409, "dt": 0.089, "elapsed": 1.2, "cost": 0.11, "time": 1794071872.6}
+{"t": "step", "step": 56, "tokens": 3670016, "loss": 6.9711, "lr": 0.003, "grad": 0.522, "tok_s": 735745, "mfu": 0.041, "dt": 0.089, "elapsed": 1.3, "cost": 0.12, "time": 1794071872.7}
+{"t": "step", "step": 57, "tokens": 3735552, "loss": 6.9061, "lr": 0.003, "grad": 0.4963, "tok_s": 734231, "mfu": 0.0409, "dt": 0.089, "elapsed": 1.4, "cost": 0.12, "time": 1794071872.8}
+{"t": "step", "step": 58, "tokens": 3801088, "loss": 6.9454, "lr": 0.003, "grad": 0.4057, "tok_s": 736658, "mfu": 0.041, "dt": 0.089, "elapsed": 1.4, "cost": 0.13, "time": 1794071872.8}
+{"t": "step", "step": 59, "tokens": 3866624, "loss": 6.898, "lr": 0.003, "grad": 0.2946, "tok_s": 734516, "mfu": 0.0409, "dt": 0.089, "elapsed": 1.5, "cost": 0.14, "time": 1794071872.9}
+{"t": "step", "step": 60, "tokens": 3932160, "loss": 6.906, "lr": 0.003, "grad": 0.4094, "tok_s": 736423, "mfu": 0.041, "dt": 0.089, "elapsed": 1.6, "cost": 0.15, "time": 1794071873.0}
+{"t": "eval", "step": 60, "val_loss": 6.9509, "val_bpb": 2.2088, "time": 1794071873.2}
+{"t": "step", "step": 61, "tokens": 3997696, "loss": 6.8948, "lr": 0.003, "grad": 0.3122, "tok_s": 736468, "mfu": 0.041, "dt": 0.089, "elapsed": 1.8, "cost": 0.17, "time": 1794071873.2}
+{"t": "step", "step": 62, "tokens": 4063232, "loss": 6.8447, "lr": 0.003, "grad": 0.5342, "tok_s": 734812, "mfu": 0.0409, "dt": 0.089, "elapsed": 1.9, "cost": 0.18, "time": 1794071873.3}
+{"t": "step", "step": 63, "tokens": 4128768, "loss": 6.7865, "lr": 0.003, "grad": 0.2576, "tok_s": 734968, "mfu": 0.0409, "dt": 0.089, "elapsed": 2.0, "cost": 0.18, "time": 1794071873.4}
+{"t": "step", "step": 64, "tokens": 4194304, "loss": 6.8007, "lr": 0.003, "grad": 0.6304, "tok_s": 733145, "mfu": 0.0408, "dt": 0.089, "elapsed": 2.1, "cost": 0.19, "time": 1794071873.5}
+{"t": "step", "step": 65, "tokens": 4259840, "loss": 6.8036, "lr": 0.003, "grad": 0.309, "tok_s": 734041, "mfu": 0.0409, "dt": 0.089, "elapsed": 2.2, "cost": 0.2, "time": 1794071873.6}
+{"t": "step", "step": 66, "tokens": 4325376, "loss": 6.8997, "lr": 0.003, "grad": 0.4438, "tok_s": 734467, "mfu": 0.0409, "dt": 0.089, "elapsed": 2.3, "cost": 0.21, "time": 1794071873.7}
+{"t": "step", "step": 67, "tokens": 4390912, "loss": 6.7459, "lr": 0.003, "grad": 0.313, "tok_s": 734353, "mfu": 0.0409, "dt": 0.089, "elapsed": 2.4, "cost": 0.22, "time": 1794071873.8}
+{"t": "step", "step": 68, "tokens": 4456448, "loss": 6.8034, "lr": 0.003, "grad": 0.3618, "tok_s": 732674, "mfu": 0.0408, "dt": 0.089, "elapsed": 2.5, "cost": 0.23, "time": 1794071873.9}
+{"t": "step", "step": 69, "tokens": 4521984, "loss": 6.7708, "lr": 0.003, "grad": 0.351, "tok_s": 734302, "mfu": 0.0409, "dt": 0.089, "elapsed": 2.6, "cost": 0.23, "time": 1794071874.0}
+{"t": "step", "step": 70, "tokens": 4587520, "loss": 6.914, "lr": 0.003, "grad": 0.2674, "tok_s": 736472, "mfu": 0.041, "dt": 0.089, "elapsed": 2.6, "cost": 0.24, "time": 1794071874.0}
+{"t": "step", "step": 71, "tokens": 4653056, "loss": 6.7145, "lr": 0.003, "grad": 0.3602, "tok_s": 736697, "mfu": 0.041, "dt": 0.089, "elapsed": 2.7, "cost": 0.25, "time": 1794071874.1}
+{"t": "step", "step": 72, "tokens": 4718592, "loss": 6.7504, "lr": 0.003, "grad": 0.3298, "tok_s": 736622, "mfu": 0.041, "dt": 0.089, "elapsed": 2.8, "cost": 0.26, "time": 1794071874.2}
+{"t": "step", "step": 73, "tokens": 4784128, "loss": 6.7235, "lr": 0.003, "grad": 0.2401, "tok_s": 734549, "mfu": 0.0409, "dt": 0.089, "elapsed": 2.9, "cost": 0.27, "time": 1794071874.3}
+{"t": "step", "step": 74, "tokens": 4849664, "loss": 6.6829, "lr": 0.003, "grad": 0.4937, "tok_s": 733845, "mfu": 0.0409, "dt": 0.089, "elapsed": 3.0, "cost": 0.27, "time": 1794071874.4}
+{"t": "step", "step": 75, "tokens": 4915200, "loss": 6.7637, "lr": 0.003, "grad": 0.5066, "tok_s": 737296, "mfu": 0.041, "dt": 0.089, "elapsed": 3.1, "cost": 0.28, "time": 1794071874.5}
+{"t": "ckpt", "step": 75, "path": "/home/ubuntu/chotu-runs/twin-day/drill/ckpt/step_000075.pt", "mb": 85.0, "time": 1794071874.6}
+{"t": "step", "step": 76, "tokens": 4980736, "loss": 6.6827, "lr": 0.003, "grad": 0.3009, "tok_s": 715504, "mfu": 0.0398, "dt": 0.092, "elapsed": 3.3, "cost": 0.3, "time": 1794071874.7}
+{"t": "step", "step": 77, "tokens": 5046272, "loss": 6.7733, "lr": 0.003, "grad": 0.6233, "tok_s": 730843, "mfu": 0.0407, "dt": 0.09, "elapsed": 3.4, "cost": 0.31, "time": 1794071874.8}
+{"t": "step", "step": 78, "tokens": 5111808, "loss": 6.6541, "lr": 0.003, "grad": 0.3262, "tok_s": 735015, "mfu": 0.0409, "dt": 0.089, "elapsed": 3.5, "cost": 0.32, "time": 1794071874.9}
+{"t": "step", "step": 79, "tokens": 5177344, "loss": 6.7329, "lr": 0.003, "grad": 0.4582, "tok_s": 734294, "mfu": 0.0409, "dt": 0.089, "elapsed": 3.6, "cost": 0.33, "time": 1794071875.0}
+{"t": "step", "step": 80, "tokens": 5242880, "loss": 6.7105, "lr": 0.003, "grad": 0.3944, "tok_s": 732465, "mfu": 0.0408, "dt": 0.089, "elapsed": 3.6, "cost": 0.33, "time": 1794071875.0}
+{"t": "step", "step": 81, "tokens": 5308416, "loss": 6.6351, "lr": 0.003, "grad": 0.3555, "tok_s": 734065, "mfu": 0.0409, "dt": 0.089, "elapsed": 3.7, "cost": 0.34, "time": 1794071875.1}
+{"t": "step", "step": 82, "tokens": 5373952, "loss": 6.6133, "lr": 0.003, "grad": 0.4882, "tok_s": 734306, "mfu": 0.0409, "dt": 0.089, "elapsed": 3.8, "cost": 0.35, "time": 1794071875.2}
+{"t": "step", "step": 83, "tokens": 5439488, "loss": 6.6206, "lr": 0.003, "grad": 0.3779, "tok_s": 737173, "mfu": 0.041, "dt": 0.089, "elapsed": 3.9, "cost": 0.36, "time": 1794071875.3}
+{"t": "step", "step": 84, "tokens": 5505024, "loss": 6.578, "lr": 0.003, "grad": 0.5163, "tok_s": 733906, "mfu": 0.0409, "dt": 0.089, "elapsed": 4.0, "cost": 0.37, "time": 1794071875.4}
+{"t": "step", "step": 85, "tokens": 5570560, "loss": 6.569, "lr": 0.003, "grad": 0.5655, "tok_s": 734441, "mfu": 0.0409, "dt": 0.089, "elapsed": 4.1, "cost": 0.37, "time": 1794071875.5}
+{"t": "step", "step": 86, "tokens": 5636096, "loss": 6.5577, "lr": 0.003, "grad": 0.2972, "tok_s": 734453, "mfu": 0.0409, "dt": 0.089, "elapsed": 4.2, "cost": 0.38, "time": 1794071875.6}
+{"t": "step", "step": 87, "tokens": 5701632, "loss": 6.5729, "lr": 0.003, "grad": 0.4091, "tok_s": 737122, "mfu": 0.041, "dt": 0.089, "elapsed": 4.3, "cost": 0.39, "time": 1794071875.7}
+{"t": "step", "step": 88, "tokens": 5767168, "loss": 6.6625, "lr": 0.003, "grad": 0.3894, "tok_s": 735503, "mfu": 0.0409, "dt": 0.089, "elapsed": 4.4, "cost": 0.4, "time": 1794071875.8}
+{"t": "step", "step": 89, "tokens": 5832704, "loss": 6.5996, "lr": 0.003, "grad": 0.5098, "tok_s": 735786, "mfu": 0.041, "dt": 0.089, "elapsed": 4.4, "cost": 0.41, "time": 1794071875.8}
+{"t": "step", "step": 90, "tokens": 5898240, "loss": 6.5767, "lr": 0.003, "grad": 0.2584, "tok_s": 733426, "mfu": 0.0408, "dt": 0.089, "elapsed": 4.5, "cost": 0.42, "time": 1794071875.9}
+{"t": "step", "step": 91, "tokens": 5963776, "loss": 6.7511, "lr": 0.003, "grad": 0.5842, "tok_s": 733507, "mfu": 0.0408, "dt": 0.089, "elapsed": 4.6, "cost": 0.42, "time": 1794071876.0}
+{"t": "step", "step": 92, "tokens": 6029312, "loss": 6.6193, "lr": 0.003, "grad": 0.2682, "tok_s": 733732, "mfu": 0.0408, "dt": 0.089, "elapsed": 4.7, "cost": 0.43, "time": 1794071876.1}
+{"t": "step", "step": 93, "tokens": 6094848, "loss": 6.6346, "lr": 0.003, "grad": 0.5354, "tok_s": 733845, "mfu": 0.0409, "dt": 0.089, "elapsed": 4.8, "cost": 0.44, "time": 1794071876.2}
+{"t": "step", "step": 94, "tokens": 6160384, "loss": 6.504, "lr": 0.003, "grad": 0.2648, "tok_s": 733319, "mfu": 0.0408, "dt": 0.089, "elapsed": 4.9, "cost": 0.45, "time": 1794071876.3}
+{"t": "step", "step": 95, "tokens": 6225920, "loss": 6.5341, "lr": 0.003, "grad": 0.4528, "tok_s": 729231, "mfu": 0.0406, "dt": 0.09, "elapsed": 5.0, "cost": 0.46, "time": 1794071876.4}
+{"t": "step", "step": 96, "tokens": 6291456, "loss": 6.5615, "lr": 0.003, "grad": 0.4317, "tok_s": 734418, "mfu": 0.0409, "dt": 0.089, "elapsed": 5.1, "cost": 0.46, "time": 1794071876.5}
+{"t": "step", "step": 97, "tokens": 6356992, "loss": 6.4667, "lr": 0.003, "grad": 0.5006, "tok_s": 734437, "mfu": 0.0409, "dt": 0.089, "elapsed": 5.2, "cost": 0.47, "time": 1794071876.6}
+{"t": "step", "step": 98, "tokens": 6422528, "loss": 6.3985, "lr": 0.0028750000000000004, "grad": 0.7219, "tok_s": 736460, "mfu": 0.041, "dt": 0.089, "elapsed": 5.3, "cost": 0.48, "time": 1794071876.7}
+{"t": "step", "step": 99, "tokens": 6488064, "loss": 6.5237, "lr": 0.00275, "grad": 0.6328, "tok_s": 737128, "mfu": 0.041, "dt": 0.089, "elapsed": 5.3, "cost": 0.49, "time": 1794071876.7}
+{"t": "step", "step": 100, "tokens": 6553600, "loss": 6.5155, "lr": 0.002625, "grad": 0.4164, "tok_s": 734873, "mfu": 0.0409, "dt": 0.089, "elapsed": 5.4, "cost": 0.5, "time": 1794071876.8}
+{"t": "ckpt", "step": 100, "path": "/home/ubuntu/chotu-runs/twin-day/drill/ckpt/step_000100.pt", "mb": 85.0, "time": 1794071876.9}
+{"t": "step", "step": 101, "tokens": 6619136, "loss": 6.4481, "lr": 0.0025, "grad": 0.5584, "tok_s": 716404, "mfu": 0.0399, "dt": 0.091, "elapsed": 5.6, "cost": 0.52, "time": 1794071877.0}
+{"t": "step", "step": 102, "tokens": 6684672, "loss": 6.4849, "lr": 0.002375, "grad": 0.4001, "tok_s": 734008, "mfu": 0.0409, "dt": 0.089, "elapsed": 5.7, "cost": 0.52, "time": 1794071877.1}
+{"t": "step", "step": 103, "tokens": 6750208, "loss": 6.5409, "lr": 0.0022500000000000003, "grad": 0.4005, "tok_s": 734320, "mfu": 0.0409, "dt": 0.089, "elapsed": 5.8, "cost": 0.53, "time": 1794071877.2}
+{"t": "step", "step": 104, "tokens": 6815744, "loss": 6.5041, "lr": 0.002125, "grad": 0.3207, "tok_s": 736754, "mfu": 0.041, "dt": 0.089, "elapsed": 5.9, "cost": 0.54, "time": 1794071877.3}
+{"t": "step", "step": 105, "tokens": 6881280, "loss": 6.3609, "lr": 0.002, "grad": 0.3177, "tok_s": 729249, "mfu": 0.0406, "dt": 0.09, "elapsed": 6.0, "cost": 0.55, "time": 1794071877.4}
+{"t": "step", "step": 106, "tokens": 6946816, "loss": 6.4611, "lr": 0.001875, "grad": 0.2409, "tok_s": 735757, "mfu": 0.041, "dt": 0.089, "elapsed": 6.1, "cost": 0.56, "time": 1794071877.5}
+{"t": "step", "step": 107, "tokens": 7012352, "loss": 6.4387, "lr": 0.0017500000000000003, "grad": 0.2297, "tok_s": 735034, "mfu": 0.0409, "dt": 0.089, "elapsed": 6.2, "cost": 0.57, "time": 1794071877.6}
+{"t": "step", "step": 108, "tokens": 7077888, "loss": 6.4497, "lr": 0.001625, "grad": 0.3049, "tok_s": 734697, "mfu": 0.0409, "dt": 0.089, "elapsed": 6.3, "cost": 0.57, "time": 1794071877.7}
+{"t": "step", "step": 109, "tokens": 7143424, "loss": 6.4299, "lr": 0.0015, "grad": 0.2545, "tok_s": 733442, "mfu": 0.0408, "dt": 0.089, "elapsed": 6.3, "cost": 0.58, "time": 1794071877.7}
+{"t": "step", "step": 110, "tokens": 7208960, "loss": 6.5013, "lr": 0.001375, "grad": 0.355, "tok_s": 737197, "mfu": 0.041, "dt": 0.089, "elapsed": 6.4, "cost": 0.59, "time": 1794071877.8}
+{"t": "step", "step": 111, "tokens": 7274496, "loss": 6.5312, "lr": 0.00125, "grad": 0.2871, "tok_s": 734663, "mfu": 0.0409, "dt": 0.089, "elapsed": 6.5, "cost": 0.6, "time": 1794071877.9}
+{"t": "step", "step": 112, "tokens": 7340032, "loss": 6.2946, "lr": 0.0011250000000000001, "grad": 0.2414, "tok_s": 734434, "mfu": 0.0409, "dt": 0.089, "elapsed": 6.6, "cost": 0.61, "time": 1794071878.0}
+{"t": "step", "step": 113, "tokens": 7405568, "loss": 6.327, "lr": 0.001, "grad": 0.1912, "tok_s": 737434, "mfu": 0.0411, "dt": 0.089, "elapsed": 6.7, "cost": 0.61, "time": 1794071878.1}
+{"t": "step", "step": 114, "tokens": 7471104, "loss": 6.5016, "lr": 0.0008750000000000001, "grad": 0.2567, "tok_s": 735200, "mfu": 0.0409, "dt": 0.089, "elapsed": 6.8, "cost": 0.62, "time": 1794071878.2}
+{"t": "step", "step": 115, "tokens": 7536640, "loss": 6.5384, "lr": 0.00075, "grad": 0.253, "tok_s": 735253, "mfu": 0.0409, "dt": 0.089, "elapsed": 6.9, "cost": 0.63, "time": 1794071878.3}
+{"t": "step", "step": 116, "tokens": 7602176, "loss": 6.454, "lr": 0.000625, "grad": 0.2011, "tok_s": 734891, "mfu": 0.0409, "dt": 0.089, "elapsed": 7.0, "cost": 0.64, "time": 1794071878.4}
+{"t": "step", "step": 117, "tokens": 7667712, "loss": 6.4075, "lr": 0.0005, "grad": 0.1554, "tok_s": 735052, "mfu": 0.0409, "dt": 0.089, "elapsed": 7.1, "cost": 0.65, "time": 1794071878.5}
+{"t": "step", "step": 118, "tokens": 7733248, "loss": 6.4886, "lr": 0.000375, "grad": 0.1814, "tok_s": 736905, "mfu": 0.041, "dt": 0.089, "elapsed": 7.1, "cost": 0.66, "time": 1794071878.6}
+{"t": "step", "step": 119, "tokens": 7798784, "loss": 6.3578, "lr": 0.00025, "grad": 0.1932, "tok_s": 737577, "mfu": 0.0411, "dt": 0.089, "elapsed": 7.2, "cost": 0.66, "time": 1794071878.6}
+{"t": "step", "step": 120, "tokens": 7864320, "loss": 6.4192, "lr": 0.000125, "grad": 0.183, "tok_s": 736893, "mfu": 0.041, "dt": 0.089, "elapsed": 7.3, "cost": 0.67, "time": 1794071878.7}
+{"t": "eval", "step": 120, "val_loss": 6.4636, "val_bpb": 2.054, "time": 1794071878.8}
+{"t": "ckpt", "step": 120, "path": "/home/ubuntu/chotu-runs/twin-day/drill/ckpt/step_000120.pt", "mb": 85.0, "time": 1794071878.9}
+{"t": "end", "step": 120, "reason": "finished", "params": 7079552, "gpu": "NVIDIA H100 80GB HBM3", "steps": 120, "run_steps": 120, "tokens": 7864320, "minutes": 0.13, "cost_inr": 0.7, "tok_s": 734492, "final_loss": 6.4192, "val_bpb": 2.054, "copy_first": null, "copy_second": null, "mfu": 0.0409, "time": 1794071878.9}

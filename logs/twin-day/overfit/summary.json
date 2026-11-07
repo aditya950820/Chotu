@@ -1,0 +1,20 @@
+{
+ "name": "overfit",
+ "kind": "overfit",
+ "model": "twin",
+ "params": 7079552,
+ "gpu": "NVIDIA H100 80GB HBM3",
+ "reason": "finished",
+ "step": 150,
+ "steps": 150,
+ "run_steps": 150,
+ "tokens": 9830400,
+ "minutes": 0.24,
+ "cost_inr": 1.3,
+ "tok_s": 741276,
+ "final_loss": 1.3319,
+ "val_bpb": 3.6552,
+ "copy_first": null,
+ "copy_second": null,
+ "mfu": 0.0413
+}

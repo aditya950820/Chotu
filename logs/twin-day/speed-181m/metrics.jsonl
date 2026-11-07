@@ -1,0 +1,2 @@
+{"t": "meta", "name": "speed-181m", "kind": "speed", "model": "chotu", "params": 180925056, "device": "cuda", "gpu": "NVIDIA H100 80GB HBM3", "peak_tflops": 989, "gpu_price": 330.0, "steps": 19187, "run_steps": 30, "batch_tokens": 524288, "seq": 2048, "micro": 32, "lr": 0.003, "warmup": 700, "decay_start": 15349, "tokens": 10059513856, "compile": true, "overfit": false, "crash_at": 0, "resumed": false, "torch": "2.14.1+cu130", "time": 1794072082.4}
+{"t": "eval", "step": 0, "val_loss": 10.9394, "val_bpb": 3.4763, "time": 1794072106.6}
