@@ -1,0 +1,541 @@
+<meta name="dash-one-writer">
+<style>
+.tw{display:grid;gap:var(--cds-gap-xl);font-family:var(--font-anthropic-sans);color:var(--color-fg);max-width:1180px;margin-inline:auto}
+.tw h1{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);margin:0}
+.tw h2{font-size:var(--cds-font-size-heading);font-weight:var(--cds-font-weight-medium);margin:0}
+.tw h3{font-size:var(--cds-font-size-body);font-weight:var(--cds-font-weight-medium);margin:0}
+.tw p{margin:0}
+.tw .tw-head{display:grid;gap:var(--cds-gap-sm)}
+.tw .tw-lead{font-size:var(--cds-font-size-body);max-width:78ch;line-height:1.5}
+.tw .tw-lead b,.tw .tw-big{font-variant-numeric:tabular-nums}
+.tw .tw-muted{color:var(--color-fg-muted);font-size:var(--cds-font-size-caption);line-height:1.45}
+.tw .tw-links{display:flex;flex-wrap:wrap;gap:var(--cds-gap-md);font-size:var(--cds-font-size-caption)}
+.tw .tw-links a{color:var(--color-fg)}
+.tw .tw-section{display:grid;gap:var(--cds-gap-md)}
+.tw .tw-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,9.5rem),1fr));gap:var(--cds-gap-md)}
+.tw .tw-tile{background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);padding:var(--cds-pad-md) var(--cds-pad-lg);display:grid;gap:var(--cds-gap-xs);min-width:0}
+.tw .tw-tile span:first-child{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.tw .tw-big{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);line-height:1.1;overflow-wrap:anywhere}
+.tw .tw-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,20rem),1fr));gap:var(--cds-gap-md)}
+.tw .tw-card{background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);padding:var(--cds-pad-lg);display:grid;gap:var(--cds-gap-sm);align-content:start;min-width:0}
+.tw .tw-row{display:flex;flex-wrap:wrap;gap:var(--cds-gap-sm);align-items:center;justify-content:space-between}
+.tw select{font:inherit;font-size:var(--cds-font-size-caption);padding:var(--cds-pad-xs) var(--cds-pad-sm);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);background:var(--color-bg);color:var(--color-fg)}
+.tw .tw-chart{position:relative;width:100%;min-height:280px}
+.tw .tw-chart.sm{min-height:170px}
+.tw .tw-chart svg{display:block;width:100%;height:auto;overflow:visible}
+.tw .tw-tip{position:absolute;pointer-events:none;background:var(--cds-surface-popover);border:1px solid var(--cds-border);border-radius:var(--cds-radius);box-shadow:var(--cds-shadow-popover);padding:var(--cds-pad-xs) var(--cds-pad-sm);font-size:var(--cds-font-size-caption);white-space:nowrap;z-index:2;font-variant-numeric:tabular-nums}
+.tw .tw-tip div:first-child{color:var(--cds-text-secondary)}
+.tw .tw-empty{display:flex;align-items:center;justify-content:center;min-height:inherit;color:var(--color-fg-muted);font-size:var(--cds-font-size-caption);text-align:center;padding:var(--cds-pad-md)}
+.tw .tw-fail{display:flex;align-items:center;justify-content:center;gap:var(--cds-gap-xs);min-height:inherit;color:var(--color-fg-muted);font-size:var(--cds-font-size-caption)}
+.tw .tw-fail i{width:.375rem;height:.375rem;border-radius:50%;background:var(--color-bad)}
+.tw .tw-phases{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:var(--cds-gap-md)}
+.tw .tw-phase{display:grid;gap:var(--cds-gap-xs);align-content:start}
+.tw .tw-phase-h{display:flex;justify-content:space-between;gap:var(--cds-gap-sm);align-items:baseline;border-bottom:1px solid var(--color-border-line);padding-bottom:var(--cds-pad-xs)}
+.tw .tw-item{display:grid;grid-template-columns:auto 1fr;gap:var(--cds-gap-sm);align-items:start;padding:3px 0;font-size:var(--cds-font-size-caption);line-height:1.4}
+.tw .tw-chip{font-size:11px;padding:1px 7px;border-radius:999px;border:1px solid var(--color-border-line);white-space:nowrap;color:var(--color-fg-muted);min-width:4.4rem;text-align:center}
+.tw .tw-chip.done{color:var(--color-ok);border-color:currentColor}
+.tw .tw-chip.failed{color:var(--color-bad);border-color:currentColor}
+.tw .tw-chip.running{color:var(--color-warn);border-color:currentColor}
+.tw .tw-ev{display:block;color:var(--color-fg-muted)}
+.tw .tw-tablebox{overflow-x:auto}
+.tw table{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-caption);font-variant-numeric:tabular-nums}
+.tw th,.tw td{text-align:left;padding:var(--cds-pad-xs) var(--cds-pad-sm);border-bottom:1px solid var(--color-border-line);vertical-align:top}
+.tw th{color:var(--color-fg-muted);font-weight:var(--cds-font-weight-medium);white-space:nowrap}
+.tw td.n,.tw th.n{text-align:right;white-space:nowrap}
+.tw ol,.tw ul{margin:0;padding-left:1.2rem;display:grid;gap:var(--cds-gap-xs);font-size:var(--cds-font-size-body);line-height:1.5;max-width:82ch}
+.tw .tw-samples{display:grid;gap:var(--cds-gap-sm);font-size:var(--cds-font-size-caption);line-height:1.45}
+.tw .tw-samples q{color:var(--color-fg-muted)}
+.tw .tw-stages{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr));gap:var(--cds-gap-sm);counter-reset:none}
+.tw .tw-stage{border:1px solid var(--color-border-line);border-radius:var(--cds-radius);padding:var(--cds-pad-sm) var(--cds-pad-md);display:grid;gap:4px;align-content:start;font-size:var(--cds-font-size-caption);min-width:0;background:var(--color-bg)}
+.tw .tw-stage b{font-weight:var(--cds-font-weight-medium);font-size:var(--cds-font-size-body)}
+.tw .tw-stage.pass{border-color:var(--color-ok)}
+.tw .tw-stage.fail{border-color:var(--color-bad)}
+.tw .tw-stage.running{border-color:var(--color-warn)}
+.tw .tw-stage .tw-ev{overflow-wrap:anywhere}
+.tw .tw-multi{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr));gap:var(--cds-gap-md)}
+.tw .tw-legend{display:flex;flex-wrap:wrap;gap:var(--cds-gap-md);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.tw .tw-sw{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+[data-dash-source-state=refreshing]{opacity:.5;transition:opacity var(--cds-dur-slow)}
+[data-dash-source-state=empty]{color:transparent}
+</style>
+
+<div class="tw">
+  <header class="tw-head" id="top">
+    <h1>Chotu Twin Day</h1>
+    <p class="tw-lead">Session 3 rehearsal on a rented GPU: the 7M twin end to end, then a speed test of the real 181M model. Status: <b data-draw="val" data-fmt="text" data-source="live" data-field="state" data-row="0">—</b> · current run <b data-draw="val" data-fmt="text" data-source="live" data-field="run" data-row="0">—</b> · last log from the GPU at <b data-draw="val" data-fmt="time" data-source="live" data-field="pushed" data-row="0">—</b>.</p>
+    <p class="tw-muted">The GPU pushes its logs to the <code>live-runs</code> branch on GitHub every 30 seconds; Claude syncs them here while the run goes. The final report lands on the <code>twin-day</code> branch. Nothing here needs your own connectors, so anyone you share the page with sees the same numbers.</p>
+    <div class="tw-links">
+      <a href="https://github.com/aditya950820/Chotu/tree/twin-day" target="_blank" rel="noopener">Code and report (twin-day branch)</a>
+      <a href="https://github.com/aditya950820/Chotu/tree/live-runs" target="_blank" rel="noopener">Live logs (live-runs branch)</a>
+      <a href="https://claude.ai/artifact/U4Eug9jqUsCTaSKVnRDts7" target="_blank" rel="noopener">Flight school cheat sheet</a>
+      <a href="https://claude.ai/artifact/3cLuf6RiJPUDWUNYYkV7nx" target="_blank" rel="noopener">Training cost by model size</a>
+    </div>
+  </header>
+
+  <section class="tw-section" id="pipeline">
+    <h2>Pipeline</h2>
+    <div class="tw-card">
+      <p class="tw-muted">Every stage of twin day in order, with how long it took and what it found. A stage turns green when it passes, red when it fails, amber while it runs.</p>
+      <div data-draw="stages" data-source="stages"></div>
+    </div>
+  </section>
+
+  <section class="tw-section" id="live">
+    <h2>Live run</h2>
+    <div class="tw-tiles">
+      <div class="tw-tile"><span>Step</span><span class="tw-big" data-draw="val" data-fmt="int" data-source="live" data-field="step" data-row="0">—</span><span class="tw-muted">of <b data-draw="val" data-fmt="int" data-source="live" data-field="run_steps" data-row="0">—</b></span></div>
+      <div class="tw-tile"><span>Training loss</span><span class="tw-big" data-draw="val" data-fmt="num3" data-source="live" data-field="loss" data-row="0">—</span><span class="tw-muted">average surprise</span></div>
+      <div class="tw-tile"><span>Exam, bits per byte</span><span class="tw-big" data-draw="val" data-fmt="num3" data-source="live" data-field="val_bpb" data-row="0">—</span><span class="tw-muted">held-out papers</span></div>
+      <div class="tw-tile"><span>Tokens per second</span><span class="tw-big" data-draw="val" data-fmt="k" data-source="live" data-field="tok_s" data-row="0">—</span><span class="tw-muted">reading speed</span></div>
+      <div class="tw-tile"><span>MFU</span><span class="tw-big" data-draw="val" data-fmt="pct" data-source="live" data-field="mfu" data-row="0">—</span><span class="tw-muted">share of the GPU doing real work</span></div>
+      <div class="tw-tile"><span>Machine time</span><span class="tw-big" data-draw="val" data-fmt="min" data-source="live" data-field="machine_min" data-row="0">—</span><span class="tw-muted">since the script started</span></div>
+      <div class="tw-tile"><span>Cost so far</span><span class="tw-big" data-draw="val" data-fmt="inr" data-source="live" data-field="cost_so_far" data-row="0">—</span><span class="tw-muted">at <b data-draw="val" data-fmt="inr" data-source="live" data-field="price" data-row="0">—</b> per hour</span></div>
+    </div>
+
+    <div class="tw-card">
+      <div class="tw-row">
+        <h2 id="loss-chart">Loss over steps</h2>
+        <label class="tw-muted">Run <select data-draw="runpick" data-source="runs" aria-label="Run"></select></label>
+      </div>
+      <p class="tw-muted">Line: practice loss every step. Dots: the exam on locked-away papers. The dashed line is the blind-guessing start; the marker at step 300 is the kill rule.</p>
+      <div class="tw-chart" data-draw="losschart" data-source="steps evals"></div>
+    </div>
+    <div class="tw-grid">
+      <div class="tw-card"><h3>Reading speed</h3><p class="tw-muted">Tokens per second. The first steps are slow while the code compiles.</p><div class="tw-chart sm" data-draw="minichart" data-metric="tok_s" data-source="steps"></div></div>
+      <div class="tw-card"><h3>Gradient size</h3><p class="tw-muted">How strongly the papers push. The dashed line is the clip: always at the clip means the stride is too big.</p><div class="tw-chart sm" data-draw="minichart" data-metric="grad" data-source="steps"></div></div>
+      <div class="tw-card"><h3>Stride (learning rate)</h3><p class="tw-muted">Warm up, hold, then slow down over the last 20%.</p><div class="tw-chart sm" data-draw="minichart" data-metric="lr" data-source="steps"></div></div>
+    </div>
+  </section>
+
+  <section class="tw-section" id="every-run">
+    <h2>Every run</h2>
+    <div class="tw-grid">
+      <div class="tw-card">
+        <h3>Fire drill: crash and resume</h3>
+        <p class="tw-muted">The uninterrupted run (grey) against the drill run, which "dies" after step 70 and resumes from its step-50 checkpoint (dashed). If resuming works, the dashed line lies exactly on the grey one.</p>
+        <div class="tw-legend"><span><i class="tw-sw" data-sw="muted"></i>Uninterrupted</span><span><i class="tw-sw" data-sw="0"></i>Before the crash</span><span><i class="tw-sw" data-sw="1"></i>After resuming</span></div>
+        <div class="tw-chart" data-draw="drillchart" data-source="steps"></div>
+      </div>
+      <div class="tw-card">
+        <h3>Overfit one batch</h3>
+        <p class="tw-muted">The same 65,536 tokens every step. A loop that learns drives this toward zero; the exam dots stay high because memorising one batch teaches nothing general.</p>
+        <div class="tw-chart" data-draw="runchart" data-run="overfit" data-source="steps evals"></div>
+      </div>
+    </div>
+    <div class="tw-card">
+      <h3>Loss by run, same scale</h3>
+      <p class="tw-muted">Each run's practice loss (line) and exam loss (dots) on one shared scale from 0 to 11.</p>
+      <div class="tw-multi" data-draw="multiples" data-source="steps evals"></div>
+    </div>
+  </section>
+
+  <section class="tw-section" id="checklist">
+    <h2>Checklist</h2>
+    <p class="tw-muted">Today's items tick themselves from the run's own logs where they can; the rest are yours to confirm. Phases 2 to 7 are the training checklist for the real 181M run.</p>
+    <div class="tw-card"><div data-draw="checklist" data-source="checks"></div></div>
+  </section>
+
+  <section class="tw-section" id="runs">
+    <h2>Runs</h2>
+    <div class="tw-card">
+      <p class="tw-muted">Overfit proves the loop can learn; the two drill runs prove a crash costs nothing; main is the twin's real run; speed-181m measures the real model on this GPU.</p>
+      <div class="tw-tablebox">
+        <table data-source="runs" data-row-key="run">
+          <thead><tr>
+            <th data-field="run">Run</th><th data-field="state">State</th><th class="n" data-field="step">Step</th><th class="n" data-field="run_steps">of</th>
+            <th class="n" data-field="loss">Loss</th><th class="n" data-field="val_bpb">Exam bpb</th><th class="n" data-field="tok_s">Tokens/s</th>
+            <th class="n" data-field="mfu">MFU</th><th class="n" data-field="minutes">Minutes</th><th class="n" data-field="cost_inr">₹</th>
+          </tr></thead>
+          <tbody data-draw="runrows"></tbody>
+        </table>
+      </div>
+      <p class="tw-muted">Speed test projection for the whole 181M run on this GPU: <b data-draw="val" data-fmt="num1" data-source="runs" data-field="full_run_hours" data-where="run=speed-181m">—</b> hours, about <b data-draw="val" data-fmt="inr" data-source="runs" data-field="full_run_cost_inr" data-where="run=speed-181m">—</b>.</p>
+    </div>
+  </section>
+
+  <section class="tw-section" id="signals">
+    <h2>Alerts and samples</h2>
+    <div class="tw-grid">
+      <div class="tw-card">
+        <h3>Alerts</h3>
+        <p class="tw-muted">Kill rules and warnings the script fired. On the twin, the MFU alert is expected: the model is too small to keep a big GPU busy.</p>
+        <div class="tw-tablebox">
+          <table data-source="alerts" data-row-key="run,kind">
+            <thead><tr><th data-field="run">Run</th><th class="n" data-field="step">Step</th><th data-field="kind">Rule</th><th data-field="msg">What it said</th></tr></thead>
+            <tbody data-draw="alertrows"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tw-card">
+        <h3>What the twin writes</h3>
+        <p class="tw-muted">Greedy continuations of fixed prompts at each exam, newest first. Expect soup early, then common words, then grammar.</p>
+        <div class="tw-samples" data-draw="samples" data-source="samples"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tw-section" id="rules">
+    <h2>Kill rules</h2>
+    <div class="tw-card">
+      <div class="tw-tablebox">
+        <table>
+          <thead><tr><th>Signal</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td>First loss far from <b data-draw="const" data-k="start">—</b></td><td>Stop. Setup is wrong</td></tr>
+            <tr><td>Loss not below <b data-draw="const" data-k="loss300">—</b> by step <b data-draw="const" data-k="step300">—</b></td><td>Stop. Something is broken</td></tr>
+            <tr><td>MFU under <b data-draw="const" data-k="mfu">—</b> on the 181M model</td><td>Stop and find the bottleneck</td></tr>
+            <tr><td>NaN</td><td>Stop at once</td></tr>
+            <tr><td>Loss spike that doesn't come back</td><td>Alert; step back to an earlier checkpoint</td></tr>
+            <tr><td>Exam rises while practice falls</td><td>Check for repeated or leaked data</td></tr>
+            <tr><td>After resume: loss back near the start, or warm-up restarts</td><td>The checkpoint didn't load everything</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="tw-section" id="gpus">
+    <h2>Which GPU</h2>
+    <div class="tw-card">
+      <p class="tw-muted">Prices from your portal and Jarvislabs screenshots. Hours for the full 181M run are estimates: 15 to 25 hours at H100 speed, scaled by each card's compute. Today's twin day uses about half an hour of machine time.</p>
+      <div class="tw-tablebox">
+        <table data-source="plan" data-row-key="gpu">
+          <thead><tr>
+            <th data-field="provider">Where</th><th data-field="gpu">GPU</th><th class="n" data-field="inr_hr">₹ per hour</th><th class="n" data-field="mem_gb">Memory GB</th>
+            <th class="n" data-field="twin_day_cost">Twin day ₹</th><th class="n" data-field="full_cost_low">Full run from ₹</th><th class="n" data-field="full_cost_high">to ₹</th><th data-field="note">Note</th>
+          </tr></thead>
+          <tbody data-draw="planrows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="tw-section" id="next">
+    <h2>Next steps</h2>
+    <div class="tw-card">
+      <ol>
+        <li>Stop the Jarvis machine as soon as the script prints its report, and pause or delete the old instance from 24 October.</li>
+        <li>Read <code>reports/twin_day.md</code> on the twin-day branch together with your partner; merge the branch into main once you both agree.</li>
+        <li>Answer the open lesson questions in <code>docs/LEARNING.md</code>, then add today's entry to <code>docs/PROGRESS.md</code>.</li>
+        <li>Session 3 leftovers: baselines for GPT-2 124M and SmolLM2-135M in bits per byte on the same exam.</li>
+        <li>Session 4: rehearse chat tuning and export on the twin, then dry-run the whole chain with the thresholds off and confirm the machine stops itself.</li>
+        <li>Get IndiaAI portal access for the real run: the H200 there is less than half the Jarvislabs H100 price. Book about a day and a half with persistent storage.</li>
+        <li>Session 5: preflight, speed check, LR test (1.5e-3 vs 3e-3), main run, evals, chat tuning, export, upload, stop.</li>
+      </ol>
+      <p class="tw-muted">Parked ideas (local decision model, image and video models, real-time avatars) stay parked until Chotu ships.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+const TW = window.TW = window.TW || {run: null};
+const LIMITS = {start: 10.8, loss300: 6, step300: 300, mfu: 0.10};
+const FMT = {
+  text: (v) => String(v),
+  int: (v) => d3.format(',')(Math.round(v)),
+  num1: (v) => d3.format(',.1f')(v),
+  num3: (v) => d3.format('.3f')(v),
+  pct: (v) => d3.format('.1%')(v),
+  k: (v) => v >= 1e4 ? Intl.NumberFormat('en', {notation: 'compact', maximumFractionDigits: 1}).format(v) : d3.format(',')(Math.round(v)),
+  inr: (v) => '₹' + Intl.NumberFormat('en-IN', {maximumFractionDigits: v < 100 ? 1 : 0}).format(v),
+  min: (v) => d3.format(',.1f')(v) + ' min',
+  time: (v) => new Date(v * 1000).toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit'})
+};
+const ok = (id) => dash.data(id).status === 'ok';
+const rowsOf = (id) => ok(id) ? dash.data(id).data : [];
+const failed = (id) => ['error', 'connect', 'declined'].includes(dash.data(id).status);
+const n = (v) => (v === null || v === undefined || v === '' ? null : Number(v));
+
+dash.calc('live', {inputs: ['twin'], title: 'Live status', description: 'The newest live row: which run is moving and its latest numbers.', fn: (twin) => twin.filter((r) => r.k === 'live').slice(-1)});
+dash.calc('runs', {inputs: ['twin'], title: 'Runs', description: 'One row per run with its latest step, loss, exam, speed and cost.', fn: (twin) => twin.filter((r) => r.k === 'run')});
+dash.calc('steps', {inputs: ['twin'], title: 'Training steps', description: 'Per-step loss, stride, gradient and speed for every run.', fn: (twin) => twin.filter((r) => r.k === 'step')});
+dash.calc('evals', {inputs: ['twin'], title: 'Exams', description: 'Held-out loss and bits per byte at each exam.', fn: (twin) => twin.filter((r) => r.k === 'eval')});
+dash.calc('checks', {inputs: ['twin'], title: 'Checklist', description: 'Checklist items with their status and evidence.', fn: (twin) => twin.filter((r) => r.k === 'check')});
+dash.calc('alerts', {inputs: ['twin'], title: 'Alerts', description: 'Kill rules and warnings fired during the runs.', fn: (twin) => twin.filter((r) => r.k === 'alert')});
+dash.calc('samples', {inputs: ['twin'], title: 'Samples', description: 'What the twin writes from fixed prompts at each exam.', fn: (twin) => twin.filter((r) => r.k === 'sample')});
+
+function pickRow(el, rows) {
+  if (el.dataset.row !== undefined) return rows[Number(el.dataset.row)];
+  if (el.dataset.where) {
+    const parts = el.dataset.where.split('&').map((p) => p.split('=').map(decodeURIComponent));
+    return rows.find((r) => parts.every(([k, v]) => String(r[k]) === v));
+  }
+}
+dash.draw('val', (el) => {
+  const r = pickRow(el, rowsOf(el.dataset.source));
+  const v = r ? r[el.dataset.field] : null;
+  el.textContent = v === null || v === undefined || v === '' ? '—' : FMT[el.dataset.fmt](el.dataset.fmt === 'text' ? v : Number(v));
+});
+dash.draw('const', (el) => {
+  const k = el.dataset.k, v = LIMITS[k];
+  el.textContent = k === 'mfu' ? d3.format('.0%')(v) : String(v);
+});
+
+function currentRun() {
+  const runs = rowsOf('runs').map((r) => r.run);
+  if (TW.run && runs.includes(TW.run)) return TW.run;
+  const live = rowsOf('live')[0];
+  return (live && live.run) || runs.at(-1) || null;
+}
+
+dash.draw('runpick', (sel) => {
+  const runs = rowsOf('runs');
+  const cur = currentRun();
+  sel.replaceChildren(...runs.map((r) => new Option(r.run, r.run)));
+  sel.disabled = !runs.length;
+  if (cur) sel.value = cur;
+  sel.onchange = () => { TW.run = sel.value; dash.draw('losschart'); dash.draw('minichart'); };
+});
+
+function empty(el, text) {
+  const d = document.createElement('div');
+  d.className = 'tw-empty';
+  d.textContent = text;
+  el.replaceChildren(d);
+}
+function failLine(el) {
+  const b = document.createElement('div'); b.className = 'tw-fail';
+  const i = document.createElement('i'); const t = document.createElement('span'); t.textContent = 'Failed to load';
+  b.append(i, t); el.replaceChildren(b);
+}
+function tipper(el) {
+  const tip = document.createElement('div'); tip.className = 'tw-tip'; tip.hidden = true; el.append(tip);
+  return {
+    show(ev, head, lines) {
+      tip.replaceChildren();
+      [head, ...lines].forEach((t) => { const d = document.createElement('div'); d.textContent = t; tip.append(d); });
+      tip.hidden = false;
+      const b = el.getBoundingClientRect();
+      let x = ev.clientX - b.left + 12, y = ev.clientY - b.top + 12;
+      if (x + tip.offsetWidth > b.width) x = Math.max(0, ev.clientX - b.left - tip.offsetWidth - 12);
+      if (y + tip.offsetHeight > b.height) y = Math.max(0, ev.clientY - b.top - tip.offsetHeight - 12);
+      tip.style.left = x + 'px'; tip.style.top = y + 'px';
+    },
+    hide() { tip.hidden = true; }
+  };
+}
+function axisStyle(g) {
+  g.attr('font-size', null).attr('font-family', null);
+  g.selectAll('text').attr('fill', 'var(--color-fg-muted)').style('font-size', '11px');
+  g.selectAll('line').attr('stroke', 'var(--cds-chart-grid)');
+  g.select('.domain').attr('stroke', 'var(--cds-chart-axis)');
+}
+
+dash.draw('losschart', (el) => {
+  if (failed('twin')) { failLine(el); return; }
+  const run = currentRun();
+  const steps = rowsOf('steps').filter((r) => r.run === run && n(r.loss) !== null);
+  const evals = rowsOf('evals').filter((r) => r.run === run);
+  if (!steps.length) { empty(el, 'Waiting for the first training step from the GPU. Logs reach GitHub every 30 seconds.'); return; }
+  el.replaceChildren();
+  const W = Math.max(320, el.clientWidth || 640), H = 280, m = {t: 12, r: 16, b: 30, l: 40};
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).style('font-family', 'var(--font-anthropic-sans)');
+  const maxStep = d3.max(steps, (r) => n(r.step));
+  const x = d3.scaleLinear([0, Math.max(maxStep, 10)], [m.l, W - m.r]);
+  const yMax = Math.max(11, d3.max(steps, (r) => n(r.loss)));
+  const y = d3.scaleLinear([0, yMax], [H - m.b, m.t]).nice();
+  svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(Math.max(2, Math.floor(W / 110))).tickSizeOuter(0)).call(axisStyle);
+  svg.append('g').attr('transform', `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(5).tickSize(-(W - m.l - m.r))).call(axisStyle).call((g) => g.select('.domain').remove());
+  svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(LIMITS.start)).attr('y2', y(LIMITS.start)).attr('stroke', 'var(--cds-chart-reference)').attr('stroke-dasharray', '4 4');
+  if (maxStep >= 50 && run !== 'overfit') {
+    svg.append('circle').attr('cx', x(Math.min(LIMITS.step300, maxStep))).attr('cy', y(LIMITS.loss300)).attr('r', 4).attr('fill', 'none').attr('stroke', 'var(--cds-chart-status-critical)').attr('stroke-width', 1.5);
+  }
+  const line = d3.line().defined((r) => n(r.loss) !== null).x((r) => x(n(r.step))).y((r) => y(n(r.loss)));
+  svg.append('path').datum(steps).attr('d', line).attr('fill', 'none').attr('stroke', dash.colors[0]).attr('stroke-width', 2).attr('stroke-linejoin', 'round').attr('stroke-linecap', 'round');
+  svg.append('g').selectAll('circle').data(evals.filter((r) => n(r.val_loss) !== null)).join('circle')
+    .attr('cx', (r) => x(n(r.step))).attr('cy', (r) => y(n(r.val_loss))).attr('r', 4).attr('fill', dash.colors[1]).attr('stroke', 'var(--color-panel)').attr('stroke-width', 1.5);
+  const tt = tipper(el);
+  const bis = d3.bisector((r) => n(r.step)).center;
+  svg.append('rect').attr('x', m.l).attr('y', m.t).attr('width', W - m.l - m.r).attr('height', H - m.t - m.b).attr('fill', 'transparent')
+    .on('pointermove', (ev) => {
+      const sx = x.invert(d3.pointer(ev)[0]);
+      const r = steps[bis(steps, sx)];
+      const e = evals.length ? evals[d3.bisector((q) => n(q.step)).center(evals, sx)] : null;
+      tt.show(ev, `${run} · step ${FMT.int(n(r.step))}`, [`practice loss ${FMT.num3(n(r.loss))}`].concat(e ? [`exam at ${FMT.int(n(e.step))}: loss ${FMT.num3(n(e.val_loss))}, ${FMT.num3(n(e.val_bpb))} bpb`] : []));
+    })
+    .on('pointerleave', () => tt.hide());
+});
+
+dash.draw('minichart', (el) => {
+  if (failed('twin')) { failLine(el); return; }
+  const metric = el.dataset.metric, run = currentRun();
+  const steps = rowsOf('steps').filter((r) => r.run === run && n(r[metric]) !== null);
+  if (!steps.length) { empty(el, 'Appears with the first step'); return; }
+  el.replaceChildren();
+  const W = Math.max(260, el.clientWidth || 320), H = 170, m = {t: 8, r: 10, b: 24, l: 44};
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).style('font-family', 'var(--font-anthropic-sans)');
+  const x = d3.scaleLinear([0, Math.max(10, d3.max(steps, (r) => n(r.step)))], [m.l, W - m.r]);
+  const top = Math.max(metric === 'grad' ? 1.2 : 0, d3.max(steps, (r) => n(r[metric])) * 1.08);
+  const y = d3.scaleLinear([0, top || 1], [H - m.b, m.t]).nice();
+  const tf = metric === 'lr' ? d3.format('.0e') : metric === 'tok_s' ? (v) => FMT.k(v) : d3.format('.2~f');
+  svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(3).tickSizeOuter(0)).call(axisStyle);
+  svg.append('g').attr('transform', `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(3).tickFormat(tf).tickSize(-(W - m.l - m.r))).call(axisStyle).call((g) => g.select('.domain').remove());
+  if (metric === 'grad') svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(1)).attr('y2', y(1)).attr('stroke', 'var(--cds-chart-reference)').attr('stroke-dasharray', '4 4');
+  svg.append('path').datum(steps).attr('d', d3.line().x((r) => x(n(r.step))).y((r) => y(n(r[metric]))))
+    .attr('fill', 'none').attr('stroke', dash.colors[metric === 'tok_s' ? 2 : metric === 'grad' ? 3 : 4]).attr('stroke-width', 2).attr('stroke-linejoin', 'round');
+  const tt = tipper(el);
+  const bis = d3.bisector((r) => n(r.step)).center;
+  svg.append('rect').attr('x', m.l).attr('y', m.t).attr('width', W - m.l - m.r).attr('height', H - m.t - m.b).attr('fill', 'transparent')
+    .on('pointermove', (ev) => { const r = steps[bis(steps, x.invert(d3.pointer(ev)[0]))]; tt.show(ev, `step ${FMT.int(n(r.step))}`, [tf(n(r[metric]))]); })
+    .on('pointerleave', () => tt.hide());
+});
+
+dash.draw('checklist', (el) => {
+  if (failed('twin')) { failLine(el); return; }
+  const items = rowsOf('checks');
+  if (!items.length) { empty(el, 'Loading the checklist'); return; }
+  const wrap = document.createElement('div'); wrap.className = 'tw-phases';
+  d3.groups(items, (r) => r.phase).forEach(([phase, rows]) => {
+    const box = document.createElement('div'); box.className = 'tw-phase';
+    const h = document.createElement('div'); h.className = 'tw-phase-h';
+    const t = document.createElement('h3'); t.textContent = phase;
+    const c = document.createElement('span'); c.className = 'tw-muted';
+    c.textContent = `${rows.filter((r) => r.status === 'done').length} of ${rows.length} done`;
+    h.append(t, c); box.append(h);
+    rows.forEach((r) => {
+      const it = document.createElement('div'); it.className = 'tw-item';
+      const chip = document.createElement('span'); chip.className = 'tw-chip ' + r.status;
+      chip.textContent = {done: 'done', failed: 'failed', running: 'running', todo: 'to do'}[r.status] || r.status;
+      const txt = document.createElement('span'); txt.textContent = r.item;
+      if (r.evidence) { const ev = document.createElement('span'); ev.className = 'tw-ev'; ev.textContent = r.evidence; txt.append(ev); }
+      it.append(chip, txt); box.append(it);
+    });
+    wrap.append(box);
+  });
+  el.replaceChildren(wrap);
+});
+
+function tableRows(tb, rows, cols, keyCols) {
+  tb.replaceChildren(...rows.map((r) => {
+    const tr = document.createElement('tr');
+    tr.dataset.key = keyCols.map((k) => encodeURIComponent(r[k])).join(',');
+    cols.forEach(([field, fmt, num]) => {
+      const td = document.createElement('td'); if (num) td.className = 'n';
+      const v = r[field];
+      td.textContent = v === null || v === undefined || v === '' ? '' : (fmt ? FMT[fmt](Number(v)) : String(v));
+      tr.append(td);
+    });
+    return tr;
+  }));
+}
+dash.draw('runrows', (tb) => tableRows(tb, rowsOf('runs'), [['run'], ['state'], ['step', 'int', 1], ['run_steps', 'int', 1], ['loss', 'num3', 1], ['val_bpb', 'num3', 1], ['tok_s', 'k', 1], ['mfu', 'pct', 1], ['minutes', 'num1', 1], ['cost_inr', 'inr', 1]], ['run']));
+dash.draw('alertrows', (tb) => tableRows(tb, rowsOf('alerts'), [['run'], ['step', 'int', 1], ['kind'], ['msg']], ['run', 'kind']));
+dash.draw('planrows', (tb) => tableRows(tb, rowsOf('plan'), [['provider'], ['gpu'], ['inr_hr', 'inr', 1], ['mem_gb', 'int', 1], ['twin_day_cost', 'inr', 1], ['full_cost_low', 'inr', 1], ['full_cost_high', 'inr', 1], ['note']], ['gpu']));
+
+dash.draw('samples', (el) => {
+  const rows = rowsOf('samples').slice().sort((a, b) => n(b.step) - n(a.step)).slice(0, 9);
+  if (!rows.length) { empty(el, 'The twin writes its first lines at the first exam of the main run.'); return; }
+  el.replaceChildren(...rows.map((r) => {
+    const d = document.createElement('div');
+    const head = document.createElement('div'); head.className = 'tw-muted'; head.textContent = `${r.run} · step ${FMT.int(n(r.step))}`;
+    const body = document.createElement('div');
+    const p = document.createElement('b'); p.textContent = r.prompt;
+    const q = document.createElement('q'); q.textContent = r.text;
+    body.append(p, ' ', q);
+    d.append(head, body);
+    return d;
+  }));
+});
+dash.calc('stages', {inputs: ['twin'], title: 'Pipeline stages', description: 'Each twin-day stage with its status, note and duration.', fn: (twin) => twin.filter((r) => r.k === 'stage')});
+
+dash.draw('stages', (el) => {
+  if (failed('twin')) { failLine(el); return; }
+  const rows = rowsOf('stages').slice().sort((a, b) => n(a.order) - n(b.order));
+  if (!rows.length) { empty(el, 'Waiting for the script to start on the GPU'); return; }
+  const wrap = document.createElement('div'); wrap.className = 'tw-stages';
+  rows.forEach((r) => {
+    const d = document.createElement('div'); d.className = 'tw-stage ' + r.status;
+    const t = document.createElement('b'); t.textContent = r.label;
+    const chip = document.createElement('span'); chip.className = 'tw-chip ' + ({pass: 'done', fail: 'failed', running: 'running', info: 'done'}[r.status] || '');
+    chip.textContent = {pass: 'passed', fail: 'failed', running: 'running', info: 'done'}[r.status] || r.status;
+    const time = document.createElement('span'); time.className = 'tw-muted';
+    const sec = n(r.seconds) || 0;
+    time.textContent = sec >= 60 ? `${Math.floor(sec / 60)} min ${sec % 60} s` : `${sec} s`;
+    const note = document.createElement('span'); note.className = 'tw-ev'; note.textContent = r.note || '';
+    d.append(t, chip, time, note); wrap.append(d);
+  });
+  el.replaceChildren(wrap);
+});
+
+function lossFrame(el, H, maxStep, yTop) {
+  el.replaceChildren();
+  const W = Math.max(260, el.clientWidth || 360), m = {t: 10, r: 12, b: 26, l: 34};
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).style('font-family', 'var(--font-anthropic-sans)');
+  const x = d3.scaleLinear([0, Math.max(10, maxStep)], [m.l, W - m.r]);
+  const y = d3.scaleLinear([0, yTop], [H - m.b, m.t]);
+  svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(Math.max(2, Math.floor(W / 90))).tickSizeOuter(0)).call(axisStyle);
+  svg.append('g').attr('transform', `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(4).tickSize(-(W - m.l - m.r))).call(axisStyle).call((g) => g.select('.domain').remove());
+  return {svg, x, y, W, H, m};
+}
+function segments(steps) {  // a resumed run logs some steps twice: split where the step number goes back
+  const out = [[]];
+  steps.forEach((r, i) => { if (i && n(r.step) <= n(steps[i - 1].step)) out.push([]); out.at(-1).push(r); });
+  return out;
+}
+
+dash.draw('drillchart', (el) => {
+  if (failed('twin')) { failLine(el); return; }
+  const all = rowsOf('steps');
+  const ref = all.filter((r) => r.run === 'drill-ref');
+  const drill = all.filter((r) => r.run === 'drill');
+  if (!ref.length && !drill.length) { empty(el, 'Appears when the fire drill runs'); return; }
+  const segs = segments(drill);
+  const maxStep = d3.max(ref.concat(drill), (r) => n(r.step));
+  const f = lossFrame(el, 260, maxStep, Math.max(11, d3.max(ref.concat(drill), (r) => n(r.loss))));
+  const ln = d3.line().x((r) => f.x(n(r.step))).y((r) => f.y(n(r.loss)));
+  f.svg.append('path').datum(ref).attr('d', ln).attr('fill', 'none').attr('stroke', 'var(--cds-chart-muted)').attr('stroke-width', 5).attr('stroke-linecap', 'round').attr('stroke-linejoin', 'round');
+  if (segs[0].length) f.svg.append('path').datum(segs[0]).attr('d', ln).attr('fill', 'none').attr('stroke', dash.colors[0]).attr('stroke-width', 2);
+  if (segs[1] && segs[1].length) {
+    f.svg.append('path').datum(segs[1]).attr('d', ln).attr('fill', 'none').attr('stroke', dash.colors[1]).attr('stroke-width', 2).attr('stroke-dasharray', '5 4');
+    const crash = n(segs[0].at(-1).step), back = n(segs[1][0].step) - 1;
+    [[crash, 'crash'], [back, 'resume']].forEach(([s, label], i) => {
+      f.svg.append('line').attr('x1', f.x(s)).attr('x2', f.x(s)).attr('y1', f.m.t).attr('y2', f.H - f.m.b).attr('stroke', 'var(--cds-chart-reference)').attr('stroke-dasharray', '3 3');
+      f.svg.append('text').attr('x', f.x(s) + (i ? -4 : 4)).attr('y', f.m.t + 10).attr('text-anchor', i ? 'end' : 'start').attr('fill', 'var(--color-fg-muted)').style('font-size', '11px').text(`${label} ${s}`);
+    });
+  }
+  const tt = tipper(el);
+  const byStep = (rs, s) => rs.find((r) => n(r.step) === s);
+  f.svg.append('rect').attr('x', f.m.l).attr('y', f.m.t).attr('width', f.W - f.m.l - f.m.r).attr('height', f.H - f.m.t - f.m.b).attr('fill', 'transparent')
+    .on('pointermove', (ev) => {
+      const s = Math.round(f.x.invert(d3.pointer(ev)[0]));
+      const a = byStep(ref, s), b = byStep(segs[1] || [], s) || byStep(segs[0], s);
+      tt.show(ev, `step ${s}`, [a ? `uninterrupted ${FMT.num3(n(a.loss))}` : '', b ? `drill ${FMT.num3(n(b.loss))}` : ''].filter(Boolean));
+    })
+    .on('pointerleave', () => tt.hide());
+});
+
+function drawRun(el, run, H) {
+  const steps = rowsOf('steps').filter((r) => r.run === run && n(r.loss) !== null);
+  const evals = rowsOf('evals').filter((r) => r.run === run && n(r.val_loss) !== null);
+  if (!steps.length) { empty(el, 'Appears when this run starts'); return; }
+  const segs = segments(steps);
+  const f = lossFrame(el, H, d3.max(steps, (r) => n(r.step)), 11);
+  const ln = d3.line().x((r) => f.x(n(r.step))).y((r) => f.y(Math.min(11, n(r.loss))));
+  segs.forEach((sg, i) => f.svg.append('path').datum(sg).attr('d', ln).attr('fill', 'none').attr('stroke', dash.colors[0]).attr('stroke-width', 2).attr('stroke-dasharray', i ? '5 4' : null));
+  f.svg.append('g').selectAll('circle').data(evals).join('circle').attr('cx', (r) => f.x(n(r.step))).attr('cy', (r) => f.y(Math.min(11, n(r.val_loss)))).attr('r', 3.5).attr('fill', dash.colors[1]).attr('stroke', 'var(--color-panel)');
+  const tt = tipper(el);
+  const bis = d3.bisector((r) => n(r.step)).center;
+  f.svg.append('rect').attr('x', f.m.l).attr('y', f.m.t).attr('width', f.W - f.m.l - f.m.r).attr('height', f.H - f.m.t - f.m.b).attr('fill', 'transparent')
+    .on('pointermove', (ev) => { const r = steps[bis(steps, f.x.invert(d3.pointer(ev)[0]))]; tt.show(ev, `${run} · step ${FMT.int(n(r.step))}`, [`loss ${FMT.num3(n(r.loss))}`]); })
+    .on('pointerleave', () => tt.hide());
+}
+dash.draw('runchart', (el) => { if (failed('twin')) { failLine(el); return; } drawRun(el, el.dataset.run, 260); });
+
+dash.draw('multiples', (el) => {
+  if (failed('twin')) { failLine(el); return; }
+  const runs = rowsOf('runs');
+  if (!runs.length) { empty(el, 'Runs appear here as they start'); return; }
+  el.replaceChildren(...runs.map((r) => {
+    const box = document.createElement('div');
+    const h = document.createElement('div'); h.className = 'tw-muted'; h.textContent = `${r.run} · ${r.state}`;
+    const c = document.createElement('div'); c.className = 'tw-chart sm';
+    box.append(h, c);
+    requestAnimationFrame(() => drawRun(c, r.run, 170));
+    return box;
+  }));
+});
+
+dash.onData(() => {
+  document.querySelectorAll('.tw-sw').forEach((sw) => { sw.style.background = sw.dataset.sw === 'muted' ? 'var(--cds-chart-muted)' : dash.colors[Number(sw.dataset.sw)]; });
+});
+</script>

@@ -1,0 +1,74 @@
+[
+ {
+  "provider": "IndiaAI portal",
+  "gpu": "H200 SXM (Neysa)",
+  "inr_hr": 140.55,
+  "mem_gb": 141,
+  "full_hours_low": 15.0,
+  "full_hours_high": 25.0,
+  "full_cost_low": 2108,
+  "full_cost_high": 3514,
+  "twin_day_cost": 70,
+  "note": "Cheapest by far; needs portal approval and free capacity"
+ },
+ {
+  "provider": "IndiaAI portal",
+  "gpu": "A100 80GB (E2E)",
+  "inr_hr": 135.9,
+  "mem_gb": 80,
+  "full_hours_low": 47.5,
+  "full_hours_high": 79.2,
+  "full_cost_low": 6462,
+  "full_cost_high": 10770,
+  "twin_day_cost": 68,
+  "note": "Older card, about 3x slower"
+ },
+ {
+  "provider": "Jarvislabs",
+  "gpu": "H100",
+  "inr_hr": 330.48,
+  "mem_gb": 80,
+  "full_hours_low": 15.0,
+  "full_hours_high": 25.0,
+  "full_cost_low": 4957,
+  "full_cost_high": 8262,
+  "twin_day_cost": 165,
+  "note": "Today's pick: same speed as H200 for Chotu, \u20b9105/h cheaper"
+ },
+ {
+  "provider": "Jarvislabs",
+  "gpu": "H200",
+  "inr_hr": 434.97,
+  "mem_gb": 141,
+  "full_hours_low": 15.0,
+  "full_hours_high": 25.0,
+  "full_cost_low": 6525,
+  "full_cost_high": 10874,
+  "twin_day_cost": 217,
+  "note": "Extra memory doesn't help a 181M model"
+ },
+ {
+  "provider": "Jarvislabs",
+  "gpu": "RTX PRO 6000",
+  "inr_hr": 207.36,
+  "mem_gb": 96,
+  "full_hours_low": 30.0,
+  "full_hours_high": 50.0,
+  "full_cost_low": 6221,
+  "full_cost_high": 10368,
+  "twin_day_cost": 104,
+  "note": "About half the compute of an H100"
+ },
+ {
+  "provider": "Jarvislabs",
+  "gpu": "L4",
+  "inr_hr": 41.31,
+  "mem_gb": 24,
+  "full_hours_low": 123.0,
+  "full_hours_high": 205.0,
+  "full_cost_low": 5081,
+  "full_cost_high": 8469,
+  "twin_day_cost": 21,
+  "note": "Unavailable today; days for the real run"
+ }
+]

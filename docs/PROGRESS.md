@@ -5,12 +5,14 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 
 ## Now
 
-- **Current session:** Session 2 · Data done (10.06B tokens on HF); next: read samples, then Session 3
+- **Current session:** Session 3 · Twin day rehearsal done on a Jarvis H100 (branch `twin-day`); 181M speed test still to rerun
 - **Who's on what:**
-  - Adi: —
-  - Partner: —
+  - Adi: rerun the 181M speed test, save the twin to HF, stop the machine
+  - Partner: review `reports/twin_day.md` and `train.py` on branch `twin-day`
 - **Blocked on:** nothing
-- **Paid resources running:** Jarvis Labs instance (GPU type: TODO), started 2026-10-24. Pause it when not in use.
+- **Paid resources running:**
+  - Jarvis Labs H100 80GB at 151.185.52.36, started 2026-11-07 (₹330/h). **Stop it after the speed test.**
+  - Jarvis Labs instance from 2026-10-24 (GPU type: TODO). Check it is paused or deleted.
 
 ## Next up
 
@@ -37,6 +39,14 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Next:
 - Notes for the other person:
 -->
+
+### 2026-11-07 · Adi · Session 3: twin day (rehearsal on a rented H100)
+- Did: `train.py` (one training script for the twin and Chotu: frozen recipe, bf16, SDPA, compile, fused AdamW, checkpoints via temp file + swap, resume, exam + bits per byte, samples, copying test, kill-rule alerts, MFU and ₹ per step) and `scripts/twin_day.sh` (setup → data → overfit → fire drill → main twin run → 181M speed test → report → push). Logs went to GitHub live (`live-runs`, every 30 s); report and logs on `twin-day` (`reports/twin_day.md`, `logs/twin-day/`). Shared dashboard "Chotu Twin Day" follows them; its source is in `dashboard/`.
+- Results (Jarvis H100 80GB, ₹330/h): setup 9 s; data 45 s; overfit 10.9 → 1.33 in 150 steps (loop learns; the < 1.0 gate was too strict for 7M); **fire drill passed** (resume matched the uninterrupted run); **main twin run** 140M tokens in 3.0 min at ~909k tok/s, first loss ~10.9, below 6 by step 300, exam 1.39 bits per byte; samples grammatical but repetitive; copying test weak (14.3 → 13.7, expected at 7M); MFU alerts 4–5% (expected for the twin). Untrained 181M scored 10.94 on the exam (matches 10.91 from the Guessing Game).
+- Problems fixed: first two attempts used `python3` (no CUDA torch on Jarvis); now uses the machine's `python`. 181M speed test ran out of memory at 32 windows per pass; default is now 8 (same 524,288-token batch, more rounds). `ONLY="speed"` reruns single steps.
+- Next: rerun the speed test (projected full-run hours and ₹); upload the twin checkpoint to a private HF repo (`magnateadi/chotu-twin`); stop the machine; GPT-2 124M and SmolLM2-135M bits-per-byte baselines; Session 4; get IndiaAI portal access (H200 ₹140/h vs Jarvis H100 ₹330/h) for the real run.
+- Notes for the other person: `train.py` applies weight decay 0.1 to 2-D weights only (norms excluded), the usual practice; say if you'd rather decay everything. Checkpoints and the model are not in git (they stay on the machine / HF). The flight-school cheat sheet is now in `docs/FLIGHT_SCHOOL.md`; GPU cost estimates are in `dashboard/training_cost/`.
+
 
 ### 2026-10-31 · Adi · Learning: lesson 4 (batch size lab)
 - Did: lesson 4. `learning/batch_size/compass.py` measures how much gradient directions from 1–256 windows agree (at the random start and after 256 strides); race of 4 batch sizes on the same 2,048 windows. Page "Ask the Crowd" built by `learning/batch_size/build.py`; logs in `learning/batch_size/runs/`.

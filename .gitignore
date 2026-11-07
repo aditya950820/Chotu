@@ -12,3 +12,7 @@ __pycache__/
 .env
 .DS_Store
 .ipynb_checkpoints/
+
+# Dashboard sync working copy
+dashboard/twin_day/live/
+dashboard/twin_day/twin.json

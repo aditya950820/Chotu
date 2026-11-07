@@ -1,0 +1,347 @@
+<meta name="dash-one-writer">
+<style>
+#dash-root .tc{display:grid;gap:var(--cds-gap-xl);font-family:var(--font-anthropic-sans);color:var(--color-fg);max-width:1100px;margin-inline:auto}
+.tc h1{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);margin:0}
+.tc h2{font-size:var(--cds-font-size-heading);font-weight:var(--cds-font-weight-medium);margin:0}
+.tc p{margin:0}
+.tc .tc-head{display:grid;gap:var(--cds-gap-sm)}
+.tc .tc-lead{font-size:var(--cds-font-size-body);max-width:72ch}
+.tc .tc-lead b{font-weight:600;font-variant-numeric:tabular-nums}
+.tc .tc-muted{color:var(--color-fg-muted);font-size:var(--cds-font-size-caption)}
+.tc .tc-section{display:grid;gap:var(--cds-gap-md)}
+.tc .tc-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr));gap:var(--cds-gap-md)}
+.tc .tc-card{background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);padding:var(--cds-pad-lg);display:grid;gap:var(--cds-gap-sm);align-content:start;min-width:0}
+.tc .tc-big{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);font-variant-numeric:tabular-nums;line-height:1.1}
+.tc .tc-stat{display:flex;justify-content:space-between;gap:var(--cds-gap-sm);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);border-top:1px solid var(--color-border-line);padding-top:var(--cds-pad-xs)}
+.tc .tc-stat span:last-child{color:var(--color-fg);font-variant-numeric:tabular-nums}
+.tc .tc-tag{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.tc .tc-chart{position:relative;width:100%}
+.tc .tc-chart svg{display:block;width:100%;height:auto;overflow:visible}
+.tc .tc-dots{min-height:336px}
+.tc .tc-bars{min-height:300px}
+.tc .tc-legend{display:flex;flex-wrap:wrap;gap:var(--cds-gap-md);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.tc .tc-sw{display:inline-block;width:.625rem;height:.625rem;border-radius:50%;margin-right:var(--cds-gap-xs);vertical-align:middle}
+.tc .tc-tip{position:absolute;pointer-events:none;background:var(--cds-surface-popover);border:1px solid var(--cds-border);border-radius:var(--cds-radius);box-shadow:var(--cds-shadow-popover);padding:var(--cds-pad-xs) var(--cds-pad-sm);font-size:var(--cds-font-size-caption);white-space:nowrap;z-index:2;font-variant-numeric:tabular-nums}
+.tc .tc-tip .tc-tip-h{color:var(--cds-text-secondary)}
+.tc .tc-seg{display:flex;flex-wrap:wrap;gap:var(--cds-gap-xs)}
+.tc .tc-seg button{font:inherit;font-size:var(--cds-font-size-caption);padding:var(--cds-pad-xs) var(--cds-pad-md);border-radius:999px;border:1px solid var(--color-border-line);background:var(--color-panel);color:var(--color-fg);cursor:pointer}
+.tc .tc-seg button[aria-pressed="true"]{background:var(--color-fg);color:var(--color-bg);border-color:var(--color-fg)}
+.tc .tc-tablebox{overflow-x:auto}
+.tc table{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-caption);font-variant-numeric:tabular-nums}
+.tc th,.tc td{text-align:left;padding:var(--cds-pad-xs) var(--cds-pad-sm);border-bottom:1px solid var(--color-border-line);white-space:nowrap}
+.tc th{color:var(--color-fg-muted);font-weight:var(--cds-font-weight-medium)}
+.tc td.n,.tc th.n{text-align:right}
+.tc tr.tc-pick td{font-weight:600}
+.tc ul.tc-list{margin:0;padding-left:1.1rem;display:grid;gap:var(--cds-gap-xs);font-size:var(--cds-font-size-body);max-width:80ch}
+.tc .tc-fail{display:flex;align-items:center;justify-content:center;gap:var(--cds-gap-xs);min-height:inherit;color:var(--color-fg-muted);font-size:var(--cds-font-size-caption)}
+.tc .tc-fail i{width:.375rem;height:.375rem;border-radius:50%;background:var(--color-bad);display:inline-block}
+[data-dash-source-state=refreshing]{opacity:.5;transition:opacity var(--cds-dur-slow)}
+</style>
+
+<div class="tc">
+  <header class="tc-head">
+    <h1>Training cost by model size</h1>
+    <p class="tc-lead">On the H200 SXM, training Chotu costs about <b data-draw="val" data-fmt="inr" data-source="costs" data-field="cost_inr" data-where="model=Chotu (181M)&amp;card=H200 SXM">—</b>. A 7B model costs <b data-draw="val" data-fmt="x" data-source="vs_chotu" data-field="times" data-where="model=Middle (7B)">—</b> as much, and a 100B model <b data-draw="val" data-fmt="x" data-source="vs_chotu" data-field="times" data-where="model=Big (100B)">—</b> as much.</p>
+    <p class="tc-muted">Estimates, not quotes: compute needed (about 6 × parameters × training tokens), each card's approximate peak speed, an assumed share of that speed actually used (MFU), and the portal's on-demand price per card-hour. A 10-minute speed test on your own code is what settles the real number.</p>
+  </header>
+
+  <section class="tc-section" id="sizes">
+    <h2>Three sizes on the H200 SXM</h2>
+    <div class="tc-tiles">
+      <div class="tc-card">
+        <span class="tc-tag">Chotu · 181M parameters</span>
+        <span class="tc-big" data-draw="val" data-fmt="inr" data-source="costs" data-field="cost_inr" data-where="model=Chotu (181M)&amp;card=H200 SXM">—</span>
+        <div class="tc-stat"><span>GPU-hours</span><span data-draw="val" data-fmt="num" data-source="costs" data-field="gpu_hours" data-where="model=Chotu (181M)&amp;card=H200 SXM">—</span></div>
+        <div class="tc-stat"><span>GPUs used at once</span><span data-draw="val" data-fmt="num" data-source="models" data-field="cluster" data-where="model=Chotu (181M)">—</span></div>
+        <div class="tc-stat"><span>Wall-clock days</span><span data-draw="val" data-fmt="num" data-source="costs" data-field="days_on_cluster" data-where="model=Chotu (181M)&amp;card=H200 SXM">—</span></div>
+        <div class="tc-stat"><span>Compared with Chotu</span><span>Baseline</span></div>
+      </div>
+      <div class="tc-card">
+        <span class="tc-tag">Middle · 7B parameters</span>
+        <span class="tc-big" data-draw="val" data-fmt="inr" data-source="costs" data-field="cost_inr" data-where="model=Middle (7B)&amp;card=H200 SXM">—</span>
+        <div class="tc-stat"><span>GPU-hours</span><span data-draw="val" data-fmt="num" data-source="costs" data-field="gpu_hours" data-where="model=Middle (7B)&amp;card=H200 SXM">—</span></div>
+        <div class="tc-stat"><span>GPUs used at once</span><span data-draw="val" data-fmt="num" data-source="models" data-field="cluster" data-where="model=Middle (7B)">—</span></div>
+        <div class="tc-stat"><span>Wall-clock days</span><span data-draw="val" data-fmt="num" data-source="costs" data-field="days_on_cluster" data-where="model=Middle (7B)&amp;card=H200 SXM">—</span></div>
+        <div class="tc-stat"><span>Compared with Chotu</span><span data-draw="val" data-fmt="x" data-source="vs_chotu" data-field="times" data-where="model=Middle (7B)">—</span></div>
+      </div>
+      <div class="tc-card">
+        <span class="tc-tag">Big · 100B parameters</span>
+        <span class="tc-big" data-draw="val" data-fmt="inr" data-source="costs" data-field="cost_inr" data-where="model=Big (100B)&amp;card=H200 SXM">—</span>
+        <div class="tc-stat"><span>GPU-hours</span><span data-draw="val" data-fmt="num" data-source="costs" data-field="gpu_hours" data-where="model=Big (100B)&amp;card=H200 SXM">—</span></div>
+        <div class="tc-stat"><span>GPUs used at once</span><span data-draw="val" data-fmt="num" data-source="models" data-field="cluster" data-where="model=Big (100B)">—</span></div>
+        <div class="tc-stat"><span>Wall-clock days</span><span data-draw="val" data-fmt="num" data-source="costs" data-field="days_on_cluster" data-where="model=Big (100B)&amp;card=H200 SXM">—</span></div>
+        <div class="tc-stat"><span>Compared with Chotu</span><span data-draw="val" data-fmt="x" data-source="vs_chotu" data-field="times" data-where="model=Big (100B)">—</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tc-section" id="all-cards">
+    <h2>Every card, all three sizes</h2>
+    <div class="tc-card">
+      <p class="tc-muted">Total training cost per card, on a log scale: each step right is 10× more. Rows are sorted by the 100B cost, cheapest first. The gap between dots in a row is the jump in model size; the spread down a column is the choice of card.</p>
+      <div class="tc-legend">
+        <span><i class="tc-sw" data-i="0"></i>Chotu · 181M</span>
+        <span><i class="tc-sw" data-i="1"></i>Middle · 7B</span>
+        <span><i class="tc-sw" data-i="2"></i>Big · 100B</span>
+      </div>
+      <div class="tc-chart tc-dots" data-draw="dots" data-source="costs"></div>
+    </div>
+  </section>
+
+  <section class="tc-section" id="one-size">
+    <h2>One size at a time</h2>
+    <div class="tc-seg" role="group" aria-label="Model size">
+      <button type="button" data-model="Chotu (181M)" aria-pressed="true">Chotu · 181M</button>
+      <button type="button" data-model="Middle (7B)" aria-pressed="false">Middle · 7B</button>
+      <button type="button" data-model="Big (100B)" aria-pressed="false">Big · 100B</button>
+    </div>
+    <div class="tc-card">
+      <h2>Total cost by card</h2>
+      <p class="tc-muted">Cheapest first. The H200 SXM is highlighted: the recommended card for Chotu, since it runs your current code unchanged.</p>
+      <div class="tc-chart tc-bars" data-draw="bars" data-source="costs"></div>
+    </div>
+    <div class="tc-card">
+      <h2>The full sheet</h2>
+      <p class="tc-muted">Wall-clock days use the GPU count in the assumptions below. Cards to hold the model is the fewest cards whose memory fits the model plus the coach's notebook, before anything else.</p>
+      <div class="tc-tablebox">
+        <table data-source="costs" data-row-key="model,card">
+          <thead><tr>
+            <th data-field="card">Card</th>
+            <th data-field="provider">Provider</th>
+            <th class="n" data-field="inr_per_hr">₹ per card-hour</th>
+            <th class="n" data-field="gpu_hours">GPU-hours</th>
+            <th class="n" data-field="cost_inr">Total cost (₹)</th>
+            <th class="n" data-field="days_on_cluster">Wall-clock days</th>
+            <th class="n" data-field="min_cards_to_hold">Cards to hold model</th>
+            <th data-field="note">The catch</th>
+          </tr></thead>
+          <tbody data-draw="rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="tc-section" id="assumptions">
+    <h2>What each size assumes</h2>
+    <div class="tc-card">
+      <p class="tc-muted">Chotu uses its real plan. The 7B and 100B models read the usual compute-efficient amount of text for their size; many real models read far more, which raises the cost in proportion. MFU is lower for Chotu because small models leave the GPU partly idle.</p>
+      <div class="tc-tablebox">
+        <table data-source="models" data-row-key="model">
+          <thead><tr>
+            <th data-field="model">Model</th>
+            <th class="n" data-field="params">Parameters</th>
+            <th class="n" data-field="tokens">Training tokens</th>
+            <th class="n" data-field="tokens_per_param">Tokens per parameter</th>
+            <th class="n" data-field="mfu">Assumed MFU</th>
+            <th class="n" data-field="cluster">GPUs used at once</th>
+            <th class="n" data-field="state_gb">Model + optimizer memory (GB)</th>
+          </tr></thead>
+          <tbody data-draw="mrows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="tc-section" id="left-out">
+    <h2>What these numbers leave out</h2>
+    <div class="tc-card">
+      <ul class="tc-list">
+        <li>Storage for data and checkpoints, and GST. The portal total had no storage entered.</li>
+        <li>The LR test, smaller experiments and restarts. Real projects often spend several times the final run on these.</li>
+        <li>Availability. The portal lists single-card instances; 64 or 1,024 linked cards for the bigger models is a separate booking, and it may not exist at these prices.</li>
+        <li>Fast links between cards. Multi-card training needs them; the L4, Trainium and TPU rows are least likely to scale the way this sheet assumes.</li>
+        <li>Real speed. Every card is rated at the same MFU here. On Chotu, big cards like the B200 likely run below it, which erases their small paper advantage.</li>
+        <li>People. The engineers who build and babysit a 100B run cost more than the GPUs for anything smaller.</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<script>
+  const MODELS = ['Chotu (181M)', 'Middle (7B)', 'Big (100B)'];
+  const PICK = 'H200 SXM';
+  const nIN = new Intl.NumberFormat('en-IN', {maximumFractionDigits: 1});
+  const iIN = new Intl.NumberFormat('en-IN', {maximumFractionDigits: 0});
+  const num = (v) => Number(v);
+  const FMT = {
+    inr: (v) => '₹' + iIN.format(v),
+    num: (v) => nIN.format(v),
+    x: (v) => iIN.format(v) + '×',
+    pct: (v) => d3.format('.0%')(v),
+    price: (v) => '₹' + v.toFixed(2)
+  };
+  const short = (v) => v >= 1e12 ? +(v / 1e12).toFixed(1) + 'T' : v >= 1e9 ? +(v / 1e9).toFixed(1) + 'B' : +(v / 1e6).toFixed(1) + 'M';
+  const lakh = (v) => v >= 1e7 ? '₹' + (v / 1e7).toFixed(1) + ' Cr' : v >= 1e5 ? '₹' + (v / 1e5).toFixed(2) + ' L' : '₹' + iIN.format(v);
+  window.tcState = window.tcState || {model: 'Chotu (181M)'};
+
+  dash.calc('vs_chotu', {
+    inputs: ['costs'],
+    title: 'Cost compared with Chotu',
+    description: 'Each size’s H200 SXM cost divided by Chotu’s H200 SXM cost, rounded.',
+    fn: (costs) => {
+      const h200 = costs.filter((r) => r.card === 'H200 SXM');
+      const chotu = h200.find((r) => r.model === 'Chotu (181M)');
+      if (!chotu) return [];
+      return h200.map((r) => ({model: r.model, times: Math.round(Number(r.cost_inr) / Number(chotu.cost_inr))}));
+    }
+  });
+
+  const rowsOf = (id) => { const d = dash.data(id); return d.status === 'ok' ? d.data : null; };
+  const failed = (id) => { const s = dash.data(id).status; return s === 'error' || s === 'connect' || s === 'declined'; };
+  const failLine = (el) => {
+    const box = document.createElement('div'); box.className = 'tc-fail';
+    const dot = document.createElement('i'); const t = document.createElement('span'); t.textContent = 'Failed to load';
+    box.append(dot, t); el.replaceChildren(box);
+  };
+  const whereRow = (rows, w) => {
+    const parts = w.split('&').map((p) => p.split('=').map(decodeURIComponent));
+    return rows.find((r) => parts.every(([k, v]) => String(r[k]) === v));
+  };
+
+  dash.draw('val', (el) => {
+    const rows = rowsOf(el.dataset.source);
+    const r = rows && whereRow(rows, el.dataset.where || '');
+    el.textContent = r ? FMT[el.dataset.fmt](num(r[el.dataset.field])) : '—';
+  });
+
+  function tipper(el) {
+    let tip = el.querySelector('.tc-tip');
+    if (!tip) { tip = document.createElement('div'); tip.className = 'tc-tip'; tip.hidden = true; el.append(tip); }
+    return {
+      show(ev, head, lines) {
+        tip.replaceChildren();
+        const h = document.createElement('div'); h.className = 'tc-tip-h'; h.textContent = head; tip.append(h);
+        lines.forEach((l) => { const d = document.createElement('div'); d.textContent = l; tip.append(d); });
+        tip.hidden = false;
+        const box = el.getBoundingClientRect();
+        let x = ev.clientX - box.left + 12, y = ev.clientY - box.top + 12;
+        const w = tip.offsetWidth, hgt = tip.offsetHeight;
+        if (x + w > box.width) x = Math.max(0, ev.clientX - box.left - w - 12);
+        if (y + hgt > box.height) y = Math.max(0, ev.clientY - box.top - hgt - 12);
+        tip.style.left = x + 'px'; tip.style.top = y + 'px';
+      },
+      hide() { tip.hidden = true; }
+    };
+  }
+
+  const LOGT = [1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9];
+  const logLabel = (v) => ({1e3: '₹1K', 1e4: '₹10K', 1e5: '₹1L', 1e6: '₹10L', 1e7: '₹1Cr', 1e8: '₹10Cr', 1e9: '₹100Cr'})[v];
+
+  dash.draw('dots', (el) => {
+    if (failed('costs')) { failLine(el); return; }
+    const rows = rowsOf('costs');
+    if (!rows) { el.replaceChildren(); el.textContent = '—'; return; }
+    el.replaceChildren();
+    const get = (c, m) => rows.find((r) => r.card === c && r.model === m);
+    const cards = [...new Set(rows.map((r) => r.card))].sort((a, b) => num(get(a, 'Big (100B)').cost_inr) - num(get(b, 'Big (100B)').cost_inr));
+    const W = Math.max(320, el.clientWidth || 640), rowH = 30, top = 30, bottom = 10;
+    const H = top + cards.length * rowH + bottom;
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).style('font-family', 'var(--font-anthropic-sans)').attr('role', 'img').attr('aria-label', 'Training cost per card for three model sizes, log scale');
+    const probe = svg.append('g');
+    let ml = 0;
+    cards.forEach((c) => { const t = probe.append('text').attr('font-size', 12).text(c); ml = Math.max(ml, t.node().getComputedTextLength()); });
+    probe.remove();
+    ml += 16;
+    const x = d3.scaleLog([1e3, 1e9], [ml, W - 20]);
+    const g = svg.append('g');
+    LOGT.forEach((t) => {
+      g.append('line').attr('x1', x(t)).attr('x2', x(t)).attr('y1', top - 6).attr('y2', H - bottom).attr('stroke', 'var(--cds-chart-grid)');
+      g.append('text').attr('x', x(t)).attr('y', top - 12).attr('text-anchor', 'middle').attr('font-size', 11).attr('fill', 'var(--color-fg-muted)').text(logLabel(t));
+    });
+    const tt = tipper(el);
+    cards.forEach((c, i) => {
+      const y = top + i * rowH + rowH / 2;
+      const vals = MODELS.map((m) => get(c, m)).filter(Boolean);
+      g.append('text').attr('x', ml - 12).attr('y', y + 4).attr('text-anchor', 'end').attr('font-size', 12)
+        .attr('font-weight', c === PICK ? 600 : 400).attr('fill', 'var(--color-fg)').text(c);
+      const xs = vals.map((r) => x(num(r.cost_inr)));
+      g.append('line').attr('x1', d3.min(xs)).attr('x2', d3.max(xs)).attr('y1', y).attr('y2', y).attr('stroke', 'var(--cds-chart-axis)').attr('stroke-width', 1);
+      vals.forEach((r) => {
+        const mi = MODELS.indexOf(r.model);
+        g.append('circle').attr('cx', x(num(r.cost_inr))).attr('cy', y).attr('r', c === PICK ? 6.5 : 5.5)
+          .attr('fill', dash.colors[mi]).attr('stroke', 'var(--color-panel)').attr('stroke-width', 1.5).style('cursor', 'default')
+          .on('pointerenter pointermove', (ev) => tt.show(ev, `${r.card} · ${r.model}`, [`Total ${lakh(num(r.cost_inr))} (₹${iIN.format(num(r.cost_inr))})`, `${nIN.format(num(r.gpu_hours))} GPU-hours`]))
+          .on('pointerleave', () => tt.hide());
+      });
+    });
+  });
+
+  dash.draw('bars', (el) => {
+    if (failed('costs')) { failLine(el); return; }
+    const all = rowsOf('costs');
+    if (!all) { el.replaceChildren(); el.textContent = '—'; return; }
+    el.replaceChildren();
+    const m = window.tcState.model;
+    const rows = all.filter((r) => r.model === m).sort((a, b) => num(a.cost_inr) - num(b.cost_inr));
+    const W = Math.max(320, el.clientWidth || 640), rowH = 28, top = 4, bottom = 4;
+    const H = top + rows.length * rowH + bottom;
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).style('font-family', 'var(--font-anthropic-sans)').attr('role', 'img').attr('aria-label', `Total training cost by card for ${m}`);
+    const probe = svg.append('g');
+    let ml = 0, mr = 0;
+    rows.forEach((r) => {
+      const a = probe.append('text').attr('font-size', 12).text(r.card); ml = Math.max(ml, a.node().getComputedTextLength());
+      const b = probe.append('text').attr('font-size', 12).text(lakh(num(r.cost_inr))); mr = Math.max(mr, b.node().getComputedTextLength());
+    });
+    probe.remove();
+    ml += 16; mr += 16;
+    const x = d3.scaleLinear([0, d3.max(rows, (r) => num(r.cost_inr))], [ml, W - mr]);
+    const tt = tipper(el);
+    rows.forEach((r, i) => {
+      const y = top + i * rowH;
+      const pick = r.card === PICK;
+      svg.append('text').attr('x', ml - 12).attr('y', y + rowH / 2 + 4).attr('text-anchor', 'end').attr('font-size', 12)
+        .attr('font-weight', pick ? 600 : 400).attr('fill', 'var(--color-fg)').text(r.card);
+      svg.append('rect').attr('x', ml).attr('y', y + 5).attr('height', rowH - 10).attr('width', Math.max(1, x(num(r.cost_inr)) - ml)).attr('rx', 3)
+        .attr('fill', pick ? dash.colors[0] : 'var(--cds-chart-muted)')
+        .on('pointerenter pointermove', (ev) => tt.show(ev, `${r.card} · ${r.provider}`, [`Total ${lakh(num(r.cost_inr))}`, `₹${num(r.inr_per_hr).toFixed(2)} per card-hour`, `${nIN.format(num(r.gpu_hours))} GPU-hours`]))
+        .on('pointerleave', () => tt.hide());
+      svg.append('text').attr('x', x(num(r.cost_inr)) + 8).attr('y', y + rowH / 2 + 4).attr('font-size', 12)
+        .attr('font-weight', pick ? 600 : 400).attr('fill', pick ? 'var(--color-fg)' : 'var(--color-fg-muted)').text(lakh(num(r.cost_inr)));
+    });
+  });
+
+  dash.draw('rows', (tb) => {
+    const all = rowsOf('costs');
+    tb.replaceChildren();
+    if (!all) return;
+    const m = window.tcState.model;
+    all.filter((r) => r.model === m).sort((a, b) => num(a.cost_inr) - num(b.cost_inr)).forEach((r) => {
+      const tr = document.createElement('tr');
+      tr.dataset.key = encodeURIComponent(r.model) + ',' + encodeURIComponent(r.card);
+      if (r.card === PICK) tr.className = 'tc-pick';
+      const cells = [
+        [r.card, ''], [r.provider, ''], ['₹' + num(r.inr_per_hr).toFixed(2), 'n'], [nIN.format(num(r.gpu_hours)), 'n'],
+        ['₹' + iIN.format(num(r.cost_inr)), 'n'], [nIN.format(num(r.days_on_cluster)), 'n'], [iIN.format(num(r.min_cards_to_hold)), 'n'], [r.note, '']
+      ];
+      cells.forEach(([t, c]) => { const td = document.createElement('td'); if (c) td.className = c; td.textContent = t; tr.append(td); });
+      tb.append(tr);
+    });
+  });
+
+  dash.draw('mrows', (tb) => {
+    const rows = rowsOf('models');
+    tb.replaceChildren();
+    if (!rows) return;
+    rows.forEach((r) => {
+      const tr = document.createElement('tr');
+      const cells = [
+        [r.model, ''], [short(num(r.params)), 'n'], [short(num(r.tokens)), 'n'], [iIN.format(num(r.tokens_per_param)), 'n'],
+        [d3.format('.0%')(num(r.mfu)), 'n'], [iIN.format(num(r.cluster)), 'n'], [nIN.format(num(r.state_gb)), 'n']
+      ];
+      cells.forEach(([t, c]) => { const td = document.createElement('td'); if (c) td.className = c; td.textContent = t; tr.append(td); });
+      tb.append(tr);
+    });
+  });
+
+  document.querySelectorAll('.tc-seg button').forEach((b) => {
+    b.addEventListener('click', () => {
+      window.tcState.model = b.dataset.model;
+      document.querySelectorAll('.tc-seg button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+      dash.draw('bars'); dash.draw('rows');
+    });
+  });
+
+  dash.onData(() => {
+    document.querySelectorAll('.tc-sw').forEach((s) => { s.style.background = dash.colors[Number(s.dataset.i)] || ''; });
+  });
+</script>

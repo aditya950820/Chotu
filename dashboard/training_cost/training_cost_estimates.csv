@@ -1,0 +1,31 @@
+model,card,provider,inr_per_hr,tflops,mem_gb,gpu_hours,cost_inr,days_on_cluster,min_cards_to_hold,note
+Chotu (181M),H200 SXM,Neysa,140.00,989,141,20.3,2847,0.8,1,Same CUDA stack as H100
+Chotu (181M),H200 NVL,Jio Platforms,146.38,835,141,24.1,3526,1.0,1,Lower-power H200
+Chotu (181M),B200 SXM,Yotta / Cyfuture,290.70,2250,180,8.9,2598,0.4,1,Underused on small models
+Chotu (181M),B300 SXM,Neysa,351.00,2250,288,8.9,3137,0.4,1,Extra speed mostly in FP4
+Chotu (181M),MI300X,Jio Platforms,168.20,1307,192,15.4,2588,0.6,1,AMD ROCm software
+Chotu (181M),MI325X,Cyfuture,169.20,1307,256,15.4,2604,0.6,1,AMD ROCm software
+Chotu (181M),TPU v6e,Sify,114.94,918,32,21.9,2518,0.9,1,Needs JAX / PyTorch-XLA port
+Chotu (181M),A100 80GB,E2E Networks,135.90,312,80,64.5,8760,2.7,1,Older generation
+Chotu (181M),L4,Sify,44.86,121,24,166.2,7456,6.9,1,"Small, no fast links between cards"
+Chotu (181M),Trainium trn1,Locuz,130.21,190,32,105.8,13782,4.4,1,AWS Neuron software
+Middle (7B),H200 SXM,Neysa,140.00,989,141,4128.7,578025,2.7,1,Same CUDA stack as H100
+Middle (7B),H200 NVL,Jio Platforms,146.38,835,141,4890.2,715830,3.2,1,Lower-power H200
+Middle (7B),B200 SXM,Yotta / Cyfuture,290.70,2250,180,1814.8,527567,1.2,1,Underused on small models
+Middle (7B),B300 SXM,Neysa,351.00,2250,288,1814.8,637000,1.2,1,Extra speed mostly in FP4
+Middle (7B),MI300X,Jio Platforms,168.20,1307,192,3124.2,525491,2.0,1,AMD ROCm software
+Middle (7B),MI325X,Cyfuture,169.20,1307,256,3124.2,528615,2.0,1,AMD ROCm software
+Middle (7B),TPU v6e,Sify,114.94,918,32,4448.1,511262,2.9,4,Needs JAX / PyTorch-XLA port
+Middle (7B),A100 80GB,E2E Networks,135.90,312,80,13087.6,1778606,8.5,2,Older generation
+Middle (7B),L4,Sify,44.86,121,24,33746.6,1513871,22.0,5,"Small, no fast links between cards"
+Middle (7B),Trainium trn1,Locuz,130.21,190,32,21491.2,2798373,14.0,4,AWS Neuron software
+Big (100B),H200 SXM,Neysa,140.00,989,141,842602.0,117964274,34.3,12,Same CUDA stack as H100
+Big (100B),H200 NVL,Jio Platforms,146.38,835,141,998004.0,146087824,40.6,12,Lower-power H200
+Big (100B),B200 SXM,Yotta / Cyfuture,290.70,2250,180,370370.4,107666667,15.1,9,Underused on small models
+Big (100B),B300 SXM,Neysa,351.00,2250,288,370370.4,130000000,15.1,6,Extra speed mostly in FP4
+Big (100B),MI300X,Jio Platforms,168.20,1307,192,637592.5,107243050,25.9,9,AMD ROCm software
+Big (100B),MI325X,Cyfuture,169.20,1307,256,637592.5,107880643,25.9,7,AMD ROCm software
+Big (100B),TPU v6e,Sify,114.94,918,32,907770.5,104339143,36.9,50,Needs JAX / PyTorch-XLA port
+Big (100B),A100 80GB,E2E Networks,135.90,312,80,2670940.2,362980769,108.7,20,Older generation
+Big (100B),L4,Sify,44.86,121,24,6887052.3,308953168,280.2,67,"Small, no fast links between cards"
+Big (100B),Trainium trn1,Locuz,130.21,190,32,4385964.9,571096491,178.5,50,AWS Neuron software

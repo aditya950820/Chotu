@@ -11,6 +11,12 @@ Newest at the top.
 - Still unclear:
 -->
 
+### 2026-11-07 · Adi · Lessons 5–8 and twin day, with Claude
+- Lessons 5–8: practice paper vs exam and bits per byte; speed, MFU and the first 10 minutes; checkpoints and the fire drill; judging what the knobs learned (samples, copying test, word map, knob health). Everything is collected in `docs/FLIGHT_SCHOOL.md` (cheat sheet, checklist, glossary).
+- Seen for real today: the cliff (loss below 6 well before step 300), exam dots falling with practice, a resumed run lying on top of the uninterrupted one, MFU of 4–5% on a model too small for an H100, and a twin that writes grammatical but repetitive English.
+- Open questions: why does the 7M twin fail the copying test while bigger models pass it? Why did 32 windows per pass run out of memory for 181M but not for 7M? Why can a 7M model read 140M tokens in 3 minutes while 181M needs 15–25 hours for 10B?
+- Still unclear:
+
 ### 2026-10-31 · Adi · Lesson 4: batch size (ask the crowd), with Claude
 - Analogy: each window is a stranger you ask for directions; the batch is the crowd you ask before each stride; the reading budget is fixed, so a bigger crowd means fewer strides.
 - Compasses (real gradients of the tiny twin): typical miss vs a 768-window reference. 1 window 75°, 8 windows 53°, 32 windows 33°, 256 windows 15° at the start. After 256 strides, small crowds disagree more (1 window 86°, 32 windows 41°).
