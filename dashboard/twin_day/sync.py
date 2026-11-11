@@ -249,7 +249,9 @@ for phase, items in P:
     for item, s_, ev in items:
         add(phase, item, s_, ev)
 rows.extend(checks)
-json.dump(rows, open(out_path, "w"))
+clean = lambda v: None if isinstance(v, float) and not math.isfinite(v) else v  # NaN/inf is not valid JSON for the page
+rows = [{k: clean(v) for k, v in r.items()} for r in rows]
+json.dump(rows, open(out_path, "w"), allow_nan=False)
 live = rows[-len(checks) - 1] if False else next(r for r in rows if r["k"] == "live")
 print(json.dumps({k: live.get(k) for k in ("run", "state", "step", "run_steps", "loss", "machine_min", "cost_so_far", "pushed")}),
       "rows", len(rows), "report_pushed", report_pushed)
