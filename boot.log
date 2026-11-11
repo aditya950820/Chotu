@@ -1,0 +1,5 @@
+boot Wed Nov 11 16:03:09 UTC 2026
+NVIDIA H200
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+AssertionError
