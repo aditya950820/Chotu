@@ -7,7 +7,7 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 
 - **Current session:** Session 3 · Twin day rehearsal done on a Jarvis H100 (branch `twin-day`); 181M speed test still to rerun
 - **Who's on what:**
-  - Adi: rerun the 181M speed test, save the twin to HF, stop the machine
+  - Adi: next H100 session: `ONLY="speed main5x" bash scripts/twin_day.sh` (181M speed test + 5x twin run, then the machine pauses itself)
   - Partner: review `reports/twin_day.md` and `train.py` on branch `twin-day`
 - **Blocked on:** nothing
 - **Paid resources running:**
@@ -39,6 +39,13 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Next:
 - Notes for the other person:
 -->
+
+### 2026-11-11 · Adi · Session 3: 5x twin run prepared
+- Did: `scripts/twin_day.sh` gains an opt-in step `main5x`: the same 7M twin reads 700M tokens (5x the 140M run, ~10,680 steps) with the same recipe and the same locked exam, to test whether more reading improves it. It reads from 5 train shards (5x the text, so repeats stay at the same share as the 140M run); the 4 extra shards download in the background during the speed test, so the GPU never waits. The final checkpoint and logs then go to HF `magnateadi/chotu-twin-day` (`twin-day/main-5x/`) before the machine pauses. `scripts/twin_report.py` adds a 140M vs 700M table (falls back to the 140M logs in git on a fresh machine).
+- Tested: CPU smoke run on fake shards (train.py → report table works), bash syntax, size test passes. Not yet run on a GPU.
+- Command on the H100 (repo root, branch twin-day, `.env` with HF_TOKEN, GH_TOKEN, JL_API_KEY, JL_MACHINE_ID): `ONLY="speed main5x" bash scripts/twin_day.sh 2>&1 | tee ~/twin_day_5x.log`
+- Estimate: speed test ~2 min, 5x run ~15 min at ~909k tok/s, about ₹100–150 in total including setup.
+- Notes for the other person: the comparison that counts is held-out bits per byte (140M run: 1.3881). The 5x run's score at step ~2,136 is not like-for-like (no slow-down yet).
 
 ### 2026-11-07 · Adi · Session 3: twin day files synced
 - Did: all 10 twin-day checkpoints (85 MB each) uploaded to the private HF repo `magnateadi/chotu-twin-day` (covers the "upload the twin checkpoint" next step above). Added the full `logs/twin-day/twin_day.log`, the H100 package list `logs/twin-day/pip-freeze-h100.txt`, `scripts/setup_gpu.sh` (builds a Python 3.12 venv with CUDA torch on a bare VM) and `scripts/talk.py` (`python scripts/talk.py "Once upon a time"` fetches the final twin checkpoint from HF and continues the text).
