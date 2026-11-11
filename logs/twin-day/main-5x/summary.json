@@ -1,0 +1,20 @@
+{
+ "name": "main-5x",
+ "kind": "train",
+ "model": "twin",
+ "params": 7079552,
+ "gpu": "NVIDIA H200",
+ "reason": "finished",
+ "step": 10681,
+ "steps": 10681,
+ "run_steps": 10681,
+ "tokens": 699990016,
+ "minutes": 10.81,
+ "cost_inr": 78.4,
+ "tok_s": 1153631,
+ "final_loss": 4.1749,
+ "val_bpb": 1.3292,
+ "copy_first": 13.570727348327637,
+ "copy_second": 13.324830055236816,
+ "mfu": 0.0642
+}

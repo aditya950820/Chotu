@@ -1,0 +1,22 @@
+{
+ "name": "speed-181m",
+ "kind": "speed",
+ "model": "chotu",
+ "params": 180925056,
+ "gpu": "NVIDIA H200",
+ "reason": "nan",
+ "step": 1,
+ "steps": 19187,
+ "run_steps": 30,
+ "tokens": 524288,
+ "minutes": 1.13,
+ "cost_inr": 8.2,
+ "tok_s": 7718,
+ "final_loss": 10.9532,
+ "val_bpb": 3.4763,
+ "copy_first": null,
+ "copy_second": null,
+ "mfu": 0.0124,
+ "full_run_hours": 362.1,
+ "full_run_cost_inr": 157500
+}

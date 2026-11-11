@@ -1,13 +1,13 @@
-{"id": "setup", "status": "running", "note": "GPU check, packages, size test", "time": 1794071769}
-{"id": "setup", "status": "pass", "note": "NVIDIA H100 80GB HBM3, 81559 MiB; 2.14.1+cu130 cuda True transformers 5.20.2; size test 180,925,056 OK", "time": 1794071778}
-{"id": "data", "status": "running", "note": "download 1 train + 1 val shard", "time": 1794071778}
-{"id": "data", "status": "pass", "note": "train_000.bin val_000.bin ", "time": 1794071823}
-{"id": "overfit", "status": "running", "note": "150 steps on one batch", "time": 1794071823}
-{"id": "overfit", "status": "fail", "note": "final loss 1.3319 (should be < 1.0)", "time": 1794071842}
-{"id": "firedrill", "status": "running", "note": "reference run, crash at 70, resume", "time": 1794071842}
-{"id": "firedrill", "status": "pass", "note": "resumed run matches, max loss gap 0.0463", "time": 1794071880}
-{"id": "main", "status": "running", "note": "140M tokens, compile, samples", "time": 1794071880}
-{"id": "main", "status": "pass", "note": "val 1.3881 bpb, 909,337 tok/s, 2.97 min", "time": 1794072077}
-{"id": "speed", "status": "running", "note": "181M, 30 steps x 524,288 tokens", "time": 1794072077}
-{"id": "speed", "status": "fail", "note": "speed test did not finish", "time": 1794072188}
-{"id": "end", "status": "info", "note": "script finished", "time": 1794072188}
+{"id": "setup", "status": "running", "note": "GPU check, packages, size test", "time": 1794413968}
+{"id": "setup", "status": "pass", "note": "NVIDIA H200, 143771 MiB; 2.14.1+cu130 cuda True transformers 5.20.2; size test 180,925,056 OK", "time": 1794413982}
+{"id": "data", "status": "running", "note": "download 1 train + 1 val shard", "time": 1794413982}
+{"id": "data", "status": "pass", "note": "train_000.bin val_000.bin ", "time": 1794414026}
+{"id": "data", "status": "info", "note": "downloading 4 more train shards in the background (for main5x)", "time": 1794414026}
+{"id": "speed", "status": "running", "note": "181M, 30 steps x 524,288 tokens", "time": 1794414026}
+{"id": "speed", "status": "pass", "note": "7,718 tok/s, MFU 1.2%, full run 362.1 h \u2248 \u20b9157,500", "time": 1794414138}
+{"id": "main5x", "status": "running", "note": "waiting for the extra train shards", "time": 1794414138}
+{"id": "main5x", "status": "running", "note": "700M tokens over 5 train shards, compile, samples", "time": 1794414140}
+{"id": "main5x", "status": "pass", "note": "val 1.3292 bpb (140M run: 1.3881), 1,153,631 tok/s, 10.81 min", "time": 1794414808}
+{"id": "upload", "status": "running", "note": "main-5x checkpoint to HF magnateadi/chotu-twin-day", "time": 1794414808}
+{"id": "upload", "status": "pass", "note": "twin-day/main-5x on HF", "time": 1794414827}
+{"id": "end", "status": "info", "note": "script finished", "time": 1794414827}
