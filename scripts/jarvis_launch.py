@@ -27,7 +27,7 @@ ap.add_argument("--branch", default="claude/chotu-project-setup-t9dncn", help="b
 ap.add_argument("--gpu", default="H100")
 ap.add_argument("--template", default="vm", help="'vm' = bare VM (H100s are offered as VMs)")
 ap.add_argument("--storage", type=int, default=100, help="disk in GB")
-ap.add_argument("--name", default="chotu-5x")
+ap.add_argument("--name", default="chotu-" + time.strftime("%m%d-%H%M"), help="unique, so the job pauses the right machine")
 ap.add_argument("--boot-minutes", type=float, default=25, help="pause if the job has not reported by then")
 ap.add_argument("--beat-minutes", type=float, default=8, help="pause if the machine has sent no boot heartbeat by then")
 ap.add_argument("--max-minutes", type=float, default=75, help="pause no matter what after this long")
@@ -60,7 +60,8 @@ beat() {{  # sign of life: step name + log tail (keys filtered out) to the live-
 }}
 echo "boot $(date)"; nvidia-smi --query-gpu=name --format=csv,noheader
 beat "1 machine up"
-[ -d Chotu ] || git clone -q -b {a.branch} "$GH" Chotu
+for i in $(seq 60); do git ls-remote "$GH" HEAD >/dev/null 2>&1 && break; sleep 5; done   # network can lag at boot
+[ -d Chotu ] || git clone -q -b {a.branch} "$GH" Chotu || {{ beat "FAILED: could not clone the repo"; exit 1; }}
 cd Chotu && git pull -q || true
 umask 077
 cat > .env <<'ENVEOF'
@@ -70,14 +71,14 @@ JL_API_KEY={env['JL_API_KEY']}
 GPU_PRICE={env.get('GPU_PRICE') or 330}
 ENVEOF
 beat "2 code cloned"
-# Python: the image's own CUDA torch if it works (containers ship one), else build ~/venv312 (bare VMs)
+# Python: the image's own CUDA torch if it is Python 3.12+ (our pins need it), else build ~/venv312
 PY=$(command -v python || command -v python3)
-if "$PY" -c "import sys, torch; assert sys.version_info >= (3, 10) and torch.cuda.is_available()"; then
+if "$PY" -c "import sys, torch; assert sys.version_info >= (3, 12) and torch.cuda.is_available()"; then
   echo "using the image's python: $PY $("$PY" -c 'import torch; print(torch.__version__)')"
   "$PY" -m pip install -q jarvislabs python-dotenv || true
 else
   command -v sudo >/dev/null || {{ printf '#!/bin/sh\nexec "$@"\n' > /usr/local/bin/sudo; chmod +x /usr/local/bin/sudo; }}
-  beat "3 building python (bare VM)"
+  beat "3 building python 3.12 + torch"
   bash scripts/setup_gpu.sh || {{ beat "FAILED: setup_gpu.sh"; exit 1; }}
   echo "PATH=$HOME/venv312/bin:$PATH" >> .env
   PY="$HOME/venv312/bin/python"
