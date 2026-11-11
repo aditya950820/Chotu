@@ -29,7 +29,7 @@ report_pushed = subprocess.run(["git", "ls-remote", URL, "twin-day"], capture_ou
     subprocess.run(["git", "-C", str(CLONE), "fetch", "-q", "--depth", "1", "origin", "twin-day"]).returncode == 0 and \
     "reports/twin_day.md" in subprocess.run(["git", "-C", str(CLONE), "ls-tree", "-r", "--name-only", "FETCH_HEAD"], capture_output=True, text=True).stdout
 
-RUN_ORDER = ["overfit", "drill-ref", "drill", "main", "speed-181m"]
+RUN_ORDER = ["overfit", "drill-ref", "drill", "main", "speed-181m", "main-5x"]
 rows, status, runs = [], {}, {}
 if root and root.exists():
     if (root / "status.jsonl").exists():
@@ -40,9 +40,15 @@ if root and root.exists():
     for d in sorted(root.iterdir()):
         if (d / "metrics.jsonl").exists():
             runs[d.name] = [json.loads(line) for line in open(d / "metrics.jsonl") if line.strip()]
+# the 140M main run is the baseline for the 5x run; on a fresh machine it is not in live-runs, so take it from twin-day
+if "main" not in runs and subprocess.run(["git", "-C", str(CLONE), "fetch", "-q", "--depth", "1", "origin", "twin-day"]).returncode == 0:
+    txt = git("show", "FETCH_HEAD:logs/twin-day/main/metrics.jsonl").stdout
+    if txt.strip():
+        runs["main"] = [json.loads(line) for line in txt.splitlines() if line.strip()]
 
 LABELS = {"setup": "Setup and size test", "data": "Download shards", "overfit": "Overfit one batch", "firedrill": "Fire drill",
-          "main": "Main twin run", "speed": "181M speed test", "end": "Report and push"}
+          "main": "Main twin run", "speed": "181M speed test", "main5x": "5x twin run (700M tokens)",
+          "upload": "Checkpoint to HF", "end": "Report and push"}
 if root and (root / "status.jsonl").exists():
     seen = {}
     for line in open(root / "status.jsonl"):
@@ -96,7 +102,7 @@ for name in RUN_ORDER[::-1]:
     if name in runs and steps_by_run.get(name):
         cur = name if cur is None else cur
 active = next((n for n in RUN_ORDER if status.get({"overfit": "overfit", "drill-ref": "firedrill", "drill": "firedrill",
-                                                   "main": "main", "speed-181m": "speed"}[n], {}).get("status") == "running"
+                                                   "main": "main", "speed-181m": "speed", "main-5x": "main5x"}[n], {}).get("status") == "running"
                and n in runs), None)
 cur = active or cur
 price = next((r.get("gpu_price") for rs in runs.values() for r in rs if r["t"] == "meta"), None)
@@ -178,6 +184,24 @@ add(T, "Report and logs pushed to GitHub", "done" if report_pushed else "todo", 
 add(T, "Machine stopped", "todo", "Stop it in the Jarvis dashboard")
 add(T, "Old Jarvis instance from 24 Oct paused or deleted", "todo", "PROGRESS.md still lists it as running")
 add(T, "PROGRESS.md log entry for today", "todo", "")
+
+# the 5x day: does reading 5x more (700M tokens) make the same 7M twin better?
+if "main5x" in status or "main-5x" in runs:
+    F = "1b · 5x twin run"
+    frun = next((r for r in rows if r["k"] == "run" and r["run"] == "main-5x"), {})
+    fev = [r for r in rows if r["k"] == "eval" and r["run"] == "main-5x"]
+    add(F, "181M speed test passes with 8 windows per pass (ran out of memory at 32)", *st("speed"))
+    add(F, "4 extra train shards downloaded while the GPU worked", "done" if status.get("data", {}).get("status") == "info" and st("main5x")[0] != "todo" else st("data")[0],
+        "5 train shards, so repeats stay at the 140M run's share")
+    add(F, "5x run: 700M tokens, same model, recipe and exam", *st("main5x"))
+    base = mevals[-1]["val_bpb"] if mevals else 1.3881
+    if frun.get("state") == "finished" and fev:
+        add(F, "Exam better than the 140M run", "done" if fev[-1]["val_bpb"] < base else "failed",
+            f"{fev[-1]['val_bpb']:.4f} vs {base:.4f} bits per byte ({(fev[-1]['val_bpb'] - base) / base:+.1%})")
+    else:
+        add(F, "Exam better than the 140M run", "running" if fev else "todo", f"140M run: {base:.4f} bits per byte")
+    add(F, "Final checkpoint on HF (magnateadi/chotu-twin-day, twin-day/main-5x)", *st("upload"))
+    add(F, "Machine paused", "done" if "end" in status and st("main5x")[0] != "running" else "todo", "the script pauses it when JL_API_KEY and JL_MACHINE_ID are in .env")
 
 fd = st("firedrill")[0]
 P = [("2 · Before the real run", [

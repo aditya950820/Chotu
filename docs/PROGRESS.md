@@ -45,6 +45,7 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Tested: CPU smoke run on fake shards (train.py → report table works), bash syntax, size test passes. Not yet run on a GPU.
 - Command on the H100 (repo root, branch twin-day, `.env` with HF_TOKEN, GH_TOKEN, JL_API_KEY, JL_MACHINE_ID): `ONLY="speed main5x" bash scripts/twin_day.sh 2>&1 | tee ~/twin_day_5x.log`
 - Estimate: speed test ~2 min, 5x run ~15 min at ~909k tok/s, about ₹100–150 in total including setup.
+- Dashboard: "Chotu Twin Day" follows the 5x run too (`dashboard/twin_day/sync.py` knows `main-5x`, takes the 140M baseline from `twin-day` if the machine lacks it, and adds a "1b · 5x twin run" checklist). A 5x session starts a fresh stage list, so machine time and cost count from that day.
 - Notes for the other person: the comparison that counts is held-out bits per byte (140M run: 1.3881). The 5x run's score at step ~2,136 is not like-for-like (no slow-down yet).
 
 ### 2026-11-07 · Adi · Session 3: twin day files synced

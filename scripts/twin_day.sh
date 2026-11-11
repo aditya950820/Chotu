@@ -28,10 +28,11 @@ STATUS=$RUNS/status.jsonl
 PY=$(command -v python || command -v python3)   # Jarvis images keep CUDA torch under `python`
 NAME="aditya950820"; EMAIL="202965202+aditya950820@users.noreply.github.com"
 mkdir -p "$DATA/shards" "$RUNS"
-[ -n "${ONLY:-}" ] || : > "$STATUS"   # a fresh status list, unless re-running single steps
 want() { [ -z "${ONLY:-}" ] || [[ " $ONLY " == *" $1 "* ]]; }   # ONLY="speed" re-runs just those steps
 asked() { [[ " ${ONLY:-} " == *" $1 "* ]]; }                    # opt-in steps run only when listed in ONLY
 TRAIN_SHARDS=1; asked main5x && TRAIN_SHARDS=${TRAIN_SHARDS_5X:-5}
+# a fresh status list, unless re-running single steps (a 5x session is a new day, so it starts fresh too)
+{ [ -z "${ONLY:-}" ] || asked main5x; } && : > "$STATUS"
 
 status() {  # id, status (running/pass/fail/info), note
   $PY -c 'import json,sys,time; print(json.dumps({"id":sys.argv[1],"status":sys.argv[2],"note":sys.argv[3],"time":round(time.time())}))' "$1" "$2" "${3:-}" >> "$STATUS"
