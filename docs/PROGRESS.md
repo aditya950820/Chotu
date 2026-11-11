@@ -5,14 +5,13 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 
 ## Now
 
-- **Current session:** Session 3 · Twin day rehearsal done on a Jarvis H100 (branch `twin-day`); 181M speed test still to rerun
+- **Current session:** Session 3 · 5x twin run done (4.2% better exam); 181M first step gives a NaN gradient in train.py: fix before Session 4
 - **Who's on what:**
-  - Adi: next H100 session: `ONLY="speed main5x" bash scripts/twin_day.sh` (181M speed test + 5x twin run, then the machine pauses itself)
+  - Adi: find the 181M NaN (see 2026-11-11 entry); rotate the GitHub, HF and Jarvis keys (pasted in chat)
   - Partner: review `reports/twin_day.md` and `train.py` on branch `twin-day`
 - **Blocked on:** nothing
 - **Paid resources running:**
-  - Jarvis Labs H100 80GB at 151.185.52.36, started 2026-11-07 (₹330/h). **Stop it after the speed test.**
-  - Jarvis Labs instance from 2026-10-24 (GPU type: TODO). Check it is paused or deleted.
+  - Jarvis H200 container `chotu-1111-1603` (571330): **paused** 2026-11-11 (storage still billed; destroy when not needed). The 7 Nov H100 and the 24 Oct instance no longer exist. Balance ₹3,653.
 
 ## Next up
 
@@ -39,6 +38,14 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Next:
 - Notes for the other person:
 -->
+
+### 2026-11-11 · Adi · Session 3: 5x twin run (H200) + 181M NaN found
+- Did: ran `ONLY="speed main5x"` on a Jarvis H200 container (₹435/h). New `scripts/jarvis_launch.py` rents a machine and runs the job via a startup script, with a boot heartbeat on the `live-boot` branch and a safety net that pauses it. Startup scripts don't run on bare VMs (first H100 try sat idle ~19 min, ₹110); on containers DNS lagged at boot and apt-get hung, so setup was finished by hand in the Jupyter terminal. Total spent today ≈ ₹350.
+- Results, 5x twin (700M tokens, 10,681 steps, 10.8 min, ₹78): held-out **1.3292 bits per byte vs 1.3881** for 140M (**−4.2%**); training loss 4.17 vs 4.32; copying test 13.32 vs 13.74 (still weak). Samples stay on topic more ("Photosynthesis ... the plant") but still loop. More reading helps, but a 7M model is mostly limited by its size. Checkpoint on HF `magnateadi/chotu-twin-day` (`twin-day/main-5x/`). Report: `reports/twin_day.md` on `twin-day`.
+- Problem found: the 181M speed test **got a NaN gradient on step 1** (loss itself 10.95, normal). Its speed numbers (7,718 tok/s, 362 h) are meaningless (one step, includes compile). `scripts/diag_nan.py` on the H200: fp32, bf16 and bf16+compile single passes are all fine (grad norm ~4.93); on CPU the step is fine too. So the bug is in train.py's loop: suspects are the exam run on the compiled model before training (eval→train switch) and summing 32 micro-passes.
+- Also fixed: dashboard sync writes NaN as blank (NaN broke the page); `.env.example` gains GH_TOKEN and GPU_PRICE.
+- Next: reproduce the NaN cheaply (exam-before-train and 32-pass accumulation, on an L4 or A100 container) and fix train.py; rerun the speed test; Session 4.
+- Notes for the other person: the GitHub, HF and Jarvis keys were pasted in chat today; Adi is rotating them.
 
 ### 2026-11-11 · Adi · Session 3: 5x twin run prepared
 - Did: `scripts/twin_day.sh` gains an opt-in step `main5x`: the same 7M twin reads 700M tokens (5x the 140M run, ~10,680 steps) with the same recipe and the same locked exam, to test whether more reading improves it. It reads from 5 train shards (5x the text, so repeats stay at the same share as the 140M run); the 4 extra shards download in the background during the speed test, so the GPU never waits. The final checkpoint and logs then go to HF `magnateadi/chotu-twin-day` (`twin-day/main-5x/`) before the machine pauses. `scripts/twin_report.py` adds a 140M vs 700M table (falls back to the 140M logs in git on a fresh machine).
