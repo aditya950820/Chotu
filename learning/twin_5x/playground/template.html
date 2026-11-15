@@ -1,0 +1,233 @@
+<title>Talk to the Twins</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout concept: a two-desk tasting room. One prompt goes to both twins at once; their answers, their expectations and their surprise sit side by side. */
+:root{
+  --bg:#f4f5f8; --surface:#fff; --ink:#16192b; --muted:#596079; --faint:#c8cdda; --line:#e2e5ee; --field:#f8f9fc;
+  --a:#1b8a9e; --b:#d9731b; --good:#1e9e62; --bad:#d2453d;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif; --body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f1220;--surface:#171b2e;--ink:#e7eaf5;--muted:#9ba3c0;--faint:#3a4166;--line:#262c48;--field:#12162a;--a:#3cc0d4;--b:#f3a04f;--good:#40c98a;--bad:#ff7a70;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1220;--surface:#171b2e;--ink:#e7eaf5;--muted:#9ba3c0;--faint:#3a4166;--line:#262c48;--field:#12162a;--a:#3cc0d4;--b:#f3a04f;--good:#40c98a;--bad:#ff7a70;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 56px}
+.wrap{max-width:1080px;margin:0 auto;display:grid;gap:18px}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.12;text-wrap:balance}
+h1{font-size:clamp(2rem,5vw,3rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.3rem;font-weight:800}
+h3{font-size:1rem;font-weight:600}
+p{margin:0;max-width:72ch}
+.muted{color:var(--muted)}
+.eyebrow{font-family:var(--mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--a)}
+header{padding-block:36px 4px;display:grid;gap:10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;align-content:start;min-width:0}
+.status{font-family:var(--mono);font-size:.82rem;color:var(--muted);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.status .bar{flex:1;min-width:120px;max-width:280px;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.status .bar i{display:block;height:100%;width:0;background:var(--a);transition:width .2s}
+textarea{width:100%;min-height:76px;resize:vertical;font:inherit;font-size:1rem;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+textarea:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{font:inherit;font-size:.84rem;padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.chips button:hover{border-color:var(--muted)}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px 18px;align-items:end}
+.ctl{display:grid;gap:4px;font-size:.84rem;color:var(--muted);align-content:end}
+.ctl b{color:var(--ink);font-family:var(--mono);font-weight:500}
+.ctl input[type=range]{width:100%;accent-color:var(--a)}
+.seg{display:flex;gap:4px;flex-wrap:wrap}
+.seg button{font:inherit;font-size:.84rem;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.go{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{font:inherit;font-weight:600;padding:9px 18px;border-radius:10px;border:1px solid var(--ink);background:var(--ink);color:var(--bg);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn:disabled{opacity:.5;cursor:default}
+.duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.duo{grid-template-columns:minmax(0,1fr)}}
+.twin h3{display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
+.twin h3 small{font-family:var(--mono);font-weight:400;font-size:.76rem;color:var(--muted)}
+.twin.a h3 span{color:var(--a)} .twin.b h3 span{color:var(--b)}
+.out{font-family:var(--mono);font-size:.9rem;line-height:1.75;white-space:pre-wrap;word-break:break-word;min-height:7.5em;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:12px}
+.out .p{color:var(--muted)}
+.out span.t{border-radius:3px}
+.meta{font-family:var(--mono);font-size:.78rem;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
+.guess{display:grid;gap:5px}
+.guess .row{display:grid;grid-template-columns:minmax(0,9rem) 1fr 3.4rem;gap:8px;align-items:center;font-family:var(--mono);font-size:.82rem}
+.guess .row .w{white-space:pre;overflow:hidden;text-overflow:ellipsis}
+.guess .row .bar{height:12px;border-radius:3px}
+.guess .row .n{text-align:right;color:var(--muted)}
+.score{font-family:var(--mono);font-size:.9rem;line-height:2;white-space:pre-wrap;word-break:break-word}
+.score span{border-radius:3px}
+.scale{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--muted);flex-wrap:wrap}
+.scale .grad{height:10px;width:160px;border-radius:5px}
+.big{font-family:var(--display);font-size:1.6rem;font-weight:800;font-variant-numeric:tabular-nums}
+.verdict{display:flex;gap:18px;flex-wrap:wrap;align-items:baseline}
+.tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);font-family:var(--mono);font-size:.74rem;padding:5px 8px;border-radius:6px;white-space:pre;z-index:5;transform:translate(-50%,-120%)}
+.note{font-size:.84rem;color:var(--muted)}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Chotu · twin playground</div>
+  <h1>Talk to the Twins</h1>
+  <p>Both 7M twins run right here in your browser: the one that read 140M tokens (7 Nov) and the one that read 700M tokens (11 Nov). Give them the start of a sentence and they both continue it, or paste any text and see which twin finds it less surprising. They only learned to continue web text, so treat them as text-continuers, not chatbots.</p>
+  <div class="status" id="status"><span id="status-text">Loading the twins (about 39 MB)…</span><span class="bar"><i id="status-bar"></i></span></div>
+</header>
+
+<div class="card">
+  <h2>Continue a sentence</h2>
+  <textarea id="prompt" aria-label="Start of a sentence">Photosynthesis is the process by which</textarea>
+  <div class="chips" id="presets"></div>
+  <div class="controls">
+    <div class="ctl">How it picks each word
+      <div class="seg" id="mode" role="group" aria-label="How it picks each word"><button data-v="greedy" aria-pressed="false">Top guess</button><button data-v="sample" aria-pressed="true">Sample</button></div>
+    </div>
+    <label class="ctl" for="temp">Temperature <b id="temp-v">0.8</b><input id="temp" type="range" min="0.1" max="1.5" step="0.05" value="0.8"></label>
+    <label class="ctl" for="rep">Repetition penalty <b id="rep-v">1.2</b><input id="rep" type="range" min="1" max="2" step="0.05" value="1.2"></label>
+    <label class="ctl" for="len">Length (tokens) <b id="len-v">60</b><input id="len" type="range" min="10" max="200" step="10" value="60"></label>
+  </div>
+  <p class="note">Temperature: lower plays it safe, higher takes more risks. Repetition penalty: above 1 discourages words it already used (1 = off). Both twins get the same random seed, so differences come from what they learned, not luck.</p>
+  <div class="go"><button class="btn" id="run" disabled>Continue with both</button><button class="btn ghost" id="reseed" disabled>New seed</button><span class="meta" id="seed"></span></div>
+</div>
+
+<div class="duo">
+  <div class="card twin a"><h3><span>Twin · 140M tokens</span><small id="a-meta"></small></h3><div class="out" id="a-out" aria-live="polite"></div></div>
+  <div class="card twin b"><h3><span>Twin · 700M tokens</span><small id="b-meta"></small></h3><div class="out" id="b-out" aria-live="polite"></div></div>
+</div>
+<p class="note">Hover any generated word to see how likely that twin thought it was when it chose it.</p>
+
+<div class="card">
+  <h2>What does each twin expect next?</h2>
+  <p class="muted">Its top 8 guesses for the very next token after your prompt, with the probability it gives each one, before it writes a single word. ␣ marks a token that starts with a space, ↵ a line break.</p>
+  <div class="duo"><div class="guess" id="a-guess"></div><div class="guess" id="b-guess"></div></div>
+</div>
+
+<div class="card">
+  <h2>Who finds this text easier?</h2>
+  <p class="muted">Paste any English text. Each token is shaded by how surprised a twin was to see it (darker = more surprised). The score is bits per byte, the same exam score as on the dashboard: lower is better.</p>
+  <textarea id="score-text" aria-label="Text to score">The Moon orbits the Earth about once every 27 days. Because the same side always faces us, people on Earth never see the far side of the Moon without a spacecraft.</textarea>
+  <div class="go"><button class="btn" id="score-run" disabled>Score with both</button>
+    <div class="seg" id="score-view" role="group" aria-label="Shading"><button data-v="a" aria-pressed="false">140M</button><button data-v="b" aria-pressed="false">700M</button><button data-v="d" aria-pressed="true">Difference</button></div></div>
+  <div class="verdict" id="verdict"></div>
+  <div class="scale" id="score-scale"></div>
+  <div class="score" id="score-out"></div>
+</div>
+<p class="note">Both models are the real checkpoints from Hugging Face (<span class="mono">twin-day/main</span> step 2,136 and <span class="mono">twin-day/main-5x</span> step 10,681), stored as 16-bit numbers. The maths was checked against PyTorch: same predictions, logits within 0.0001.</p>
+</div>
+
+<script>__TWINS_JS__</script>
+<script>
+const $ = (id) => document.getElementById(id);
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const mix = (c, a) => `color-mix(in srgb, ${css(c)} ${Math.round(Math.max(0, Math.min(1, a)) * 100)}%, transparent)`;
+const PRESETS = ['Photosynthesis is the process by which', 'The capital of France is', 'Once upon a time, there was a', 'The most important thing about exercise is', 'In 1969, the first', 'To make a cup of tea, you', 'The best way to learn a new language is', 'Water boils at'];
+let tok = null, twins = {}, seed = 7, busy = false;
+
+// tooltip
+const tip = document.createElement('div'); tip.className = 'tip'; tip.hidden = true; document.body.appendChild(tip);
+document.addEventListener('mouseover', (e) => { const t = e.target.closest('[data-tip]'); if (!t) { tip.hidden = true; return; } tip.textContent = t.dataset.tip; tip.hidden = false; });
+document.addEventListener('mousemove', (e) => { tip.style.left = Math.min(innerWidth - 90, Math.max(90, e.clientX)) + 'px'; tip.style.top = e.clientY + 'px'; });
+
+// presets and controls
+$('presets').innerHTML = PRESETS.map((p) => `<button type="button">${p}</button>`).join('');
+$('presets').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; $('prompt').value = b.textContent; run(); });
+function seg(id, fn) { const g = $(id); g.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; g.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b)); fn && fn(b.dataset.v); }); }
+const pressed = (id) => $(id).querySelector('[aria-pressed="true"]').dataset.v;
+seg('mode', (v) => { $('temp').disabled = v === 'greedy'; }); seg('score-view', () => paintScore());
+[['temp', 'temp-v'], ['rep', 'rep-v'], ['len', 'len-v']].forEach(([i, o]) => $(i).addEventListener('input', () => { $(o).textContent = $(i).value; }));
+$('reseed').addEventListener('click', () => { seed = 1 + Math.floor(Math.random() * 1e6); run(); });
+$('run').addEventListener('click', run); $('score-run').addEventListener('click', scoreText);
+
+// loading: fetch with progress
+async function fetchBytes(url, onBytes) {
+  const r = await fetch(url); if (!r.ok) throw new Error(url + ' ' + r.status);
+  const reader = r.body.getReader(), parts = []; let n = 0;
+  for (;;) { const { done, value } = await reader.read(); if (done) break; parts.push(value); n += value.length; onBytes(value.length); }
+  const out = new Uint8Array(n); let o = 0; for (const p of parts) { out.set(p, o); o += p.length; } return out;
+}
+(async function load() {
+  try {
+    const total = 29.7e6; let got = 0;
+    const tick = (n) => { got += n; $('status-bar').style.width = Math.min(100, 100 * got / total) + '%'; };
+    const total2 = 39.2e6; const tick2 = (n) => { got += n; $('status-bar').style.width = Math.min(100, 100 * got / total2) + '%'; };
+    const files = ['tokenizer.json', 'manifest.json', 'twin140.1.txt', 'twin140.2.txt', 'twin700.1.txt', 'twin700.2.txt'];
+    const [tj, mj, a1, a2, b1, b2] = await Promise.all(files.map((f) => fetchBytes(f, tick2)));
+    const dec = new TextDecoder();
+    const unb64 = (...parts) => { const bins = parts.map((p) => { const s = atob(dec.decode(p)); const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; });
+      const out = new Uint8Array(bins.reduce((n, u) => n + u.length, 0)); let o = 0; for (const u of bins) { out.set(u, o); o += u.length; } return out; };
+    const a = unb64(a1, a2), b = unb64(b1, b2);  // the weights travel as text (base64) because the page host serves no raw binary files
+    tok = new Twins.Tokenizer(JSON.parse(dec.decode(tj)));
+    const man = JSON.parse(dec.decode(mj));
+    twins.a = new Twins.Twin(a.buffer, man); twins.b = new Twins.Twin(b.buffer, man);
+    $('status-text').textContent = 'Both twins loaded and running in your browser.'; $('status-bar').style.width = '100%';
+    ['run', 'reseed', 'score-run'].forEach((i) => { $(i).disabled = false; });
+    await run(); await scoreText();
+  } catch (e) { $('status-text').textContent = 'Could not load the twins: ' + e.message + '. Reload the page to try again.'; }
+})();
+
+const pause = () => new Promise((r) => setTimeout(r, 0));
+const fmtP = (p) => p >= .1 ? (100 * p).toFixed(0) + '%' : p >= .001 ? (100 * p).toFixed(1) + '%' : '<0.1%';
+function showGuesses(el, logits, color) {
+  const p = Twins.softmax(logits), top = Twins.topk(p, 8), mx = p[top[0]];
+  el.innerHTML = '';
+  top.forEach((id) => { const row = document.createElement('div'); row.className = 'row';
+    const w = document.createElement('span'); w.className = 'w'; w.textContent = tok.piece(id).replace(/^ /, '␣').replace(/\n/g, '↵').replace(/\t/g, '⇥') || '·';
+    const bar = document.createElement('span'); bar.className = 'bar'; bar.style.background = mix(color, .85); bar.style.width = (100 * p[id] / mx) + '%';
+    const n = document.createElement('span'); n.className = 'n'; n.textContent = fmtP(p[id]);
+    row.append(w, bar, n); el.appendChild(row); });
+}
+
+async function run() {
+  if (!tok || busy) return; busy = true; $('run').disabled = true;
+  const text = $('prompt').value; const ids = tok.encode(text);
+  if (!ids.length) { busy = false; $('run').disabled = false; return; }
+  const mode = pressed('mode'), temp = mode === 'greedy' ? 0 : +$('temp').value, rep = +$('rep').value, n = +$('len').value;
+  $('seed').textContent = mode === 'greedy' ? 'top guess: no randomness' : 'seed ' + seed;
+  const st = {};
+  for (const k of ['a', 'b']) {
+    const m = twins[k]; m.reset(); const out = $(k + '-out'); out.innerHTML = '';
+    const pr = document.createElement('span'); pr.className = 'p'; pr.textContent = text; out.appendChild(pr);
+    const lg = m.feed(ids.slice(-2048)); showGuesses($(k + '-guess'), lg, k === 'a' ? '--a' : '--b');
+    st[k] = { lg, hist: ids.slice(), rand: Twins.rng(seed), out, logp: 0, n: 0, t0: performance.now() };
+  }
+  for (let i = 0; i < n; i++) {
+    for (const k of ['a', 'b']) {
+      const s = st[k], m = twins[k]; if (s.done) continue;
+      const id = Twins.choose(s.lg, { temp, topK: 40, repPenalty: rep, history: s.hist, rand: s.rand });
+      const p = Twins.softmax(s.lg)[id]; s.logp += Math.log(p); s.n++;
+      const sp = document.createElement('span'); sp.className = 't'; sp.textContent = tok.piece(id); sp.dataset.tip = `it gave this ${fmtP(p)}`;
+      s.out.appendChild(sp); s.hist.push(id);
+      if (id === 0) { s.done = true; continue; }
+      s.lg = m.step(id);
+    }
+    if (i % 2 === 1) await pause();
+  }
+  for (const k of ['a', 'b']) { const s = st[k];
+    const loop = (() => { const g = []; for (let i = ids.length; i + 4 <= s.hist.length; i++) g.push(s.hist.slice(i, i + 4).join()); return g.length ? 1 - new Set(g).size / g.length : 0; })();
+    $(k + '-meta').textContent = `${s.n} tokens · ${(performance.now() - s.t0).toFixed(0)} ms · looping ${(100 * loop).toFixed(0)}%`; }
+  busy = false; $('run').disabled = false;
+}
+
+// score text
+let scored = null;
+async function scoreText() {
+  if (!tok || busy) return; const text = $('score-text').value; const ids = tok.encode(text).slice(0, 1024);
+  if (ids.length < 2) return; busy = true; $('score-run').disabled = true;
+  const res = { ids, a: [], b: [] };
+  for (const k of ['a', 'b']) { const m = twins[k]; m.reset(); let lg = m.step(0);  // start from end-of-text, like a fresh document
+    for (let i = 0; i < ids.length; i++) { const p = Twins.softmax(lg); res[k].push(-Math.log(Math.max(p[ids[i]], 1e-12))); if (i < ids.length - 1) lg = m.step(ids[i]); if (i % 40 === 39) await pause(); } }
+  const bytes = new TextEncoder().encode(tok.decode(ids)).length;
+  res.bpb = { a: res.a.reduce((x, y) => x + y, 0) / Math.LN2 / bytes, b: res.b.reduce((x, y) => x + y, 0) / Math.LN2 / bytes };
+  scored = res; paintScore(); busy = false; $('score-run').disabled = false;
+}
+function paintScore() {
+  if (!scored) return; const v = pressed('score-view'), r = scored, out = $('score-out'); out.innerHTML = '';
+  const better = r.bpb.b < r.bpb.a;
+  $('verdict').innerHTML = `<span><span class="big" style="color:${css('--a')}">${r.bpb.a.toFixed(3)}</span> <span class="muted">140M twin</span></span><span><span class="big" style="color:${css('--b')}">${r.bpb.b.toFixed(3)}</span> <span class="muted">700M twin</span></span><span class="muted">${better ? 'The 700M twin' : 'The 140M twin'} found this ${(100 * Math.abs(r.bpb.a - r.bpb.b) / Math.max(r.bpb.a, r.bpb.b)).toFixed(1)}% easier (${r.ids.length} tokens).</span>`;
+  r.ids.forEach((id, i) => { const sp = document.createElement('span'); sp.textContent = tok.piece(id);
+    if (v === 'd') { const d = r.a[i] - r.b[i]; sp.style.background = mix(d >= 0 ? '--good' : '--bad', Math.min(1, Math.abs(d) / 3) * .8); sp.dataset.tip = `surprise 140M ${r.a[i].toFixed(2)} → 700M ${r.b[i].toFixed(2)}`; }
+    else { const x = r[v][i]; sp.style.background = mix(v === 'a' ? '--a' : '--b', Math.min(1, x / 10) * .85); sp.dataset.tip = `surprise ${x.toFixed(2)} (it gave this ${fmtP(Math.exp(-x))})`; }
+    out.appendChild(sp); });
+  $('score-scale').innerHTML = v === 'd' ? `<span>700M more surprised</span><span class="grad" style="background:linear-gradient(90deg, ${mix('--bad', .8)}, transparent, ${mix('--good', .8)})"></span><span>700M less surprised</span>`
+    : `<span>expected</span><span class="grad" style="background:linear-gradient(90deg, transparent, ${mix(v === 'a' ? '--a' : '--b', .85)})"></span><span>very surprised</span>`;
+}
+</script>
