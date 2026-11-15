@@ -395,6 +395,9 @@ def main():
         base = kn_prob(pos, S, D, 1)
         skips = [skip_prob(pos, skipS[o], standard_discounts(skipS[o]["coc"]), o, base) for o in patterns]
         parts[name] = dict(P=np.stack([kn, cache, copy] + skips, 1), b=buckets(mlen, hist, deepest(pos, S, N)), mlen=mlen, kn=kn)
+    # save every part's prediction for each tuning and exam position, so mixing can be studied without recounting
+    np.savez_compressed(pathlib.Path(a.out).with_suffix(".parts.npz"), **{f"{n}_{k}": v for n in parts for k, v in parts[n].items()},
+                        tune_W=tune.W, exam_W=exam.W, tune_deep=deepest(tune, S, N), exam_deep=deepest(exam, S, N))
     nb = 5 * 4 * 3
     cols = {"kn_cache": [0, 1], "kn_cache_copy": [0, 1, 2], "kn_skip": [0] + list(range(3, 3 + len(patterns))), "full": list(range(3 + len(patterns)))}
     lams = {k: em_weights(parts["tune"]["P"][:, c], parts["tune"]["b"], nb) for k, c in cols.items()}
