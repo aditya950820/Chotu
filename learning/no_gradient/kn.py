@@ -129,10 +129,11 @@ class Store:
         self.keys, self.cols = u, [c[idx] for c in cols]
 
 
-def count(train_paths, pos_sets, N, chunk=10_000_000, log=print, orders=None):
+def count(train_paths, pos_sets, N, chunk=10_000_000, log=print, orders=None, part=(0, 1)):
     """One pass over the training shards. For each order k < N: distinct (k+1)-gram types x·h·w whose middle h is a
     context we need (continuation counts). For order N: counts of N-grams whose context we need.
-    `orders` limits the pass to some orders (lower memory: one order per pass)."""
+    `orders` limits the pass to some orders (lower memory); `part` = (p, P) keeps only targets whose token % P == p,
+    so a pass holds 1/P of the tables (statistics add up exactly across parts, see merge_parts)."""
     orders = set(orders or range(1, N + 1))
     need = {k: np.unique(np.concatenate([p.ctx[k] for p in pos_sets])) for k in range(2, N + 1)}
     cont = {k: Store() for k in range(1, N) if k in orders}
@@ -142,8 +143,11 @@ def count(train_paths, pos_sets, N, chunk=10_000_000, log=print, orders=None):
         sh = np.memmap(path, dtype=np.uint16, mode="r")
         for s in range(0, len(sh), chunk):
             s0, e = max(0, s - N), min(len(sh), s + chunk)
-            K = ngram_keys(np.asarray(sh[s0:e]), N)
+            longest = max([k + 1 for k in cont] + ([N] if N in orders else []))
+            K = ngram_keys(np.asarray(sh[s0:e]), longest)
             i = np.arange(s - s0, e - s0)  # targets of this chunk (the first N tokens are only history)
+            if part[1] > 1:
+                i = i[K[1][i] % np.uint64(part[1]) == np.uint64(part[0])]
             for k in cont:
                 ii = i[i >= k]  # needs a token x before the context
                 if k >= 2:
@@ -181,6 +185,22 @@ def finalize(cont, top, N, orders=None):
                     n1=np.bincount(hinv, weights=c == 1), n2=np.bincount(hinv, weights=c == 2), n3=np.bincount(hinv, weights=c >= 3),
                     coc=[int((c == r).sum()) for r in (1, 2, 3, 4)], types=len(uhw))
     return S
+
+
+def merge_parts(parts):
+    """Combine per-order statistics computed on disjoint sets of target tokens: (h, w) counts are disjoint, per-context
+    totals and n1/n2/n3 add up."""
+    if len(parts) == 1:
+        return parts[0]
+    hw = np.concatenate([p["hw"] for p in parts])
+    o = np.argsort(hw, kind="stable")
+    h_all = np.concatenate([p["h"] for p in parts])
+    uh, inv = np.unique(h_all, return_inverse=True)
+    out = dict(hw=hw[o], c=np.concatenate([p["c"] for p in parts])[o], h=uh,
+               coc=[sum(p["coc"][r] for p in parts) for r in range(4)], types=sum(p["types"] for p in parts))
+    for n in ("tot", "n1", "n2", "n3"):
+        out[n] = np.bincount(inv, weights=np.concatenate([p[n] for p in parts]), minlength=len(uh))
+    return out
 
 
 def standard_discounts(coc):
@@ -350,6 +370,7 @@ def main():
     ap.add_argument("--exam-windows", type=int, default=96)
     ap.add_argument("--max-tokens", type=float, default=0, help="use only the first this-many training tokens (0 = all)")
     ap.add_argument("--low-memory", action="store_true", help="count the orders in four passes (1, 2, 3, 4+) instead of one")
+    ap.add_argument("--split", type=int, default=1, help="split each pass of orders 2+ into this many parts by target token (less memory)")
     ap.add_argument("--skip", nargs="*", default=[], help="skip-gram patterns as comma-separated distances, e.g. 2,3 1,3 2")
     ap.add_argument("--out", default=str(pathlib.Path(__file__).with_name("results.json")))
     a = ap.parse_args()
@@ -367,10 +388,17 @@ def main():
     S = {}
     groups = [[1], [2], [3], list(range(4, N + 1))] if a.low_memory else [list(range(1, N + 1))]  # the low orders hold the most types
     for group in groups:
-        cont, top, seen = count(paths, [tune, exam], N, log=log, orders=group)
-        S.update(finalize(cont, top, N, orders=group))
-        del cont, top
-        log("finished orders", group)
+        P_ = 1 if group == [1] else a.split
+        got = {k: [] for k in group}
+        for part in range(P_):
+            cont, top, seen = count(paths, [tune, exam], N, log=log, orders=group, part=(part, P_))
+            for k, st in finalize(cont, top, N, orders=group).items():
+                got[k].append(st)
+            del cont, top
+        for k in group:
+            S[k] = merge_parts(got[k])
+        del got
+        log("finished orders", group, f"({P_} part{'s' if P_ > 1 else ''})")
     log("types per order:", {k: S[k]["types"] for k in S})
 
     # 1. Kneser-Ney: start from the standard discounts, then improve them by trying nearby values on the tuning set
