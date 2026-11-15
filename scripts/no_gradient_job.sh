@@ -21,7 +21,7 @@ OUT=learning/no_gradient/runs/full_${SHARDS}shards
 STATUS=$W/status.jsonl
 LIVE=$HOME/ng-live
 NAME="aditya950820"; EMAIL="202965202+aditya950820@users.noreply.github.com"
-mkdir -p "$W/shards" "$W/dump" "$OUT"
+mkdir -p "$W/shards" "$W/dump"; [ -n "$TEST" ] || mkdir -p "$OUT"
 : > "$STATUS"
 git config user.name "$NAME"; git config user.email "$EMAIL"
 
@@ -52,10 +52,10 @@ finish() {
   status end info "job finished"
   kill "$LIVE_PID" 2>/dev/null
   push_live || true
+  [ -n "$TEST" ] && { echo ">>> TEST: results in $W, nothing pushed, machine not paused"; return; }
   cp "$W"/run.json "$W"/mix.json "$OUT"/ 2>/dev/null
   sed -E 's/(github_pat_|hf_)[A-Za-z0-9_]+/***/g' "$W/run.log" > "$OUT/run.log" 2>/dev/null
   cp "$STATUS" "$OUT/" 2>/dev/null
-  [ -n "$TEST" ] && { echo ">>> TEST: results in $W, nothing pushed, machine not paused"; return; }
   git add "$OUT" && git commit -q -m "No-gradient model on $SHARDS shards: results" && \
     { git pull -q --rebase origin "$(git rev-parse --abbrev-ref HEAD)"; git push -q origin HEAD; }
   $PY - "$W/run.parts.npz" <<'EOF' || true
