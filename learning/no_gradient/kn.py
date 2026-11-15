@@ -119,11 +119,13 @@ class Store:
         self.keys, self.cols = u, [c[idx] for c in cols]
 
 
-def count(train_paths, pos_sets, N, chunk=10_000_000, log=print):
+def count(train_paths, pos_sets, N, chunk=10_000_000, log=print, orders=None):
     """One pass over the training shards. For each order k < N: distinct (k+1)-gram types x·h·w whose middle h is a
-    context we need (continuation counts). For order N: counts of N-grams whose context we need."""
+    context we need (continuation counts). For order N: counts of N-grams whose context we need.
+    `orders` limits the pass to some orders (lower memory: one order per pass)."""
+    orders = set(orders or range(1, N + 1))
     need = {k: np.unique(np.concatenate([p.ctx[k] for p in pos_sets])) for k in range(2, N + 1)}
-    cont = {k: Store() for k in range(1, N)}
+    cont = {k: Store() for k in range(1, N) if k in orders}
     top = Store(with_counts=True)
     seen = 0
     for path in train_paths:
@@ -132,15 +134,16 @@ def count(train_paths, pos_sets, N, chunk=10_000_000, log=print):
             s0, e = max(0, s - N), min(len(sh), s + chunk)
             K = ngram_keys(np.asarray(sh[s0:e]), N)
             i = np.arange(s - s0, e - s0)  # targets of this chunk (the first N tokens are only history)
-            for k in range(1, N):
+            for k in cont:
                 ii = i[i >= k]  # needs a token x before the context
                 if k >= 2:
                     ii = ii[member(K[k - 1][ii - 1], need[k])]
                 cols = [] if k + 1 <= 4 else [K[k][ii], K[k - 1][ii - 1]]  # exact keys hold hw and h; hashes don't
                 cont[k].add(K[k + 1][ii], cols)
-            ii = i[i >= N - 1]
-            ii = ii[member(K[N - 1][ii - 1], need[N])]
-            top.add(K[N][ii], [K[N - 1][ii - 1]])
+            if N in orders:
+                ii = i[i >= N - 1]
+                ii = ii[member(K[N - 1][ii - 1], need[N])]
+                top.add(K[N][ii], [K[N - 1][ii - 1]])
             seen += e - s
             log(f"counted {seen / 1e6:,.0f}M tokens")
     for st in list(cont.values()) + [top]:
@@ -148,11 +151,11 @@ def count(train_paths, pos_sets, N, chunk=10_000_000, log=print):
     return cont, top, seen
 
 
-def finalize(cont, top, N):
+def finalize(cont, top, N, orders=None):
     """Turn the stored types into per-context statistics: count of (h, w) and, per context h, its total and how many
     w were seen once, twice, three or more times. Also count-of-counts for the standard discount estimate."""
     S = {}
-    for k in range(1, N + 1):
+    for k in (orders or range(1, N + 1)):
         if k < N:
             st = cont[k]
             if k + 1 <= 4:
@@ -336,6 +339,7 @@ def main():
     ap.add_argument("--tune-windows", type=int, default=16)
     ap.add_argument("--exam-windows", type=int, default=96)
     ap.add_argument("--max-tokens", type=float, default=0, help="use only the first this-many training tokens (0 = all)")
+    ap.add_argument("--low-memory", action="store_true", help="count one order per pass over the data")
     ap.add_argument("--skip", nargs="*", default=[], help="skip-gram patterns as comma-separated distances, e.g. 2,3 1,3 2")
     ap.add_argument("--out", default=str(pathlib.Path(__file__).with_name("results.json")))
     a = ap.parse_args()
@@ -350,9 +354,12 @@ def main():
         sub = D_ / f"shards/_prefix_{int(a.max_tokens)}.bin"
         np.asarray(np.memmap(paths[0], dtype=np.uint16, mode="r")[:int(a.max_tokens)]).tofile(sub)
         paths = [sub]
-    cont, top, seen = count(paths, [tune, exam], N, log=log)
-    S = finalize(cont, top, N)
-    del cont, top
+    S = {}
+    for group in ([[k] for k in range(1, N + 1)] if a.low_memory else [list(range(1, N + 1))]):
+        cont, top, seen = count(paths, [tune, exam], N, log=log, orders=group)
+        S.update(finalize(cont, top, N, orders=group))
+        del cont, top
+        log("finished orders", group)
     log("types per order:", {k: S[k]["types"] for k in S})
 
     # 1. Kneser-Ney: start from the standard discounts, then improve them by trying nearby values on the tuning set
