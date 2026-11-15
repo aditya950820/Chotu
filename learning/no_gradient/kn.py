@@ -204,6 +204,66 @@ def deepest(pos, S, N):
     return out
 
 
+# ---------------------------------------------------------------- skip-grams (Goodman 2001)
+def pattern_keys(t, offs):
+    """Context made of the tokens at the given distances before position i (e.g. (2, 3) skips the token just before)."""
+    t = t.astype(np.uint64)
+    ctx = np.zeros(len(t), np.uint64)
+    for o in offs:
+        sh = np.zeros(len(t), np.uint64)
+        sh[o:] = t[:-o]
+        ctx = (ctx << U16) | sh
+    return ctx, (ctx << U16) | t
+
+
+def count_patterns(train_paths, pos_sets, patterns, chunk=20_000_000, log=print):
+    """Counts of (skip-context, next token) for contexts that occur at the tuning and exam positions."""
+    out = {}
+    for offs in patterns:
+        need = np.unique(np.concatenate([p.pat[offs][0] for p in pos_sets]))
+        st = Store(with_counts=True)
+        for path in train_paths:
+            sh = np.memmap(path, dtype=np.uint16, mode="r")
+            for s in range(0, len(sh), chunk):
+                s0, e = max(0, s - max(offs)), min(len(sh), s + chunk)
+                ctx, full = pattern_keys(np.asarray(sh[s0:e]), offs)
+                i = np.arange(s - s0, e - s0)
+                i = i[i >= max(offs)]
+                i = i[member(ctx[i], need)]
+                st.add(full[i], [ctx[i]])
+        st.merge()
+        uh, hinv = np.unique(st.cols[0], return_inverse=True)
+        c = st.cnt
+        out[offs] = dict(hw=st.keys, c=c, h=uh, tot=np.bincount(hinv, weights=c), n1=np.bincount(hinv, weights=c == 1),
+                         n2=np.bincount(hinv, weights=c == 2), n3=np.bincount(hinv, weights=c >= 3), coc=[int((c == r).sum()) for r in (1, 2, 3, 4)])
+        log(f"skip pattern {offs}: {len(uh):,} contexts, {len(c):,} types")
+    return out
+
+
+def add_patterns(pos, patterns):
+    pos.pat = {}
+    for offs in patterns:
+        cs, fs, ok = [], [], []
+        for w in pos.W:
+            ctx, full = pattern_keys(w, offs)
+            cs.append(ctx[1:]); fs.append(full[1:])
+            ok.append(np.arange(1, SEQ + 1) >= max(offs))
+        pos.pat[offs] = (np.concatenate(cs), np.concatenate(fs), np.concatenate(ok))
+
+
+def skip_prob(pos, st, D, offs, base):
+    """Modified absolute discounting on the skip context, falling back to `base` (the KN unigram)."""
+    ctx, full, ok = pos.pat[offs]
+    d1, d2, d3 = D
+    tot = lookup(ctx, st["h"], st["tot"], 0.0)
+    c = lookup(full, st["hw"], st["c"], 0).astype(np.float64)
+    n1, n2, n3 = (lookup(ctx, st["h"], st[n], 0.0) for n in ("n1", "n2", "n3"))
+    d = np.where(c == 0, 0, np.where(c == 1, d1, np.where(c == 2, d2, d3)))
+    seen = (tot > 0) & ok
+    safe = np.where(seen, tot, 1)
+    return np.where(seen, np.maximum(c - d, 0) / safe + (d1 * n1 + d2 * n2 + d3 * n3) / safe * base, base)
+
+
 # ---------------------------------------------------------------- document memory
 def doc_memory(W, max_copy=16):
     """For each target: (a) share of the current document's earlier tokens equal to it (unigram cache, with a small
@@ -275,8 +335,10 @@ def main():
     ap.add_argument("--tune-windows", type=int, default=16)
     ap.add_argument("--exam-windows", type=int, default=96)
     ap.add_argument("--max-tokens", type=float, default=0, help="use only the first this-many training tokens (0 = all)")
+    ap.add_argument("--skip", nargs="*", default=[], help="skip-gram patterns as comma-separated distances, e.g. 2,3 1,3 2")
     ap.add_argument("--out", default=str(pathlib.Path(__file__).with_name("results.json")))
     a = ap.parse_args()
+    patterns = [tuple(int(x) for x in p.split(",")) for p in a.skip]
     D_, N, t0 = pathlib.Path(a.dir), a.order, time.time()
     log = lambda *m: print(f"[{time.time() - t0:6.0f}s]", *m, flush=True)
 
@@ -308,27 +370,36 @@ def main():
                         best, D = s, trial
         log(f"discount search sweep {sweep + 1}: tune {best:.4f}")
 
+    # skip-grams: extra parts for the mix
+    skipS = {}
+    if patterns:
+        for pos in (tune, exam):
+            add_patterns(pos, patterns)
+        skipS = count_patterns(paths, [tune, exam], patterns, log=log)
+
     # 2-4. document memory and EM mixing, per situation
     parts = {}
     for name, pos in (("tune", tune), ("exam", exam)):
         kn = kn_prob(pos, S, D, N)
         cache, copy, mlen, hist = doc_memory(pos.W)
         cache = 0.9 * cache + 0.1 / V  # never exactly zero
-        parts[name] = dict(P=np.stack([kn, cache, copy], 1), b=buckets(mlen, hist, deepest(pos, S, N)), mlen=mlen, kn=kn)
+        base = kn_prob(pos, S, D, 1)
+        skips = [skip_prob(pos, skipS[o], standard_discounts(skipS[o]["coc"]), o, base) for o in patterns]
+        parts[name] = dict(P=np.stack([kn, cache, copy] + skips, 1), b=buckets(mlen, hist, deepest(pos, S, N)), mlen=mlen, kn=kn)
     nb = 5 * 4 * 3
-    lam = em_weights(parts["tune"]["P"], parts["tune"]["b"], nb)
-    lam_nocopy = em_weights(parts["tune"]["P"][:, :2], parts["tune"]["b"], nb)
+    cols = {"kn_cache": [0, 1], "kn_cache_copy": [0, 1, 2], "kn_skip": [0] + list(range(3, 3 + len(patterns))), "full": list(range(3 + len(patterns)))}
+    lams = {k: em_weights(parts["tune"]["P"][:, c], parts["tune"]["b"], nb) for k, c in cols.items()}
+    lam = lams["full"]
     res = {}
     for name in ("tune", "exam"):
         pt = parts[name]
-        res[name] = dict(kn=round(bpb(pt["kn"]), 4), kn_cache=round(bpb(mix(pt["P"][:, :2], lam_nocopy, pt["b"])), 4),
-                         full=round(bpb(mix(pt["P"], lam, pt["b"])), 4))
+        res[name] = dict(kn=round(bpb(pt["kn"]), 4), **{k: round(bpb(mix(pt["P"][:, c], lams[k], pt["b"])), 4) for k, c in cols.items()})
         log(name, res[name])
     full_exam = mix(parts["exam"]["P"], lam, parts["exam"]["b"])
     by_copy = [dict(match=lab, share=round(float(sel.mean()), 4), kn=round(bpb(parts["exam"]["kn"][sel]), 4), full=round(bpb(full_exam[sel]), 4))
                for lab, sel in [("no repeat found", parts["exam"]["mlen"] == 0), ("repeat of 1-3 tokens", (parts["exam"]["mlen"] >= 1) & (parts["exam"]["mlen"] < 4)),
                                 ("repeat of 4+ tokens", parts["exam"]["mlen"] >= 4)]]
-    json.dump(dict(meta=dict(order=N, train=[str(p.name) for p in paths], train_tokens=int(seen), minutes=round((time.time() - t0) / 60, 1),
+    json.dump(dict(meta=dict(order=N, skip=[list(o) for o in patterns], train=[str(p.name) for p in paths], train_tokens=int(seen), minutes=round((time.time() - t0) / 60, 1),
                              tune_tokens=len(tune.target), exam_tokens=len(exam.target)),
                    types={k: S[k]["types"] for k in S}, discounts=D, tune=res["tune"], exam=res["exam"], by_copy=by_copy,
                    weights=lam.round(4).tolist()), open(a.out, "w"), indent=1)
