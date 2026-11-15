@@ -98,9 +98,11 @@ class Store:
         if self.with_counts:
             u, idx, c = np.unique(keys, return_index=True, return_counts=True)
             self.buf.append((u, [col[idx] for col in cols], c.astype(np.int64)))
-        else:
+        elif cols:
             u, idx = np.unique(keys, return_index=True)
             self.buf.append((u, [col[idx] for col in cols], None))
+        else:  # keys only: no index array needed (saves memory on the biggest tables)
+            self.buf.append((np.unique(keys), [], None))
         if sum(len(b[0]) for b in self.buf) > MERGE_ROWS:
             self.merge()
 
@@ -114,8 +116,16 @@ class Store:
         if self.with_counts:
             u, idx, inv = np.unique(keys, return_index=True, return_inverse=True)
             self.cnt = np.bincount(inv, weights=np.concatenate([p[2] for p in parts])).astype(np.int64)
-        else:
+        elif cols:
             u, idx = np.unique(keys, return_index=True)
+        else:
+            del parts
+            keys.sort()
+            keep = np.empty(len(keys), bool)
+            keep[0] = True
+            np.not_equal(keys[1:], keys[:-1], out=keep[1:])
+            self.keys, self.cols = keys[keep], []
+            return
         self.keys, self.cols = u, [c[idx] for c in cols]
 
 
@@ -339,7 +349,7 @@ def main():
     ap.add_argument("--tune-windows", type=int, default=16)
     ap.add_argument("--exam-windows", type=int, default=96)
     ap.add_argument("--max-tokens", type=float, default=0, help="use only the first this-many training tokens (0 = all)")
-    ap.add_argument("--low-memory", action="store_true", help="count the orders in three passes (1-2, 3, 4+) instead of one")
+    ap.add_argument("--low-memory", action="store_true", help="count the orders in four passes (1, 2, 3, 4+) instead of one")
     ap.add_argument("--skip", nargs="*", default=[], help="skip-gram patterns as comma-separated distances, e.g. 2,3 1,3 2")
     ap.add_argument("--out", default=str(pathlib.Path(__file__).with_name("results.json")))
     a = ap.parse_args()
@@ -355,7 +365,7 @@ def main():
         np.asarray(np.memmap(paths[0], dtype=np.uint16, mode="r")[:int(a.max_tokens)]).tofile(sub)
         paths = [sub]
     S = {}
-    groups = [[1, 2], [3], list(range(4, N + 1))] if a.low_memory else [list(range(1, N + 1))]  # the low orders hold the most types
+    groups = [[1], [2], [3], list(range(4, N + 1))] if a.low_memory else [list(range(1, N + 1))]  # the low orders hold the most types
     for group in groups:
         cont, top, seen = count(paths, [tune, exam], N, log=log, orders=group)
         S.update(finalize(cont, top, N, orders=group))
