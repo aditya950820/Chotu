@@ -23,6 +23,9 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 REPO = "aditya950820/Chotu"
 ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 ap.add_argument("--only", default="speed main5x", help="twin_day.sh steps to run")
+ap.add_argument("--job", default="twin_day", help="twin_day, or a script to run instead (e.g. scripts/no_gradient_job.sh; needs no torch)")
+ap.add_argument("--status-branch", default="live-runs", help="branch the job pushes its steps to")
+ap.add_argument("--status-path", default="runs/twin-day/status.jsonl", help="where on the live-runs branch the job reports its steps")
 ap.add_argument("--branch", default="claude/chotu-project-setup-t9dncn", help="branch the machine checks out")
 ap.add_argument("--gpu", default="H100")
 ap.add_argument("--template", default="vm", help="'vm' = bare VM (H100s are offered as VMs)")
@@ -73,7 +76,9 @@ ENVEOF
 beat "2 code cloned"
 # Python: the image's own CUDA torch if it is Python 3.12+ (our pins need it), else build ~/venv312
 PY=$(command -v python || command -v python3)
-if "$PY" -c "import sys, torch; assert sys.version_info >= (3, 12) and torch.cuda.is_available()"; then
+if [ "{a.job}" != "twin_day" ]; then  # numpy-only job: the image's python is enough
+  "$PY" -m pip install -q numpy huggingface_hub jarvislabs python-dotenv || true
+elif "$PY" -c "import sys, torch; assert sys.version_info >= (3, 12) and torch.cuda.is_available()"; then
   echo "using the image's python: $PY $("$PY" -c 'import torch; print(torch.__version__)')"
   "$PY" -m pip install -q jarvislabs python-dotenv || true
 else
@@ -90,9 +95,10 @@ from dotenv import load_dotenv; load_dotenv('.env')
 ids=[i.machine_id for i in Client(api_key=os.environ['JL_API_KEY']).instances.list() if i.name=='{a.name}']
 print(ids[-1] if ids else '')")
 echo "JL_MACHINE_ID=$MID" >> .env
-beat "5 starting twin_day.sh (machine $MID)"
-ONLY="{a.only}" bash scripts/twin_day.sh > "$HOME/twin_day_run.log" 2>&1
-beat "6 twin_day.sh finished"
+beat "5 starting {a.job} (machine $MID)"
+if [ "{a.job}" = "twin_day" ]; then ONLY="{a.only}" bash scripts/twin_day.sh > "$HOME/twin_day_run.log" 2>&1
+else PY="$PY" bash {a.job} > "$HOME/job_run.log" 2>&1; fi
+beat "6 job finished"
 """
 
 plan = dict(gpu=a.gpu, template=a.template, storage_gb=a.storage, name=a.name, only=a.only, branch=a.branch,
@@ -127,14 +133,14 @@ log(f"machine {mid} created: {inst}")
 def live_status():
     """The machine's step list from the live-runs branch, newest push (empty until the job reports)."""
     url = f"https://github.com/{REPO}.git"
-    r = subprocess.run(["git", "ls-remote", url, "live-runs"], capture_output=True, text=True)
+    r = subprocess.run(["git", "ls-remote", url, a.status_branch], capture_output=True, text=True)
     if not r.stdout.strip():
         return []
     tmp = pathlib.Path("/tmp/chotu-live-watch")
     if not (tmp / ".git").exists():
         subprocess.run(["git", "init", "-q", str(tmp)])
-    subprocess.run(["git", "-C", str(tmp), "fetch", "-q", "--depth", "1", url, "live-runs"], capture_output=True)
-    txt = subprocess.run(["git", "-C", str(tmp), "show", "FETCH_HEAD:runs/twin-day/status.jsonl"],
+    subprocess.run(["git", "-C", str(tmp), "fetch", "-q", "--depth", "1", url, a.status_branch], capture_output=True)
+    txt = subprocess.run(["git", "-C", str(tmp), "show", f"FETCH_HEAD:{a.status_path}"],
                          capture_output=True, text=True).stdout
     return [json.loads(x) for x in txt.splitlines() if x.strip()]
 

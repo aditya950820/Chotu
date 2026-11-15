@@ -16,7 +16,7 @@ that occur at the tuning and exam positions. That changes no score; it is exactl
 
     python learning/no_gradient/kn.py --dir <folder with shards/> --train train_000 [train_001 ...] --order 6
 """
-import argparse, json, math, pathlib, time
+import argparse, json, math, os, pathlib, time
 
 import numpy as np
 
@@ -373,6 +373,9 @@ def main():
     ap.add_argument("--split", type=int, default=1, help="split each pass of orders 2+ into this many parts by target token (less memory)")
     ap.add_argument("--skip", nargs="*", default=[], help="skip-gram patterns as comma-separated distances, e.g. 2,3 1,3 2")
     ap.add_argument("--out", default=str(pathlib.Path(__file__).with_name("results.json")))
+    ap.add_argument("--worker", default="", help="parallel mode: count these orders (e.g. 2 or 4,5,6) on --train shards and save to --dump")
+    ap.add_argument("--combine", action="store_true", help="parallel mode: merge every worker file in --dump, then score")
+    ap.add_argument("--dump", default="", help="folder for worker files")
     a = ap.parse_args()
     patterns = [tuple(int(x) for x in p.split(",")) for p in a.skip]
     D_, N, t0 = pathlib.Path(a.dir), a.order, time.time()
@@ -382,11 +385,41 @@ def main():
     exam = Positions(windows(D_ / "shards/val_000.bin", a.exam_windows, 999), N)
     paths = [D_ / f"shards/{t}.bin" for t in a.train]
     if a.max_tokens:  # a prefix of the first shard, for quick runs
-        sub = D_ / f"shards/_prefix_{int(a.max_tokens)}.bin"
+        sub = D_ / f"shards/_{paths[0].stem}_first{int(a.max_tokens)}_{os.getpid()}.bin"  # own file per process (parallel workers)
         np.asarray(np.memmap(paths[0], dtype=np.uint16, mode="r")[:int(a.max_tokens)]).tofile(sub)
         paths = [sub]
+    if a.worker:  # count some orders on some shards, save the distinct types / counts, and stop
+        group = [int(x) for x in a.worker.split(",")]
+        cont, top, seen = count(paths, [tune, exam], N, log=log, orders=group)
+        tag = "+".join(p.stem for p in paths)
+        dump = pathlib.Path(a.dump)
+        dump.mkdir(parents=True, exist_ok=True)
+        for k in group:
+            st = cont[k] if k < N else top
+            np.savez(dump / f"order{k}__{tag}.npz", keys=st.keys, cnt=st.cnt if st.cnt is not None else np.zeros(0),
+                     **{f"col{i}": c for i, c in enumerate(st.cols)}, seen=seen)
+        log("saved orders", group, "for", tag)
+        return
     S = {}
-    groups = [[1], [2], [3], list(range(4, N + 1))] if a.low_memory else [list(range(1, N + 1))]  # the low orders hold the most types
+    if a.combine:  # merge every worker's types per order (union of distinct types; counts add up), then score below
+        dump = pathlib.Path(a.dump)
+        seen = 0
+        for k in range(1, N + 1):
+            st = Store(with_counts=(k == N))
+            files = sorted(dump.glob(f"order{k}__*.npz"))
+            for f in files:
+                z = np.load(f)
+                cols = [z[f"col{i}"] for i in range(sum(1 for n in z.files if n.startswith("col")))]
+                st.buf.append((z["keys"], cols, z["cnt"] if k == N else None))
+                if k == 1:
+                    seen += int(z["seen"])
+            st.merge()
+            cont, top = ({k: st}, None) if k < N else ({}, st)
+            S.update(finalize(cont, top, N, orders=[k]))
+            del st, cont, top
+            log(f"merged order {k} from {len(files)} files")
+        paths = [pathlib.Path(f.name.split("__")[1].removesuffix(".npz")) for f in sorted(dump.glob("order1__*.npz"))]
+    groups = [] if a.combine else [[1], [2], [3], list(range(4, N + 1))] if a.low_memory else [list(range(1, N + 1))]
     for group in groups:
         P_ = 1 if group == [1] else a.split
         got = {k: [] for k in group}
