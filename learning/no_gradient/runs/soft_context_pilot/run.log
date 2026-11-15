@@ -1,0 +1,60 @@
+[    80s] band 1-1: rank 64 keeps 95.4% of the table
+[   121s] band 2-2: rank 64 keeps 91.3% of the table
+[   160s] band 3-3: rank 64 keeps 89.3% of the table
+[   200s] band 4-4: rank 64 keeps 88.7% of the table
+[   323s] band 5-8: rank 64 keeps 82.4% of the table
+[   446s] band 9-32: rank 64 keeps 81.9% of the table
+[   591s] band 33-256: rank 64 keeps 81.8% of the table
+[  1137s] counting model ready
+[  1137s] preparing tuning positions
+[  1138s] preparing exam positions
+[  1216s] without soft context: tune 1.4770  exam 1.4376
+[  1234s]    try band (1, 1) beta 0.030: tune 1.4753
+[  1252s]    try band (1, 1) beta 0.100: tune 1.4771
+[  1270s]    try band (1, 1) beta 0.300: tune 1.5176
+[  1270s] sweep 1 band (1, 1): beta 0.030  tune 1.4753
+[  1287s]    try band (2, 2) beta 0.030: tune 1.4745
+[  1305s]    try band (2, 2) beta 0.100: tune 1.4755
+[  1322s]    try band (2, 2) beta 0.300: tune 1.4984
+[  1322s] sweep 1 band (2, 2): beta 0.030  tune 1.4745
+[  1339s]    try band (3, 3) beta 0.030: tune 1.4737
+[  1358s]    try band (3, 3) beta 0.100: tune 1.4739
+[  1375s]    try band (3, 3) beta 0.300: tune 1.4883
+[  1375s] sweep 1 band (3, 3): beta 0.030  tune 1.4737
+[  1392s]    try band (4, 4) beta 0.030: tune 1.4733
+[  1410s]    try band (4, 4) beta 0.100: tune 1.4740
+[  1428s]    try band (4, 4) beta 0.300: tune 1.4880
+[  1428s] sweep 1 band (4, 4): beta 0.030  tune 1.4733
+[  1446s]    try band (5, 8) beta 0.030: tune 1.4727
+[  1463s]    try band (5, 8) beta 0.100: tune 1.4719
+[  1480s]    try band (5, 8) beta 0.300: tune 1.4732
+[  1480s] sweep 1 band (5, 8): beta 0.100  tune 1.4719
+[  1499s]    try band (9, 32) beta 0.030: tune 1.4718
+[  1517s]    try band (9, 32) beta 0.100: tune 1.4718
+[  1534s]    try band (9, 32) beta 0.300: tune 1.4742
+[  1534s] sweep 1 band (9, 32): beta 0.030  tune 1.4718
+[  1552s]    try band (33, 256) beta 0.030: tune 1.4720
+[  1569s]    try band (33, 256) beta 0.100: tune 1.4728
+[  1586s]    try band (33, 256) beta 0.300: tune 1.4772
+[  1586s] sweep 1 band (33, 256): beta 0.000  tune 1.4718
+[  1604s]    try band (1, 1) beta 0.018: tune 1.4718
+[  1622s]    try band (1, 1) beta 0.045: tune 1.4720
+[  1622s] sweep 2 band (1, 1): beta 0.030  tune 1.4718
+[  1640s]    try band (2, 2) beta 0.018: tune 1.4717
+[  1657s]    try band (2, 2) beta 0.045: tune 1.4721
+[  1657s] sweep 2 band (2, 2): beta 0.030  tune 1.4718
+[  1675s]    try band (3, 3) beta 0.018: tune 1.4718
+[  1692s]    try band (3, 3) beta 0.045: tune 1.4719
+[  1692s] sweep 2 band (3, 3): beta 0.030  tune 1.4718
+[  1711s]    try band (4, 4) beta 0.018: tune 1.4717
+[  1731s]    try band (4, 4) beta 0.045: tune 1.4719
+[  1731s] sweep 2 band (4, 4): beta 0.030  tune 1.4718
+[  1749s]    try band (5, 8) beta 0.060: tune 1.4720
+[  1766s]    try band (5, 8) beta 0.150: tune 1.4717
+[  1766s] sweep 2 band (5, 8): beta 0.100  tune 1.4718
+[  1785s]    try band (9, 32) beta 0.018: tune 1.4718
+[  1803s]    try band (9, 32) beta 0.045: tune 1.4717
+[  1803s] sweep 2 band (9, 32): beta 0.030  tune 1.4718
+[  1820s]    try band (33, 256) beta 0.010: tune 1.4718
+[  1820s] sweep 2 band (33, 256): beta 0.000  tune 1.4718
+[  1875s] WITH soft context: tune 1.4718  exam 1.4330  (betas [0.03, 0.03, 0.03, 0.03, 0.1, 0.03, 0.0])
