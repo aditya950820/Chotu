@@ -1,0 +1,85 @@
+[
+ {
+  "variant": "saved mix (kn, cache, copy)",
+  "parts": [
+   "kn",
+   "cache",
+   "copy"
+  ],
+  "situations": 60,
+  "tune": 1.3476,
+  "exam": 1.2794
+ },
+ {
+  "variant": "finer situations",
+  "parts": [
+   "kn",
+   "cache",
+   "copy"
+  ],
+  "situations": 120,
+  "tune": 1.3482,
+  "exam": 1.28
+ },
+ {
+  "variant": "+ recency memory",
+  "parts": [
+   "kn",
+   "cache",
+   "copy",
+   "recency30",
+   "recency300"
+  ],
+  "situations": 120,
+  "tune": 1.3461,
+  "exam": 1.2811
+ },
+ {
+  "variant": "+ two-word memory",
+  "parts": [
+   "kn",
+   "cache",
+   "copy",
+   "recency30",
+   "recency300",
+   "pair"
+  ],
+  "situations": 120,
+  "tune": 1.3434,
+  "exam": 1.2774
+ },
+ {
+  "variant": "+ copy by repeat length",
+  "parts": [
+   "kn",
+   "cache",
+   "recency30",
+   "recency300",
+   "pair",
+   "copy1-1",
+   "copy2-3",
+   "copy4-7",
+   "copy8-32"
+  ],
+  "situations": 120,
+  "tune": 1.3442,
+  "exam": 1.2775
+ },
+ {
+  "variant": "+ copy by repeat length (copy x depth situations)",
+  "parts": [
+   "kn",
+   "cache",
+   "recency30",
+   "recency300",
+   "pair",
+   "copy1-1",
+   "copy2-3",
+   "copy4-7",
+   "copy8-32"
+  ],
+  "situations": 30,
+  "tune": 1.3404,
+  "exam": 1.2721
+ }
+]
