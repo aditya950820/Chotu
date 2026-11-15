@@ -11,6 +11,14 @@ Newest at the top.
 - Still unclear:
 -->
 
+### 2026-11-15 · Adi · Twin 140M vs 700M: what 5x reading changed, with Claude
+- Measured on 196,608 held-out tokens (`learning/twin_5x/`, page "Five Times the Reading", report `reports/twin_5x_analysis.md`): 1.374 → 1.313 bits per byte (−4.4%); rare words gained most (0.43 vs 0.07 for the top 10); context use unchanged; copying still worse than blind guessing; looping unchanged; most of the gain came in the final slow-down.
+- Why: 89% of the twin is its word list (only 788k thinking knobs), and 700M tokens is ~99 per knob, far past ~20. Chotu 181M is the opposite shape (83% thinking layers, ~56 tokens per knob).
+- Partly answers the 2026-11-07 question "why does the 7M twin fail the copying test?": 4 tiny layers are not enough to form a copying skill, and more reading doesn't change that.
+- Questions to answer: (1) Random → 140M cut 2.07, 140M → 700M only 0.06: why? (2) The 700M run was flat from step 3,000 to 8,500: was it learning nothing? (3) What did 560M extra tokens give it that it didn't have? (4) A third of tokens got worse, yet the model improved: how? (5) Natural-text repeats are easy but the copying test fails: what explains the easy repeats?
+- In my words:
+- Still unclear:
+
 ### 2026-11-07 · Adi · Lessons 5–8 and twin day, with Claude
 - Lessons 5–8: practice paper vs exam and bits per byte; speed, MFU and the first 10 minutes; checkpoints and the fire drill; judging what the knobs learned (samples, copying test, word map, knob health). Everything is collected in `docs/FLIGHT_SCHOOL.md` (cheat sheet, checklist, glossary).
 - Seen for real today: the cliff (loss below 6 well before step 300), exam dots falling with practice, a resumed run lying on top of the uninterrupted one, MFU of 4–5% on a model too small for an H100, and a twin that writes grammatical but repetitive English.

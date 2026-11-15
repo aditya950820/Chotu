@@ -39,6 +39,12 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Notes for the other person:
 -->
 
+### 2026-11-15 · Adi · Session 3: deep analysis of the 5x twin run
+- Did: `learning/twin_5x/analyze.py` (both checkpoints from HF, untrained start, common-words guesser; 96 locked windows = 196,608 held-out tokens on CPU) and `build.py` → page "Five Times the Reading"; written report `reports/twin_5x_analysis.md`; questions in `docs/LEARNING.md`. No GPU used.
+- Results: 1.374 → 1.313 bits per byte (−4.4%), top guess right 29.1% → 30.7%. Gains are broad and biggest on rare words (−0.43 vs −0.07 for the 10 most common tokens); context use, copying (still worse than blind guessing) and looping are unchanged; most of the gain arrived in the final 20% slow-down after a long flat stretch. Cause: the twin is 89% word list (788k thinking knobs) and 700M tokens is ~99 per knob.
+- For the 181M run: a flat middle is normal (don't kill for it); add a copying-test alert; plan sampling + repetition penalty for chat. Chotu is 83% thinking layers, so expect far bigger gains.
+- Next (unchanged): fix the 181M first-step NaN in train.py; rotate the GitHub, HF and Jarvis keys.
+
 ### 2026-11-11 · Adi · Session 3: 5x twin run (H200) + 181M NaN found
 - Did: ran `ONLY="speed main5x"` on a Jarvis H200 container (₹435/h). New `scripts/jarvis_launch.py` rents a machine and runs the job via a startup script, with a boot heartbeat on the `live-boot` branch and a safety net that pauses it. Startup scripts don't run on bare VMs (first H100 try sat idle ~19 min, ₹110); on containers DNS lagged at boot and apt-get hung, so setup was finished by hand in the Jupyter terminal. Total spent today ≈ ₹350.
 - Results, 5x twin (700M tokens, 10,681 steps, 10.8 min, ₹78): held-out **1.3292 bits per byte vs 1.3881** for 140M (**−4.2%**); training loss 4.17 vs 4.32; copying test 13.32 vs 13.74 (still weak). Samples stay on topic more ("Photosynthesis ... the plant") but still loop. More reading helps, but a 7M model is mostly limited by its size. Checkpoint on HF `magnateadi/chotu-twin-day` (`twin-day/main-5x/`). Report: `reports/twin_day.md` on `twin-day`.

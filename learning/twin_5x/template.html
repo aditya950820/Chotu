@@ -1,0 +1,402 @@
+<title>Five Times the Reading</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout concept: a post-race lab notebook. Two twins, one locked exam: each section opens one drawer of the result (when, where, what not, why). */
+:root{
+  --bg:#f4f5f8; --surface:#fff; --ink:#16192b; --muted:#596079; --faint:#c8cdda; --line:#e2e5ee;
+  --a:#1b8a9e; --b:#d9731b; --raw:#9aa0b4; --uni:#7a5cc4; --good:#1e9e62; --bad:#d2453d;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif; --body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f1220;--surface:#171b2e;--ink:#e7eaf5;--muted:#9ba3c0;--faint:#3a4166;--line:#262c48;--a:#3cc0d4;--b:#f3a04f;--raw:#6d7491;--uni:#a990f0;--good:#40c98a;--bad:#ff7a70;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1220;--surface:#171b2e;--ink:#e7eaf5;--muted:#9ba3c0;--faint:#3a4166;--line:#262c48;--a:#3cc0d4;--b:#f3a04f;--raw:#6d7491;--uni:#a990f0;--good:#40c98a;--bad:#ff7a70;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 56px}
+.wrap{max-width:1040px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.12;text-wrap:balance}
+h1{font-size:clamp(2.1rem,5.5vw,3.4rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:clamp(1.3rem,2.6vw,1.8rem);font-weight:800}
+h3{font-size:1.02rem;font-weight:600}
+p{margin:0;max-width:70ch}
+.muted{color:var(--muted)}
+.eyebrow{font-family:var(--mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--a)}
+header{padding-block:40px 24px;display:grid;gap:14px}
+section{padding-block:32px;border-top:1px solid var(--line);display:grid;gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;min-width:0;align-content:start}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;gap:4px}
+.tile .k{font-family:var(--mono);font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.tile .v{font-family:var(--display);font-size:1.7rem;font-weight:800;font-variant-numeric:tabular-nums}
+.tile .v small{font-size:.95rem;font-weight:600;color:var(--muted)}
+.tile .n{font-size:.86rem;color:var(--muted)}
+.chip{display:inline-block;font-family:var(--mono);font-size:.78rem;padding:1px 8px;border-radius:999px;border:1px solid currentColor}
+.chip.good{color:var(--good)} .chip.bad{color:var(--bad)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.86rem;color:var(--muted)}
+.legend i{display:inline-block;width:18px;height:4px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%;height:auto}
+.chart text{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-family:var(--mono);font-size:.74rem;padding:5px 8px;border-radius:6px;white-space:nowrap;transform:translate(-50%,-115%);z-index:2}
+.think{border-left:3px solid var(--b);padding:6px 0 6px 14px;display:grid;gap:6px}
+.think b{font-family:var(--mono);font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--b)}
+.think ol{margin:0;padding-left:20px;display:grid;gap:4px}
+.tablebox{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.88rem;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+td.n,th.n{text-align:right}
+code,.mono{font-family:var(--mono);font-size:.86em}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{font:inherit;font-size:.86rem;padding:6px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.seg button:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+.passage{font-family:var(--mono);font-size:.92rem;line-height:2.05;white-space:pre-wrap;word-break:break-word}
+.passage span{border-radius:3px;padding:1px 0}
+.scale{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--muted);flex-wrap:wrap}
+.scale .bar{height:10px;width:160px;border-radius:5px}
+.writes{display:grid;gap:10px}
+.write{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+@media (max-width:760px){.write{grid-template-columns:minmax(0,1fr)}}
+.write .p{grid-column:1/-1;font-weight:600}
+.write .t{font-family:var(--mono);font-size:.82rem;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;white-space:pre-wrap;word-break:break-word}
+.write .t b{display:block;font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.why{display:grid;gap:12px;counter-reset:w}
+.why .card{grid-template-columns:auto minmax(0,1fr);align-items:start}
+.why .num{font-family:var(--display);font-weight:800;font-size:1.5rem;color:var(--b);min-width:1.4em}
+@media (prefers-reduced-motion:no-preference){.chart rect,.chart path{transition:opacity .2s}}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Chotu · Session 3 · twin vs twin</div>
+  <h1>Five Times the Reading</h1>
+  <p>The same 7M twin trained twice from the same random start with the same recipe. The only change was the amount of text it read: 140M tokens on 7 Nov, 700M tokens on 11 Nov. Here both take the same locked exam, <b id="hdr-tokens">—</b> held-out tokens they never trained on, and we look at where the extra reading helped, where it didn't, and why.</p>
+  <div class="tiles" id="tiles"></div>
+</header>
+
+<section id="scoreboard">
+  <h2>The scoreboard</h2>
+  <p class="muted">Four players take the same exam. Score is bits per byte: how many yes/no questions the model needs, on average, to pin down each byte of the real text. Lower is better. "Untrained" is the twin's random start; "common words only" always guesses by how often each token appears.</p>
+  <div class="card"><div class="chart" id="c-score"></div></div>
+  <div class="think"><b>Think about it</b><ol>
+    <li>Going from random to 140M tokens cut the score by 2.07. Going from 140M to 700M cut it by 0.06. Why is the second step so much smaller?</li>
+  </ol></div>
+</section>
+
+<section id="race">
+  <h2>When did the 700M twin pull ahead?</h2>
+  <p class="muted">The exam score during each run, against tokens read. The shaded band at the end of each line is its slow-down phase (the learning rate falls to zero over the last 20% of steps). Notice that at the same number of tokens, the longer run is <i>behind</i>: it is still taking full-size steps.</p>
+  <div class="legend"><span><i style="background:var(--a)"></i>140M run</span><span><i style="background:var(--b)"></i>700M run</span><span><i style="background:var(--faint)"></i>slow-down phase</span></div>
+  <div class="card"><div class="chart" id="c-race"></div></div>
+  <div class="tiles" id="race-tiles"></div>
+  <div class="think"><b>Think about it</b><ol>
+    <li>From step 3,000 to step 8,500 the 700M run barely moved. Was it learning nothing in that stretch?</li>
+    <li>For the real 181M run: what would you expect to see on the dashboard in the middle of the run, and what should <i>not</i> trigger the kill rule?</li>
+  </ol></div>
+</section>
+
+<section id="where">
+  <h2>Where the gain came from</h2>
+  <p class="muted">The exam split three ways. Each bar is the average surprise (lower is better) on one slice of the exam tokens; the chip shows how much the 700M twin gained on that slice.</p>
+  <div class="grid2">
+    <div class="card"><h3>Common words vs rare words</h3><p class="muted">Tokens grouped by how common they are (rank in a separate held-out shard). The share is how much of the exam each group is.</p><div class="chart" id="c-freq"></div></div>
+    <div class="card"><h3>Kinds of token</h3><p class="muted">A word start ("␣light"), the inside or end of a word ("ight"), punctuation, digits, spaces and line breaks.</p><div class="chart" id="c-kind"></div></div>
+  </div>
+  <div class="card"><h3>How much context it had read</h3><p class="muted">Surprise by position inside the 2,048-token window. Position 0 has no context at all; later positions can use everything before them. Both twins drop fast in the first ~60 tokens, then flatten: after a paragraph or so, more context stops helping them.</p>
+    <div class="legend"><span><i style="background:var(--a)"></i>140M</span><span><i style="background:var(--b)"></i>700M</span><span><i style="background:var(--uni)"></i>common words only</span></div>
+    <div class="chart" id="c-pos"></div></div>
+  <div class="think"><b>Think about it</b><ol>
+    <li>Rare words gained 0.43 but the 10 most common tokens only 0.07. What did 560M extra tokens give the twin that it didn't have before?</li>
+    <li>Why does the extra reading not make the far end of the window (position 1,024+) any more useful than position 256?</li>
+  </ol></div>
+</section>
+
+<section id="tokens">
+  <h2>Token by token</h2>
+  <p class="muted">For each of the exam tokens: how much less surprised the 700M twin was than the 140M twin. Right of zero means the 700M twin did better on that token.</p>
+  <div class="card"><div class="chart" id="c-hist"></div><div class="tiles" id="hist-tiles"></div></div>
+  <div class="grid2">
+    <div class="card"><h3>Biggest gains</h3><p class="muted">Tokens seen at least 60 times in the exam, by average gain.</p><div class="tablebox"><table id="t-gain"></table></div></div>
+    <div class="card"><h3>Got worse</h3><p class="muted">Mostly formatting: bullets and broken characters.</p><div class="tablebox"><table id="t-lost"></table></div></div>
+  </div>
+  <div class="card"><h3>One real passage</h3><p class="muted">The first exam window, tokens 400 to 490, not picked for looks. Choose a view: each token is shaded by how surprised that twin was (darker = more surprised), or by the difference between them.</p>
+    <div class="seg" id="seg-pass" role="group" aria-label="Passage view"><button data-v="b" aria-pressed="false">700M twin</button><button data-v="a" aria-pressed="false">140M twin</button><button data-v="d" aria-pressed="true">Difference</button></div>
+    <div class="scale" id="pass-scale"></div>
+    <div class="passage" id="passage"></div>
+  </div>
+  <div class="think"><b>Think about it</b><ol>
+    <li>About a third of tokens got <i>worse</i>. If the model improved overall, how can so many individual tokens get worse?</li>
+  </ol></div>
+</section>
+
+<section id="not">
+  <h2>What did not improve</h2>
+  <div class="grid2">
+    <div class="card"><h3>Copying test</h3><p class="muted">A random string of 128 tokens shown twice. A model that can look back and copy finds the repeat easy (near 0). Both twins score <i>worse than blind guessing</i> on both halves, and the repeat barely helps.</p>
+      <div class="legend"><span><i style="background:var(--faint)"></i>first copy</span><span><i style="background:var(--b)"></i>repeat</span><span><i style="background:var(--bad)"></i>blind guessing</span></div>
+      <div class="chart" id="c-copy"></div></div>
+    <div class="card"><h3>Looping</h3><p class="muted">From 24 real held-out openings, each twin writes 80 tokens taking its top guess every time. Looping is the share of 4-token phrases it had already written earlier in the same answer.</p>
+      <div class="chart" id="c-loop"></div>
+      <p class="muted">Both twins loop on most answers. The extra reading didn't change that.</p></div>
+  </div>
+  <div class="card"><h3>Same prompts, both twins</h3>
+    <div class="seg" id="seg-write" role="group" aria-label="Writing mode"><button data-v="greedy" aria-pressed="true">Top guess every time</button><button data-v="sampled" aria-pressed="false">Sampled (temperature 0.8)</button></div>
+    <div class="writes" id="writes"></div>
+  </div>
+  <div class="think"><b>Think about it</b><ol>
+    <li>Natural text: tokens already seen earlier in the window cost the 700M twin 2.81, new ones 6.28. Yet the copying test fails. What explains the easy repeats in real text, if not copying?</li>
+  </ol></div>
+</section>
+
+<section id="inside">
+  <h2>Inside the twin</h2>
+  <div class="grid2">
+    <div class="card"><h3>Where the knobs are</h3><p class="muted">Every model splits its knobs between the word list (one vector per token, shared with the output) and the thinking layers (attention and MLP).</p><div class="chart" id="c-split"></div></div>
+    <div class="card"><h3>How far the weights moved</h3><p class="muted">Both runs started from the same random weights. Bar length: distance from that start, relative to the start's own size, per layer.</p>
+      <div class="legend"><span><i style="background:var(--a)"></i>140M</span><span><i style="background:var(--b)"></i>700M</span></div>
+      <div class="chart" id="c-moved"></div>
+      <p class="muted" id="moved-note"></p></div>
+  </div>
+  <div class="card"><h3>When it says it is sure, is it right?</h3><p class="muted">Exam tokens grouped by how much probability the twin gave its top guess, against how often that guess was right. Points on the diagonal mean honest confidence.</p>
+    <div class="legend"><span><i style="background:var(--a)"></i>140M</span><span><i style="background:var(--b)"></i>700M</span><span><i style="background:var(--faint)"></i>perfectly honest</span></div>
+    <div class="chart" id="c-cal"></div></div>
+</section>
+
+<section id="why">
+  <h2>So: did it improve, and why only this much?</h2>
+  <p>Yes. It's a real but small gain, and it shows up the same way on every slice of the exam. The reasons, from the evidence above:</p>
+  <div class="why" id="why-list"></div>
+  <h2 style="margin-top:12px">What this means for the real 181M run</h2>
+  <div class="why" id="lessons"></div>
+  <p class="muted" id="made"></p>
+</section>
+</div>
+
+<script>
+const D = __DATA__;
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const NS = 'http://www.w3.org/2000/svg';
+const f2 = (x) => (+x).toFixed(2), f3 = (x) => (+x).toFixed(3), pct = (x) => (100 * x).toFixed(1) + '%';
+const byP = Object.fromEntries(D.overall.map((r) => [r.player, r]));
+const COL = {'untrained': '--raw', 'unigram': '--uni', 'twin-140M': '--a', 'twin-700M': '--b'};
+const NAME = {'untrained': 'Untrained twin', 'unigram': 'Common words only', 'twin-140M': 'Twin, 140M tokens', 'twin-700M': 'Twin, 700M tokens'};
+
+function el(tag, attrs = {}, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+function svg(box, w, h) { box.innerHTML = ''; const s = el('svg', {viewBox: `0 0 ${w} ${h}`, role: 'img'}); box.appendChild(s); return s; }
+function txt(s, x, y, t, a = {}) { const e = el('text', {x, y, ...a}, s); e.textContent = t; return e; }
+function tipFor(box) { let t = box.querySelector('.tip'); if (!t) { t = document.createElement('div'); t.className = 'tip'; t.hidden = true; box.appendChild(t); } return t; }
+function hover(box, node, label) {
+  const t = tipFor(box);
+  node.addEventListener('mousemove', (e) => { const r = box.getBoundingClientRect(); t.textContent = label; t.hidden = false; t.style.left = Math.min(r.width - 60, Math.max(60, e.clientX - r.left)) + 'px'; t.style.top = (e.clientY - r.top) + 'px'; });
+  node.addEventListener('mouseleave', () => { t.hidden = true; });
+}
+
+// header tiles
+document.getElementById('hdr-tokens').textContent = D.meta.tokens.toLocaleString();
+const A = byP['twin-140M'], B = byP['twin-700M'];
+const tiles = [
+  ['Exam score (bits per byte)', `${f3(A.bpb)} → ${f3(B.bpb)}`, `${pct((B.bpb - A.bpb) / A.bpb)} with 5× the reading`],
+  ['Top guess right', `${pct(A.top1)} → ${pct(B.top1)}`, 'share of exam tokens'],
+  ['Tokens read per knob', '20 → 99', `${(D.meta.params / 1e6).toFixed(2)}M knobs`],
+  ['Thinking knobs', (D.split[0].layers / 1e3).toFixed(0) + 'k', `only ${pct(D.split[0].layers / D.split[0].total)} of the twin`],
+];
+document.getElementById('tiles').innerHTML = tiles.map(([k, v, n]) => `<div class="tile"><span class="k">${k}</span><span class="v">${v}</span><span class="n">${n}</span></div>`).join('');
+
+// horizontal bars: rows = [{label, value, color, note}]
+function hbars(box, rows, {max, fmt = f2, h = 34} = {}) {
+  const W = 640, L = 170, R = 70, H = rows.length * h + 8; const s = svg(box, W, H);
+  const mx = max || Math.max(...rows.map((r) => r.value)) * 1.05;
+  rows.forEach((r, i) => {
+    const y = 4 + i * h, w = (W - L - R) * r.value / mx;
+    txt(s, L - 10, y + h / 2 + 4, r.label, {'text-anchor': 'end', style: 'font-family:var(--body);font-size:13px;fill:' + css('--ink')});
+    const b = el('rect', {x: L, y: y + 6, width: Math.max(1, w), height: h - 14, rx: 4, fill: css(r.color)}, s);
+    txt(s, L + w + 8, y + h / 2 + 4, fmt(r.value), {style: 'fill:' + css('--ink')});
+    hover(box, b, r.note || `${r.label}: ${fmt(r.value)}`);
+  });
+}
+
+hbars(document.getElementById('c-score'), ['untrained', 'unigram', 'twin-140M', 'twin-700M'].map((p) => ({label: NAME[p], value: byP[p].bpb, color: COL[p], note: `${NAME[p]}: ${f3(byP[p].bpb)} bits per byte (surprise ${f2(byP[p].loss)})`})), {fmt: f3});
+
+// grouped bars for slices: rows [{label, share, a, b, uni}]
+function grouped(box, rows) {
+  const W = 520, L = 140, R = 62, gh = 46, H = rows.length * gh + 20; const s = svg(box, W, H);
+  const mx = Math.max(...rows.map((r) => Math.max(r.a, r.b))) * 1.08;
+  rows.forEach((r, i) => {
+    const y = 6 + i * gh;
+    txt(s, L - 10, y + 15, r.label, {'text-anchor': 'end', style: 'font-family:var(--body);font-size:13px;fill:' + css('--ink')});
+    txt(s, L - 10, y + 31, pct(r.share) + ' of exam', {'text-anchor': 'end'});
+    [['a', '--a', 0], ['b', '--b', 17]].forEach(([k, c, off]) => {
+      const w = (W - L - R) * r[k] / mx;
+      const b = el('rect', {x: L, y: y + 4 + off, width: w, height: 14, rx: 3, fill: css(c)}, s);
+      txt(s, L + w + 6, y + 15 + off, f2(r[k]));
+      hover(box, b, `${r.label} · ${k === 'a' ? '140M' : '700M'} twin: surprise ${f2(r[k])}`);
+    });
+    const g = r.a - r.b;
+    txt(s, W - 4, y + 24, (g >= 0 ? '−' : '+') + f2(Math.abs(g)), {'text-anchor': 'end', style: `font-weight:600;fill:${css(g >= 0 ? '--good' : '--bad')}`});
+  });
+}
+grouped(document.getElementById('c-freq'), D.by_frequency.map((r) => ({label: r.bucket, share: r.share, a: r['twin-140M'], b: r['twin-700M']})));
+grouped(document.getElementById('c-kind'), D.by_kind.map((r) => ({label: r.kind.replace(' (middle/end)', ''), share: r.share, a: r['twin-140M'], b: r['twin-700M']})));
+
+// line chart helper
+function lines(box, series, {xlab, ylab, xlog = false, ymin, ymax, bands = [], H = 280, xfmt = (v) => v}) {
+  const W = 680, m = {l: 52, r: 16, t: 30, b: 38}; const s = svg(box, W, H);
+  const xs = series.flatMap((d) => d.pts.map((p) => p[0])), ys = series.flatMap((d) => d.pts.map((p) => p[1]));
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = ymin ?? Math.min(...ys), y1 = ymax ?? Math.max(...ys);
+  const X = (v) => m.l + (W - m.l - m.r) * (xlog ? Math.log(v) - Math.log(x0) : v - x0) / (xlog ? Math.log(x1) - Math.log(x0) : x1 - x0);
+  const Y = (v) => H - m.b - (H - m.t - m.b) * (v - y0) / (y1 - y0);
+  bands.forEach((b) => el('rect', {x: X(b[0]), y: m.t, width: Math.max(0, X(b[1]) - X(b[0])), height: H - m.t - m.b, fill: css('--faint'), opacity: .35}, s));
+  for (let i = 0; i <= 4; i++) { const v = y0 + (y1 - y0) * i / 4; el('line', {x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), stroke: css('--line')}, s); txt(s, m.l - 6, Y(v) + 4, f2(v), {'text-anchor': 'end'}); }
+  const ticks = xlog ? [1, 4, 16, 64, 256, 1024].filter((v) => v >= x0 && v <= x1) : [0, .25, .5, .75, 1].map((f) => x0 + (x1 - x0) * f);
+  ticks.forEach((v) => txt(s, X(v), H - m.b + 16, xfmt(v), {'text-anchor': 'middle'}));
+  txt(s, (W + m.l) / 2, H - 4, xlab, {'text-anchor': 'middle'});
+  txt(s, 4, 14, ylab, {});
+  series.forEach((d) => {
+    el('path', {d: d.pts.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1)).join(''), fill: 'none', stroke: css(d.color), 'stroke-width': 2.5, 'stroke-linejoin': 'round', 'stroke-dasharray': d.dash || null}, s);
+    d.pts.forEach((p) => { if (d.dots) { const c = el('circle', {cx: X(p[0]), cy: Y(p[1]), r: 3.5, fill: css(d.color), stroke: css('--surface'), 'stroke-width': 1.5}, s); hover(box, c, d.tip(p)); } });
+    const e = d.pts[d.pts.length - 1]; el('circle', {cx: X(e[0]), cy: Y(e[1]), r: 5, fill: css(d.color)}, s);
+  });
+}
+
+// race over tokens read (millions)
+const cv = D.curves, bt = 65536 / 1e6;
+const tokM = (step) => step * bt;
+const runPts = (k) => cv[k].evals.filter((e) => e.step > 0 && e.val_bpb <= 1.75).map((e) => [tokM(e.step), e.val_bpb]);  // the first exams sit far above the chart
+const last = (k) => cv[k].evals[cv[k].evals.length - 1];
+lines(document.getElementById('c-race'), [
+  {color: '--a', pts: runPts('twin-140M'), dots: true, tip: (p) => `140M run · ${p[0].toFixed(0)}M tokens: ${f3(p[1])}`},
+  {color: '--b', pts: runPts('twin-700M'), dots: true, tip: (p) => `700M run · ${p[0].toFixed(0)}M tokens: ${f3(p[1])}`},
+], {xlab: 'tokens read (millions)', ylab: 'exam, bits per byte', ymin: 1.3, ymax: 1.75, xfmt: (v) => v.toFixed(0),
+    bands: [[tokM(cv['twin-140M'].evals.slice(-1)[0].step * .8), tokM(cv['twin-140M'].evals.slice(-1)[0].step)], [tokM(last('twin-700M').step * .8), tokM(last('twin-700M').step)]]});
+const e7 = cv['twin-700M'].evals, near = (st) => e7.reduce((b, e) => Math.abs(e.step - st) < Math.abs(b.step - st) ? e : b);
+const preDecay = near(last('twin-700M').step * .8), at140 = near(last('twin-140M').step);
+const plateauA = near(3000), plateauB = preDecay;
+document.getElementById('race-tiles').innerHTML = [
+  ['At the 140M mark', `${f3(at140.val_bpb)}`, `700M run at step ${at140.step.toLocaleString()} vs ${f3(last('twin-140M').val_bpb)} for the finished 140M run`],
+  ['Long flat stretch', `${f3(plateauA.val_bpb)} → ${f3(plateauB.val_bpb)}`, `steps ${plateauA.step.toLocaleString()} to ${plateauB.step.toLocaleString()} at full stride`],
+  ['Slow-down phase', `${f3(plateauB.val_bpb)} → ${f3(last('twin-700M').val_bpb)}`, 'last 20% of steps, stride shrinking to zero'],
+].map(([k, v, n]) => `<div class="tile"><span class="k">${k}</span><span class="v">${v}</span><span class="n">${n}</span></div>`).join('');
+
+lines(document.getElementById('c-pos'), [
+  {color: '--uni', dash: '4 4', pts: D.by_position.map((r) => [Math.max(1, (r.lo + r.hi) / 2), r.unigram]), dots: true, tip: (p) => `common words only: ${f2(p[1])}`},
+  {color: '--a', pts: D.by_position.map((r) => [Math.max(1, (r.lo + r.hi) / 2), r['twin-140M']]), dots: true, tip: (p) => `140M twin, around position ${Math.round(p[0])}: ${f2(p[1])}`},
+  {color: '--b', pts: D.by_position.map((r) => [Math.max(1, (r.lo + r.hi) / 2), r['twin-700M']]), dots: true, tip: (p) => `700M twin, around position ${Math.round(p[0])}: ${f2(p[1])}`},
+], {xlab: 'position in the window (log scale)', ylab: 'surprise', xlog: true, ymin: 3.5, ymax: 8});
+
+// histogram of per-token gains
+(function () {
+  const box = document.getElementById('c-hist'), h = D.delta.hist, W = 680, H = 220, m = {l: 40, r: 10, t: 10, b: 34}; const s = svg(box, W, H);
+  const mx = Math.max(...h), bw = (W - m.l - m.r) / h.length;
+  h.forEach((n, i) => { const lo = -4 + i * .2; const bh = (H - m.t - m.b) * n / mx;
+    const r = el('rect', {x: m.l + i * bw + 1, y: H - m.b - bh, width: bw - 2, height: bh, rx: 2, fill: css(lo >= .1 ? '--good' : lo < -.1 ? '--bad' : '--faint')}, s);
+    hover(box, r, `${n.toLocaleString()} tokens with gain ${lo.toFixed(1)} to ${(lo + .2).toFixed(1)}`); });
+  [-4, -2, 0, 2, 4].forEach((v) => txt(s, m.l + (v + 4) / 8 * (W - m.l - m.r), H - m.b + 16, (v > 0 ? '+' : '') + v, {'text-anchor': 'middle'}));
+  txt(s, (W + m.l) / 2, H - 2, '← 700M worse   ·   gain in surprise per token   ·   700M better →', {'text-anchor': 'middle'});
+})();
+document.getElementById('hist-tiles').innerHTML = [['Better by >0.1', pct(D.delta.better), 'good'], ['About the same', pct(D.delta.same), ''], ['Worse by >0.1', pct(D.delta.worse), 'bad'], ['Average gain', f3(D.delta.mean), 'good']]
+  .map(([k, v, c]) => `<div class="tile"><span class="k">${k}</span><span class="v">${v}</span>${c ? `<span class="n"><span class="chip ${c}">${c === 'good' ? '700M ahead' : '700M behind'}</span></span>` : ''}</div>`).join('');
+function tokTable(id, rows) {
+  const t = document.getElementById(id);
+  t.innerHTML = '<thead><tr><th>Token</th><th class="n">Gain</th><th class="n">Seen</th><th class="n">700M surprise</th></tr></thead><tbody></tbody>';
+  const tb = t.querySelector('tbody');
+  rows.forEach((r) => { const tr = document.createElement('tr');
+    [['mono', JSON.stringify(r.token)], ['n', (r.gain > 0 ? '+' : '') + f2(r.gain)], ['n', r.n], ['n', f2(r.loss_700)]].forEach(([c, v]) => { const td = document.createElement('td'); td.className = c; td.textContent = v; tr.appendChild(td); });
+    tb.appendChild(tr); });
+}
+tokTable('t-gain', D.tokens_gained); tokTable('t-lost', D.tokens_lost);
+
+// passage
+function mix(c, a) { return `color-mix(in srgb, ${css(c)} ${Math.round(a * 100)}%, transparent)`; }
+function passage(v) {
+  const box = document.getElementById('passage'); box.innerHTML = '';
+  D.passage.forEach((p) => { const sp = document.createElement('span'); sp.textContent = p.t;
+    if (v === 'd') { const d = p.a - p.b; sp.style.background = mix(d >= 0 ? '--good' : '--bad', Math.min(1, Math.abs(d) / 3) * .8); sp.title = `140M ${f2(p.a)} → 700M ${f2(p.b)} (${d >= 0 ? 'better' : 'worse'} by ${f2(Math.abs(d))})`; }
+    else { const x = v === 'a' ? p.a : p.b; sp.style.background = mix(v === 'a' ? '--a' : '--b', Math.min(1, x / 10) * .85); sp.title = `surprise ${f2(x)}`; }
+    box.appendChild(sp); });
+  const sc = document.getElementById('pass-scale');
+  sc.innerHTML = v === 'd' ? `<span>700M worse</span><span class="bar" style="background:linear-gradient(90deg, ${mix('--bad', .8)}, transparent, ${mix('--good', .8)})"></span><span>700M better</span>`
+    : `<span>easy</span><span class="bar" style="background:linear-gradient(90deg, transparent, ${mix(v === 'a' ? '--a' : '--b', .85)})"></span><span>surprised (10)</span>`;
+}
+function seg(id, fn) { const g = document.getElementById(id); g.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; g.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b)); fn(b.dataset.v); }); }
+seg('seg-pass', passage); passage('d');
+
+// copying
+(function () {
+  const box = document.getElementById('c-copy'), rows = D.copying, W = 640, L = 130, R = 50, gh = 50, H = rows.length * gh + 30; const s = svg(box, W, H); const mx = 15;
+  rows.forEach((r, i) => { const y = 6 + i * gh;
+    txt(s, L - 10, y + 22, NAME[r.player] || r.player, {'text-anchor': 'end', style: 'font-family:var(--body);font-size:13px;fill:' + css('--ink')});
+    [['first', '--faint', 0], ['repeat', '--b', 18]].forEach(([k, c, off]) => { const w = (W - L - R) * r[k] / mx;
+      const b = el('rect', {x: L, y: y + 4 + off, width: w, height: 15, rx: 3, fill: css(c)}, s); txt(s, L + w + 6, y + 16 + off, f2(r[k]));
+      hover(box, b, `${r.player}, ${k === 'first' ? 'first copy' : 'repeat'}: ${f2(r[k])}`); });
+  });
+  const bx = L + (W - L - R) * rows[0].blind / mx; el('line', {x1: bx, x2: bx, y1: 0, y2: H - 20, stroke: css('--bad'), 'stroke-dasharray': '4 3', 'stroke-width': 2}, s);
+  txt(s, bx, H - 6, 'blind guessing ' + f2(rows[0].blind), {'text-anchor': 'middle', style: 'fill:' + css('--bad')});
+})();
+hbars(document.getElementById('c-loop'), D.loopiness.map((r) => ({label: NAME[r.player], value: r.mean, color: COL[r.player], note: `${NAME[r.player]}: ${pct(r.mean)} of 4-token phrases repeated (${r.runs} openings)`})), {max: 1, fmt: pct});
+
+function writes(mode) {
+  const box = document.getElementById('writes'); box.innerHTML = '';
+  D.writing.forEach((w) => { const d = document.createElement('div'); d.className = 'write';
+    const p = document.createElement('div'); p.className = 'p'; p.textContent = '“' + w.prompt + ' …”'; d.appendChild(p);
+    [['twin-140M', '--a', '140M'], ['twin-700M', '--b', '700M']].forEach(([k, c, lab]) => { const t = document.createElement('div'); t.className = 't';
+      const b = document.createElement('b'); b.textContent = lab + ' twin'; b.style.color = css(c); t.appendChild(b); t.appendChild(document.createTextNode(w[k][mode])); d.appendChild(t); });
+    box.appendChild(d); });
+}
+seg('seg-write', writes); writes('greedy');
+
+// parameter split
+(function () {
+  const box = document.getElementById('c-split'), W = 640, H = 140; const s = svg(box, W, H);
+  D.split.forEach((r, i) => { const y = 14 + i * 60, L = 0, w = W - 10, e = w * r.embeddings / r.total;
+    txt(s, 0, y, `${r.model} · ${(r.total / 1e6).toFixed(1)}M knobs`, {style: 'font-family:var(--body);font-size:13px;font-weight:600;fill:' + css('--ink')});
+    const a = el('rect', {x: L, y: y + 8, width: e, height: 24, rx: 4, fill: css('--uni')}, s); hover(box, a, `word list: ${(r.embeddings / 1e6).toFixed(2)}M (${pct(r.embeddings / r.total)})`);
+    const b = el('rect', {x: L + e + 2, y: y + 8, width: w - e - 2, height: 24, rx: 4, fill: css('--b')}, s); hover(box, b, `thinking layers: ${(r.layers / 1e6).toFixed(2)}M (${pct(r.layers / r.total)})`);
+    txt(s, 6, y + 25, 'word list ' + pct(r.embeddings / r.total), {style: 'fill:#fff;font-weight:600'});
+    if (w - e > 120) txt(s, e + 10, y + 25, 'thinking ' + pct(r.layers / r.total), {style: 'fill:#fff;font-weight:600'});
+    else txt(s, w, y + 48, 'thinking layers ' + pct(r.layers / r.total) + ' →', {'text-anchor': 'end'}); });
+})();
+
+// weights moved
+(function () {
+  const rows = D.weights.filter((r) => r.group !== 'norms' || r.layer === '-').map((r) => ({label: (r.layer === '-' ? '' : 'layer ' + r.layer + ' · ') + r.group.replace(' (shared with output)', ''), a: r.moved_140, b: r.moved_700}));
+  const box = document.getElementById('c-moved'), W = 540, L = 160, R = 50, gh = 36, H = rows.length * gh + 6; const s = svg(box, W, H); const mx = Math.max(...rows.map((r) => Math.max(r.a, r.b))) * 1.05;
+  rows.forEach((r, i) => { const y = 3 + i * gh; txt(s, L - 10, y + 18, r.label, {'text-anchor': 'end', style: 'font-family:var(--body);font-size:12.5px;fill:' + css('--ink')});
+    [['a', '--a', 0], ['b', '--b', 14]].forEach(([k, c, off]) => { const w = (W - L - R) * r[k] / mx; const b = el('rect', {x: L, y: y + 3 + off, width: w, height: 12, rx: 3, fill: css(c)}, s); txt(s, L + w + 5, y + 13 + off, f2(r[k])); hover(box, b, `${r.label}, ${k === 'a' ? '140M' : '700M'}: moved ${f2(r[k])}× its starting size`); }); });
+  const lay = D.weights.filter((r) => r.layer !== '-' && r.group !== 'norms'); const layerA = lay.reduce((t, r) => t + r.moved_140, 0), layerB = lay.reduce((t, r) => t + r.moved_700, 0);
+  document.getElementById('moved-note').textContent = `Both runs travelled about the same total distance (700M run: ${D.weights_summary.moved_ratio}× the 140M run's), but in very different directions: the two moves line up with a cosine of only ${D.weights_summary.cosine_of_moves} (1 = same direction, 0 = unrelated). In the thinking layers (attention and MLP) the 700M run moved ${Math.round(100 * (layerB / layerA - 1))}% further on average, while the word list moved slightly less.`;
+})();
+
+// calibration
+(function () {
+  const box = document.getElementById('c-cal'), W = 680, H = 300, m = {l: 50, r: 16, t: 30, b: 38}; const s = svg(box, W, H);
+  const X = (v) => m.l + (W - m.l - m.r) * v, Y = (v) => H - m.b - (H - m.t - m.b) * v;
+  [0, .25, .5, .75, 1].forEach((v) => { el('line', {x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), stroke: css('--line')}, s); txt(s, m.l - 6, Y(v) + 4, pct(v).replace('.0', ''), {'text-anchor': 'end'}); txt(s, X(v), H - m.b + 16, pct(v).replace('.0', ''), {'text-anchor': 'middle'}); });
+  el('line', {x1: X(0), y1: Y(0), x2: X(1), y2: Y(1), stroke: css('--faint'), 'stroke-width': 2, 'stroke-dasharray': '5 4'}, s);
+  txt(s, (W + m.l) / 2, H - 4, 'confidence in its top guess', {'text-anchor': 'middle'}); txt(s, 4, 14, 'how often right', {});
+  D.calibration.forEach((c) => { const col = css(COL[c.player]);
+    el('path', {d: c.rows.map((r, i) => (i ? 'L' : 'M') + X(r.said) + ' ' + Y(r.right)).join(''), fill: 'none', stroke: col, 'stroke-width': 2}, s);
+    c.rows.forEach((r) => { const p = el('circle', {cx: X(r.said), cy: Y(r.right), r: 3 + 18 * Math.sqrt(r.share) / 2, fill: col, opacity: .75}, s); hover(box, p, `${c.player} · confidence ${r.band}: said ${pct(r.said)}, right ${pct(r.right)} (${pct(r.share)} of tokens)`); }); });
+})();
+
+// why + lessons
+const sp = D.split[0], ch = D.split[1];
+const why = [
+  ['The twin is mostly a word list.', `${pct(sp.embeddings / sp.total)} of its ${(sp.total / 1e6).toFixed(1)}M knobs are the word list; only ${(sp.layers / 1e3).toFixed(0)}k do the thinking. The extra reading taught it more about individual words (rare words gained ${f2(D.by_frequency[4]['twin-140M'] - D.by_frequency[4]['twin-700M'])}, the 10 most common only ${f2(D.by_frequency[0]['twin-140M'] - D.by_frequency[0]['twin-700M'])}), but the small thinking part is already near what it can hold.`],
+  ['It was already well past its sweet spot.', `The usual rule of thumb is about 20 tokens per knob. The 140M run was already there (20). The 700M run is at 99, and for the thinking knobs alone at ${(700e6 / sp.layers).toFixed(0)}. Past that point each extra token teaches less.`],
+  ['Most of the gain arrived in the slow-down.', `At full stride the 700M run sat near ${f3(plateauA.val_bpb)}–${f3(plateauB.val_bpb)} for ~5,500 steps, then dropped to ${f3(last('twin-700M').val_bpb)} while the stride shrank. Large steps keep the weights bouncing around a good region; shrinking them lets the weights settle into it.`],
+  ['No new skills appeared.', `The copying test is still worse than blind guessing (repeat ${f2(D.copying[2].repeat)} vs ${f2(D.copying[2].blind)}), and greedy writing loops just as much (${pct(D.loopiness[1].mean)} vs ${pct(D.loopiness[0].mean)}). Skills like copying need enough thinking layers to build them, so more reading alone can't produce them in a model this small.`],
+  ['It found a different solution, not just a better one.', `From the same start, the two runs moved about the same distance in very different directions (cosine ${D.weights_summary.cosine_of_moves}). Many weight settings give similar scores; more reading moved the twin to a slightly better one.`],
+];
+const lessons = [
+  ['Chotu is the opposite shape.', `${pct(ch.layers / ch.total)} of Chotu's ${(ch.total / 1e6).toFixed(0)}M knobs are thinking layers (${(ch.layers / 1e6).toFixed(0)}M). It reads 10B tokens, about 56 per knob: enough data for its size without being far past the sweet spot. Expect much more from it than this twin.`],
+  ['Don’t judge the run by its middle.', 'A long flat stretch at full stride is normal; a real drop comes in the final 20%. Watch for NaN, spikes and the step-300 rule, not for a flat middle.'],
+  ['Watch the copying test.', 'On the 181M run, the copying test should fall well below blind guessing early on. If it stays above, the model is not learning to look back, and that is worth an alert.'],
+  ['Plan for loops in chat.', 'Small models loop when they always take the top guess. Plan sampling (temperature) and a repetition penalty for the chat version and the GGUF file.'],
+];
+const card = ([h, t], i) => `<div class="card"><span class="num">${i + 1}</span><div><h3>${h}</h3><p class="muted" style="margin-top:4px">${t}</p></div></div>`;
+document.getElementById("why-list").innerHTML = why.map(card).join('');
+document.getElementById('lessons').innerHTML = lessons.map(card).join('');
+document.getElementById('made').textContent = `Measured ${D.meta.made} on ${D.meta.windows} locked windows (${D.meta.tokens.toLocaleString()} tokens) from val_000; common-word counts from val_001. Rebuild: learning/twin_5x/analyze.py, then build.py.`;
+</script>
