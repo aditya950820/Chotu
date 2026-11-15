@@ -21,6 +21,7 @@ import argparse, json, math, pathlib, time
 import numpy as np
 
 BYTES_PER_TOKEN, SEQ, V = 4.54, 2048, 49_152
+MERGE_ROWS = 15_000_000  # merge each count table this often (memory: the full shard needs ~8 GB at this setting)
 P = np.uint64(0x9E3779B97F4A7C15)  # hash multiplier for n-grams longer than 4 tokens
 U16 = np.uint64(16)
 
@@ -100,7 +101,7 @@ class Store:
         else:
             u, idx = np.unique(keys, return_index=True)
             self.buf.append((u, [col[idx] for col in cols], None))
-        if sum(len(b[0]) for b in self.buf) > 60_000_000:
+        if sum(len(b[0]) for b in self.buf) > MERGE_ROWS:
             self.merge()
 
     def merge(self):
@@ -118,7 +119,7 @@ class Store:
         self.keys, self.cols = u, [c[idx] for c in cols]
 
 
-def count(train_paths, pos_sets, N, chunk=20_000_000, log=print):
+def count(train_paths, pos_sets, N, chunk=10_000_000, log=print):
     """One pass over the training shards. For each order k < N: distinct (k+1)-gram types x·h·w whose middle h is a
     context we need (continuation counts). For order N: counts of N-grams whose context we need."""
     need = {k: np.unique(np.concatenate([p.ctx[k] for p in pos_sets])) for k in range(2, N + 1)}
