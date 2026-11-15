@@ -239,15 +239,25 @@ def deepest(pos, S, N):
 
 
 # ---------------------------------------------------------------- skip-grams (Goodman 2001)
-def pattern_keys(t, offs):
-    """Context made of the tokens at the given distances before position i (e.g. (2, 3) skips the token just before)."""
-    t = t.astype(np.uint64)
+CMAP = None  # token -> class id (clusters.py), used by class contexts
+
+
+def parse_pattern(p):
+    """'2,3' = the tokens 2 and 3 back; '1w,2c,3c' = the exact token 1 back and the classes of the tokens 2 and 3 back."""
+    return tuple((int(x[:-1]), x[-1]) if x[-1] in "wc" else (int(x), "w") for x in p.split(","))
+
+
+def pattern_keys(t, spec):
+    """Context made of the tokens (or their classes) at the given distances before position i."""
+    tw = t.astype(np.uint64)
+    tc = CMAP[t].astype(np.uint64) if any(k == "c" for _, k in spec) else None
     ctx = np.zeros(len(t), np.uint64)
-    for o in offs:
+    for o, kind in spec:
+        src = tw if kind == "w" else tc
         sh = np.zeros(len(t), np.uint64)
-        sh[o:] = t[:-o]
+        sh[o:] = src[:-o]
         ctx = (ctx << U16) | sh
-    return ctx, (ctx << U16) | t
+    return ctx, (ctx << U16) | tw
 
 
 def count_patterns(train_paths, pos_sets, patterns, chunk=20_000_000, log=print):
@@ -255,14 +265,15 @@ def count_patterns(train_paths, pos_sets, patterns, chunk=20_000_000, log=print)
     out = {}
     for offs in patterns:
         need = np.unique(np.concatenate([p.pat[offs][0] for p in pos_sets]))
+        far = max(o for o, _ in offs)
         st = Store(with_counts=True)
         for path in train_paths:
             sh = np.memmap(path, dtype=np.uint16, mode="r")
             for s in range(0, len(sh), chunk):
-                s0, e = max(0, s - max(offs)), min(len(sh), s + chunk)
+                s0, e = max(0, s - far), min(len(sh), s + chunk)
                 ctx, full = pattern_keys(np.asarray(sh[s0:e]), offs)
                 i = np.arange(s - s0, e - s0)
-                i = i[i >= max(offs)]
+                i = i[i >= far]
                 i = i[member(ctx[i], need)]
                 st.add(full[i], [ctx[i]])
         st.merge()
@@ -270,7 +281,7 @@ def count_patterns(train_paths, pos_sets, patterns, chunk=20_000_000, log=print)
         c = st.cnt
         out[offs] = dict(hw=st.keys, c=c, h=uh, tot=np.bincount(hinv, weights=c), n1=np.bincount(hinv, weights=c == 1),
                          n2=np.bincount(hinv, weights=c == 2), n3=np.bincount(hinv, weights=c >= 3), coc=[int((c == r).sum()) for r in (1, 2, 3, 4)])
-        log(f"skip pattern {offs}: {len(uh):,} contexts, {len(c):,} types")
+        log(f"pattern {','.join(f'{o}{k}' for o, k in offs)}: {len(uh):,} contexts, {len(c):,} types")
     return out
 
 
@@ -281,7 +292,7 @@ def add_patterns(pos, patterns):
         for w in pos.W:
             ctx, full = pattern_keys(w, offs)
             cs.append(ctx[1:]); fs.append(full[1:])
-            ok.append(np.arange(1, SEQ + 1) >= max(offs))
+            ok.append(np.arange(1, SEQ + 1) >= max(o for o, _ in offs))
         pos.pat[offs] = (np.concatenate(cs), np.concatenate(fs), np.concatenate(ok))
 
 
@@ -371,13 +382,17 @@ def main():
     ap.add_argument("--max-tokens", type=float, default=0, help="use only the first this-many training tokens (0 = all)")
     ap.add_argument("--low-memory", action="store_true", help="count the orders in four passes (1, 2, 3, 4+) instead of one")
     ap.add_argument("--split", type=int, default=1, help="split each pass of orders 2+ into this many parts by target token (less memory)")
-    ap.add_argument("--skip", nargs="*", default=[], help="skip-gram patterns as comma-separated distances, e.g. 2,3 1,3 2")
+    ap.add_argument("--classes", default="", help="token -> class map from clusters.py (for patterns with c)")
+    ap.add_argument("--skip", nargs="*", default=[], help="extra context patterns: distances back, w = exact token (default), c = its class; e.g. 2,3 or 1w,2c,3c")
     ap.add_argument("--out", default=str(pathlib.Path(__file__).with_name("results.json")))
     ap.add_argument("--worker", default="", help="parallel mode: count these orders (e.g. 2 or 4,5,6) on --train shards and save to --dump")
     ap.add_argument("--combine", action="store_true", help="parallel mode: merge every worker file in --dump, then score")
     ap.add_argument("--dump", default="", help="folder for worker files")
     a = ap.parse_args()
-    patterns = [tuple(int(x) for x in p.split(",")) for p in a.skip]
+    patterns = [parse_pattern(p) for p in a.skip]
+    if a.classes:
+        global CMAP
+        CMAP = np.load(a.classes).astype(np.int64)
     D_, N, t0 = pathlib.Path(a.dir), a.order, time.time()
     log = lambda *m: print(f"[{time.time() - t0:6.0f}s]", *m, flush=True)
 
@@ -482,7 +497,7 @@ def main():
     by_copy = [dict(match=lab, share=round(float(sel.mean()), 4), kn=round(bpb(parts["exam"]["kn"][sel]), 4), full=round(bpb(full_exam[sel]), 4))
                for lab, sel in [("no repeat found", parts["exam"]["mlen"] == 0), ("repeat of 1-3 tokens", (parts["exam"]["mlen"] >= 1) & (parts["exam"]["mlen"] < 4)),
                                 ("repeat of 4+ tokens", parts["exam"]["mlen"] >= 4)]]
-    json.dump(dict(meta=dict(order=N, skip=[list(o) for o in patterns], train=[str(p.name) for p in paths], train_tokens=int(seen), minutes=round((time.time() - t0) / 60, 1),
+    json.dump(dict(meta=dict(order=N, skip=[",".join(f"{o}{k}" for o, k in p) for p in patterns], train=[str(p.name) for p in paths], train_tokens=int(seen), minutes=round((time.time() - t0) / 60, 1),
                              tune_tokens=len(tune.target), exam_tokens=len(exam.target)),
                    types={k: S[k]["types"] for k in S}, discounts=D, tune=res["tune"], exam=res["exam"], by_copy=by_copy,
                    weights=lam.round(4).tolist()), open(a.out, "w"), indent=1)
