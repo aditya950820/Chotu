@@ -339,7 +339,7 @@ def main():
     ap.add_argument("--tune-windows", type=int, default=16)
     ap.add_argument("--exam-windows", type=int, default=96)
     ap.add_argument("--max-tokens", type=float, default=0, help="use only the first this-many training tokens (0 = all)")
-    ap.add_argument("--low-memory", action="store_true", help="count one order per pass over the data")
+    ap.add_argument("--low-memory", action="store_true", help="count the orders in three passes (1-2, 3, 4+) instead of one")
     ap.add_argument("--skip", nargs="*", default=[], help="skip-gram patterns as comma-separated distances, e.g. 2,3 1,3 2")
     ap.add_argument("--out", default=str(pathlib.Path(__file__).with_name("results.json")))
     a = ap.parse_args()
@@ -355,7 +355,8 @@ def main():
         np.asarray(np.memmap(paths[0], dtype=np.uint16, mode="r")[:int(a.max_tokens)]).tofile(sub)
         paths = [sub]
     S = {}
-    for group in ([[k] for k in range(1, N + 1)] if a.low_memory else [list(range(1, N + 1))]):
+    groups = [[1, 2], [3], list(range(4, N + 1))] if a.low_memory else [list(range(1, N + 1))]  # the low orders hold the most types
+    for group in groups:
         cont, top, seen = count(paths, [tune, exam], N, log=log, orders=group)
         S.update(finalize(cont, top, N, orders=group))
         del cont, top
