@@ -11,6 +11,13 @@ Newest at the top.
 - Still unclear:
 -->
 
+### 2026-11-15 · Adi · Better without gradients? With Claude
+- Counting (Kneser-Ney + document memory + copying, EM mixing) on 2.28B tokens beat the 700M twin on the exam: 1.272 vs 1.313. More text helped most (~0.04 per doubling).
+- Hand-editing a trained network barely moves it; removing a "repetition direction" made our twin loop more. Edits can unlock what a model already knows; they can't teach it new things.
+- Questions to answer: (1) Why does counting win when the last 5 tokens were seen in training but lose on new word combinations? (2) Why did removing the loop direction help Qwen but hurt our twin? (3) The counting model beats the twin on the exam but writes worse text: what does the exam not measure?
+- In my words:
+- Still unclear:
+
 ### 2026-11-15 · Adi · Twin 140M vs 700M: what 5x reading changed, with Claude
 - Measured on 196,608 held-out tokens (`learning/twin_5x/`, page "Five Times the Reading", report `reports/twin_5x_analysis.md`): 1.374 → 1.313 bits per byte (−4.4%); rare words gained most (0.43 vs 0.07 for the top 10); context use unchanged; copying still worse than blind guessing; looping unchanged; most of the gain came in the final slow-down.
 - Why: 89% of the twin is its word list (only 788k thinking knobs), and 700M tokens is ~99 per knob, far past ~20. Chotu 181M is the opposite shape (83% thinking layers, ~56 tokens per knob).

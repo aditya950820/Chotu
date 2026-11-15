@@ -1,0 +1,284 @@
+{
+ "base": {
+  "tune_loop": 0.6762,
+  "held_loop": 0.641,
+  "exam": 1.3203
+ },
+ "chosen": {
+  "layers": [
+   1
+  ],
+  "columns": 16,
+  "strength": 2.0,
+  "tune_loop": 0.6762,
+  "exam": 1.3223
+ },
+ "held_after": {
+  "held_loop": 0.6363,
+  "exam": 1.3223
+ },
+ "trials": [
+  {
+   "layers": [
+    1
+   ],
+   "columns": 16,
+   "strength": 2.0,
+   "tune_loop": 0.6762,
+   "exam": 1.3223
+  },
+  {
+   "layers": [
+    1
+   ],
+   "columns": 16,
+   "strength": 6.0,
+   "tune_loop": 0.6496,
+   "exam": 1.3384
+  },
+  {
+   "layers": [
+    1
+   ],
+   "columns": 64,
+   "strength": 2.0,
+   "tune_loop": 0.682,
+   "exam": 1.3252
+  },
+  {
+   "layers": [
+    1
+   ],
+   "columns": 64,
+   "strength": 6.0,
+   "tune_loop": 0.7137,
+   "exam": 1.3615
+  },
+  {
+   "layers": [
+    2
+   ],
+   "columns": 16,
+   "strength": 2.0,
+   "tune_loop": 0.7793,
+   "exam": 1.356
+  },
+  {
+   "layers": [
+    2
+   ],
+   "columns": 16,
+   "strength": 6.0,
+   "tune_loop": 0.8113,
+   "exam": 1.567
+  },
+  {
+   "layers": [
+    2
+   ],
+   "columns": 64,
+   "strength": 2.0,
+   "tune_loop": 0.7934,
+   "exam": 1.3637
+  },
+  {
+   "layers": [
+    2
+   ],
+   "columns": 64,
+   "strength": 6.0,
+   "tune_loop": 0.8016,
+   "exam": 1.5974
+  },
+  {
+   "layers": [
+    3
+   ],
+   "columns": 16,
+   "strength": 2.0,
+   "tune_loop": 0.7027,
+   "exam": 1.3249
+  },
+  {
+   "layers": [
+    3
+   ],
+   "columns": 16,
+   "strength": 6.0,
+   "tune_loop": 0.6738,
+   "exam": 1.3637
+  },
+  {
+   "layers": [
+    3
+   ],
+   "columns": 64,
+   "strength": 2.0,
+   "tune_loop": 0.7125,
+   "exam": 1.3287
+  },
+  {
+   "layers": [
+    3
+   ],
+   "columns": 64,
+   "strength": 6.0,
+   "tune_loop": 0.7246,
+   "exam": 1.3947
+  },
+  {
+   "layers": [
+    2,
+    3
+   ],
+   "columns": 16,
+   "strength": 2.0,
+   "tune_loop": 0.7809,
+   "exam": 1.3596
+  },
+  {
+   "layers": [
+    2,
+    3
+   ],
+   "columns": 16,
+   "strength": 6.0,
+   "tune_loop": 0.7988,
+   "exam": 1.5853
+  },
+  {
+   "layers": [
+    2,
+    3
+   ],
+   "columns": 64,
+   "strength": 2.0,
+   "tune_loop": 0.7977,
+   "exam": 1.3707
+  },
+  {
+   "layers": [
+    2,
+    3
+   ],
+   "columns": 64,
+   "strength": 6.0,
+   "tune_loop": 0.7816,
+   "exam": 1.6432
+  },
+  {
+   "layers": [
+    1,
+    2,
+    3
+   ],
+   "columns": 16,
+   "strength": 2.0,
+   "tune_loop": 0.784,
+   "exam": 1.3619
+  },
+  {
+   "layers": [
+    1,
+    2,
+    3
+   ],
+   "columns": 16,
+   "strength": 6.0,
+   "tune_loop": 0.8066,
+   "exam": 1.6032
+  },
+  {
+   "layers": [
+    1,
+    2,
+    3
+   ],
+   "columns": 64,
+   "strength": 2.0,
+   "tune_loop": 0.8387,
+   "exam": 1.3792
+  },
+  {
+   "layers": [
+    1,
+    2,
+    3
+   ],
+   "columns": 64,
+   "strength": 6.0,
+   "tune_loop": 0.798,
+   "exam": 1.6985
+  },
+  {
+   "layers": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "columns": 16,
+   "strength": 2.0,
+   "tune_loop": 0.7867,
+   "exam": 1.3646
+  },
+  {
+   "layers": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "columns": 16,
+   "strength": 6.0,
+   "tune_loop": 0.7453,
+   "exam": 1.6377
+  },
+  {
+   "layers": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "columns": 64,
+   "strength": 2.0,
+   "tune_loop": 0.8043,
+   "exam": 1.3944
+  },
+  {
+   "layers": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "columns": 64,
+   "strength": 6.0,
+   "tune_loop": 0.7883,
+   "exam": 1.8326
+  }
+ ],
+ "samples": [
+  {
+   "prompt": "The capital of France is",
+   "before": " the capital of the world.\nThe capital of France is the capital of France. The capital of France is the capital of France. The capital of France is the capital of France. The capital of France is the capital of France. The capital of",
+   "after": " the capital of the world.\nThe capital of the world is the capital of the world. The capital of the world is the capital of the world. The capital of the world is the capital of the world. The capital of the world is the"
+  },
+  {
+   "prompt": "Photosynthesis is the process by which",
+   "before": " the plant is produced.\nThe plant is a plant that is produced by the plant. The plant is a plant that is produced by the plant. The plant is a plant that is produced by the plant. The plant is a plant that is produced",
+   "after": " the plant is formed.\nThe plant is a plant that is formed by the plant, which is formed by the plant. The plant is formed by the plant, which is formed by the plant. The plant is formed by the plant, which is"
+  },
+  {
+   "prompt": "The most important thing about exercise is",
+   "before": " to keep your body clean and clean.\n- Keep your body clean and clean.\n- Keep your body clean and clean.\n- Keep your body clean and clean.\n- Keep your body clean and clean.\n- Keep your body clean",
+   "after": " to keep your body clean.\n- Keep your body clean and clean.\n- Keep your body clean and clean.\n- Keep your body clean and clean.\n- Keep your body clean and clean.\n- Keep your body clean and clean"
+  },
+  {
+   "prompt": "In 1969, the first",
+   "before": " American American Congress was the first American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American",
+   "after": " American American Congress was the first American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American American"
+  }
+ ]
+}

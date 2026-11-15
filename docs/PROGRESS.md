@@ -39,6 +39,13 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Notes for the other person:
 -->
 
+### 2026-11-15 · Adi · Session 3 side quest: models without gradient descent
+- Did: (1) hand-edited the 700M twin's weights (blend, stretch, swap, confidence, SVD simplify, layer volume, and the "repetition direction" removal reported for Qwen3.5-0.8B); (2) built a counting model with no gradients: modified Kneser-Ney n-grams 1–6 + document memory + copy model + EM mixing, written in numpy (`learning/no_gradient/`, exact-reference test), counted on 1 and 3 shards on the session's CPU. Report: `reports/no_gradient.md`. Jarvis not used (renting not allowed for this).
+- Results (locked exam, bits per byte): hand edits at best 1.3129 → 1.3127; repetition-direction edit made looping worse. Counting model: 760M tokens 1.3616, **2.28B tokens 1.2721, better than the 700M twin (1.3129)**. Skip-grams and token classes gave little.
+- Lesson: weight edits unlock skills a model has, they don't add new ones; counting wins on memory but can't produce good output (no long-range coherence, instructions or reasoning). Good output still needs the real gradient-trained run.
+- Next: fix the 181M first-step NaN in train.py, then Session 4. Optional: count all 14 shards locally (~4–5 h, est. ~1.2) as a baseline for Chotu.
+- Keys: the Jarvis key was rotated; the GitHub and HF keys pasted on 2026-11-11 still worked today, so rotate those too.
+
 ### 2026-11-15 · Adi · Session 3: deep analysis of the 5x twin run
 - Did: `learning/twin_5x/analyze.py` (both checkpoints from HF, untrained start, common-words guesser; 96 locked windows = 196,608 held-out tokens on CPU) and `build.py` → page "Five Times the Reading"; written report `reports/twin_5x_analysis.md`; questions in `docs/LEARNING.md`. No GPU used.
 - Results: 1.374 → 1.313 bits per byte (−4.4%), top guess right 29.1% → 30.7%. Gains are broad and biggest on rare words (−0.43 vs −0.07 for the 10 most common tokens); context use, copying (still worse than blind guessing) and looping are unchanged; most of the gain arrived in the final 20% slow-down after a long flat stretch. Cause: the twin is 89% word list (788k thinking knobs) and 700M tokens is ~99 per knob.
