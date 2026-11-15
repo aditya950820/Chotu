@@ -1,0 +1,845 @@
+{
+ "meta": {
+  "tune_windows": 16,
+  "exam_windows": 96,
+  "tune_tokens": 32768,
+  "exam_tokens": 196608,
+  "minutes": 12.3
+ },
+ "baseline": {
+  "140M": 1.396641143278712,
+  "700M": 1.3330496110811596
+ },
+ "trials": [
+  {
+   "group": "baseline",
+   "label": "140M twin as trained",
+   "tune": 1.39664
+  },
+  {
+   "group": "baseline",
+   "label": "700M twin as trained",
+   "tune": 1.33305
+  },
+  {
+   "group": "blend",
+   "label": "blend t=0.25",
+   "tune": 1.92535,
+   "t": 0.25
+  },
+  {
+   "group": "blend",
+   "label": "blend t=0.5",
+   "tune": 2.38674,
+   "t": 0.5
+  },
+  {
+   "group": "blend",
+   "label": "blend t=0.75",
+   "tune": 1.75893,
+   "t": 0.75
+  },
+  {
+   "group": "blend",
+   "label": "blend t=1.25",
+   "tune": 2.23467,
+   "t": 1.25
+  },
+  {
+   "group": "blend",
+   "label": "blend t=1.5",
+   "tune": 3.96898,
+   "t": 1.5
+  },
+  {
+   "group": "stretch",
+   "label": "stretch x0.9",
+   "tune": 1.49405,
+   "f": 0.9
+  },
+  {
+   "group": "stretch",
+   "label": "stretch x0.95",
+   "tune": 1.36814,
+   "f": 0.95
+  },
+  {
+   "group": "stretch",
+   "label": "stretch x1.05",
+   "tune": 1.36404,
+   "f": 1.05
+  },
+  {
+   "group": "stretch",
+   "label": "stretch x1.1",
+   "tune": 1.80532,
+   "f": 1.1
+  },
+  {
+   "group": "stretch",
+   "label": "stretch x1.2",
+   "tune": 2.77088,
+   "f": 1.2
+  },
+  {
+   "group": "swap",
+   "label": "word list 140M + layers 700M",
+   "tune": 8.61516
+  },
+  {
+   "group": "swap",
+   "label": "word list 700M + layers 140M",
+   "tune": 2.99346
+  },
+  {
+   "group": "confidence",
+   "label": "confidence x0.9",
+   "tune": 1.35054,
+   "c": 0.9
+  },
+  {
+   "group": "confidence",
+   "label": "confidence x0.95",
+   "tune": 1.33827,
+   "c": 0.95
+  },
+  {
+   "group": "confidence",
+   "label": "confidence x1.05",
+   "tune": 1.33386,
+   "c": 1.05
+  },
+  {
+   "group": "confidence",
+   "label": "confidence x1.1",
+   "tune": 1.33978,
+   "c": 1.1
+  },
+  {
+   "group": "snapshots",
+   "label": "140M: average of steps 1750, 2000, 2136",
+   "tune": 1.40165
+  },
+  {
+   "group": "snapshots",
+   "label": "140M: average of steps 2000, 2136",
+   "tune": 1.39906
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L0.self_attn.q_proj keep 90%",
+   "tune": 1.33305,
+   "matrix": "model.layers.0.self_attn.q_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L0.self_attn.q_proj keep 75%",
+   "tune": 1.33304,
+   "matrix": "model.layers.0.self_attn.q_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L0.self_attn.k_proj keep 90%",
+   "tune": 1.33305,
+   "matrix": "model.layers.0.self_attn.k_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L0.self_attn.k_proj keep 75%",
+   "tune": 1.33319,
+   "matrix": "model.layers.0.self_attn.k_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L0.self_attn.v_proj keep 90%",
+   "tune": 1.33312,
+   "matrix": "model.layers.0.self_attn.v_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L0.self_attn.v_proj keep 75%",
+   "tune": 1.33359,
+   "matrix": "model.layers.0.self_attn.v_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L0.self_attn.o_proj keep 90%",
+   "tune": 1.33311,
+   "matrix": "model.layers.0.self_attn.o_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L0.self_attn.o_proj keep 75%",
+   "tune": 1.33388,
+   "matrix": "model.layers.0.self_attn.o_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L0.mlp.gate_proj keep 90%",
+   "tune": 1.34119,
+   "matrix": "model.layers.0.mlp.gate_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L0.mlp.gate_proj keep 75%",
+   "tune": 1.35658,
+   "matrix": "model.layers.0.mlp.gate_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L0.mlp.up_proj keep 90%",
+   "tune": 1.34407,
+   "matrix": "model.layers.0.mlp.up_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L0.mlp.up_proj keep 75%",
+   "tune": 1.37292,
+   "matrix": "model.layers.0.mlp.up_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L0.mlp.down_proj keep 90%",
+   "tune": 1.33752,
+   "matrix": "model.layers.0.mlp.down_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L0.mlp.down_proj keep 75%",
+   "tune": 1.37508,
+   "matrix": "model.layers.0.mlp.down_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L1.self_attn.q_proj keep 90%",
+   "tune": 1.33312,
+   "matrix": "model.layers.1.self_attn.q_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L1.self_attn.q_proj keep 75%",
+   "tune": 1.33336,
+   "matrix": "model.layers.1.self_attn.q_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L1.self_attn.k_proj keep 90%",
+   "tune": 1.33337,
+   "matrix": "model.layers.1.self_attn.k_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L1.self_attn.k_proj keep 75%",
+   "tune": 1.33483,
+   "matrix": "model.layers.1.self_attn.k_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L1.self_attn.v_proj keep 90%",
+   "tune": 1.33737,
+   "matrix": "model.layers.1.self_attn.v_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L1.self_attn.v_proj keep 75%",
+   "tune": 1.34232,
+   "matrix": "model.layers.1.self_attn.v_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L1.self_attn.o_proj keep 90%",
+   "tune": 1.33303,
+   "matrix": "model.layers.1.self_attn.o_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L1.self_attn.o_proj keep 75%",
+   "tune": 1.33341,
+   "matrix": "model.layers.1.self_attn.o_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L1.mlp.gate_proj keep 90%",
+   "tune": 1.33438,
+   "matrix": "model.layers.1.mlp.gate_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L1.mlp.gate_proj keep 75%",
+   "tune": 1.33792,
+   "matrix": "model.layers.1.mlp.gate_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L1.mlp.up_proj keep 90%",
+   "tune": 1.33526,
+   "matrix": "model.layers.1.mlp.up_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L1.mlp.up_proj keep 75%",
+   "tune": 1.33959,
+   "matrix": "model.layers.1.mlp.up_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L1.mlp.down_proj keep 90%",
+   "tune": 1.33434,
+   "matrix": "model.layers.1.mlp.down_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L1.mlp.down_proj keep 75%",
+   "tune": 1.33803,
+   "matrix": "model.layers.1.mlp.down_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L2.self_attn.q_proj keep 90%",
+   "tune": 1.33311,
+   "matrix": "model.layers.2.self_attn.q_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L2.self_attn.q_proj keep 75%",
+   "tune": 1.33326,
+   "matrix": "model.layers.2.self_attn.q_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L2.self_attn.k_proj keep 90%",
+   "tune": 1.33336,
+   "matrix": "model.layers.2.self_attn.k_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L2.self_attn.k_proj keep 75%",
+   "tune": 1.33382,
+   "matrix": "model.layers.2.self_attn.k_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L2.self_attn.v_proj keep 90%",
+   "tune": 1.34128,
+   "matrix": "model.layers.2.self_attn.v_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L2.self_attn.v_proj keep 75%",
+   "tune": 1.34586,
+   "matrix": "model.layers.2.self_attn.v_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L2.self_attn.o_proj keep 90%",
+   "tune": 1.33305,
+   "matrix": "model.layers.2.self_attn.o_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L2.self_attn.o_proj keep 75%",
+   "tune": 1.33324,
+   "matrix": "model.layers.2.self_attn.o_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L2.mlp.gate_proj keep 90%",
+   "tune": 1.3346,
+   "matrix": "model.layers.2.mlp.gate_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L2.mlp.gate_proj keep 75%",
+   "tune": 1.33857,
+   "matrix": "model.layers.2.mlp.gate_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L2.mlp.up_proj keep 90%",
+   "tune": 1.33626,
+   "matrix": "model.layers.2.mlp.up_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L2.mlp.up_proj keep 75%",
+   "tune": 1.34248,
+   "matrix": "model.layers.2.mlp.up_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L2.mlp.down_proj keep 90%",
+   "tune": 1.33415,
+   "matrix": "model.layers.2.mlp.down_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L2.mlp.down_proj keep 75%",
+   "tune": 1.33845,
+   "matrix": "model.layers.2.mlp.down_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L3.self_attn.q_proj keep 90%",
+   "tune": 1.33309,
+   "matrix": "model.layers.3.self_attn.q_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L3.self_attn.q_proj keep 75%",
+   "tune": 1.33315,
+   "matrix": "model.layers.3.self_attn.q_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L3.self_attn.k_proj keep 90%",
+   "tune": 1.33333,
+   "matrix": "model.layers.3.self_attn.k_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L3.self_attn.k_proj keep 75%",
+   "tune": 1.33458,
+   "matrix": "model.layers.3.self_attn.k_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L3.self_attn.v_proj keep 90%",
+   "tune": 1.52819,
+   "matrix": "model.layers.3.self_attn.v_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L3.self_attn.v_proj keep 75%",
+   "tune": 1.56872,
+   "matrix": "model.layers.3.self_attn.v_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L3.self_attn.o_proj keep 90%",
+   "tune": 1.33306,
+   "matrix": "model.layers.3.self_attn.o_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L3.self_attn.o_proj keep 75%",
+   "tune": 1.33354,
+   "matrix": "model.layers.3.self_attn.o_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L3.mlp.gate_proj keep 90%",
+   "tune": 1.33427,
+   "matrix": "model.layers.3.mlp.gate_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L3.mlp.gate_proj keep 75%",
+   "tune": 1.33947,
+   "matrix": "model.layers.3.mlp.gate_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L3.mlp.up_proj keep 90%",
+   "tune": 1.33431,
+   "matrix": "model.layers.3.mlp.up_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L3.mlp.up_proj keep 75%",
+   "tune": 1.34288,
+   "matrix": "model.layers.3.mlp.up_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L3.mlp.down_proj keep 90%",
+   "tune": 1.35886,
+   "matrix": "model.layers.3.mlp.down_proj.weight",
+   "keep": 0.9
+  },
+  {
+   "group": "simplify",
+   "label": "simplify L3.mlp.down_proj keep 75%",
+   "tune": 1.37339,
+   "matrix": "model.layers.3.mlp.down_proj.weight",
+   "keep": 0.75
+  },
+  {
+   "group": "volume",
+   "label": "volume round 1 L0 self_attn x0.9",
+   "tune": 1.33376,
+   "layer": 0,
+   "part": "self_attn.o_proj",
+   "f": 0.9,
+   "round": 1
+  },
+  {
+   "group": "volume",
+   "label": "volume round 1 L0 self_attn x1.1",
+   "tune": 1.33464,
+   "layer": 0,
+   "part": "self_attn.o_proj",
+   "f": 1.1,
+   "round": 1
+  },
+  {
+   "group": "volume",
+   "label": "volume round 1 L0 mlp x0.9",
+   "tune": 1.3363,
+   "layer": 0,
+   "part": "mlp.down_proj",
+   "f": 0.9,
+   "round": 1
+  },
+  {
+   "group": "volume",
+   "label": "volume round 1 L0 mlp x1.1",
+   "tune": 1.33532,
+   "layer": 0,
+   "part": "mlp.down_proj",
+   "f": 1.1,
+   "round": 1
+  },
+  {
+   "group": "volume",
+   "label": "volume round 1 L1 self_attn x0.9",
+   "tune": 1.33404,
+   "layer": 1,
+   "part": "self_attn.o_proj",
+   "f": 0.9,
+   "round": 1
+  },
+  {
+   "group": "volume",
+   "label": "volume round 1 L1 self_attn x1.1",
+   "tune": 1.33434,
+   "layer": 1,
+   "part": "self_attn.o_proj",
+   "f": 1.1,
+   "round": 1
+  },
+  {
+   "group": "volume",
+   "label": "volume round 1 L1 mlp x0.9",
+   "tune": 1.33426,
+   "layer": 1,
+   "part": "mlp.down_proj",
+   "f": 0.9,
+   "round": 1
+  },
+  {
+   "group": "volume",
+   "label": "volume round 1 L1 mlp x1.1",
+   "tune": 1.33337,
+   "layer": 1,
+   "part": "mlp.down_proj",
+   "f": 1.1,
+   "round": 1
+  },
+  {
+   "group": "volume",
+   "label": "volume round 1 L2 self_attn x0.9",
+   "tune": 1.33387,
+   "layer": 2,
+   "part": "self_attn.o_proj",
+   "f": 0.9,
+   "round": 1
+  },
+  {
+   "group": "volume",
+   "label": "volume round 1 L2 self_attn x1.1",
+   "tune": 1.33456,
+   "layer": 2,
+   "part": "self_attn.o_proj",
+   "f": 1.1,
+   "round": 1
+  },
+  {
+   "group": "volume",
+   "label": "volume round 1 L2 mlp x0.9",
+   "tune": 1.3344,
+   "layer": 2,
+   "part": "mlp.down_proj",
+   "f": 0.9,
+   "round": 1
+  },
+  {
+   "group": "volume",
+   "label": "volume round 1 L2 mlp x1.1",
+   "tune": 1.33379,
+   "layer": 2,
+   "part": "mlp.down_proj",
+   "f": 1.1,
+   "round": 1
+  },
+  {
+   "group": "volume",
+   "label": "volume round 1 L3 self_attn x0.9",
+   "tune": 1.33702,
+   "layer": 3,
+   "part": "self_attn.o_proj",
+   "f": 0.9,
+   "round": 1
+  },
+  {
+   "group": "volume",
+   "label": "volume round 1 L3 self_attn x1.1",
+   "tune": 1.33637,
+   "layer": 3,
+   "part": "self_attn.o_proj",
+   "f": 1.1,
+   "round": 1
+  },
+  {
+   "group": "volume",
+   "label": "volume round 1 L3 mlp x0.9",
+   "tune": 1.33848,
+   "layer": 3,
+   "part": "mlp.down_proj",
+   "f": 0.9,
+   "round": 1
+  },
+  {
+   "group": "volume",
+   "label": "volume round 1 L3 mlp x1.1",
+   "tune": 1.33847,
+   "layer": 3,
+   "part": "mlp.down_proj",
+   "f": 1.1,
+   "round": 1
+  },
+  {
+   "group": "volume",
+   "label": "volume round 2 L0 self_attn x0.9",
+   "tune": 1.33376,
+   "layer": 0,
+   "part": "self_attn.o_proj",
+   "f": 0.9,
+   "round": 2
+  },
+  {
+   "group": "volume",
+   "label": "volume round 2 L0 self_attn x1.1",
+   "tune": 1.33464,
+   "layer": 0,
+   "part": "self_attn.o_proj",
+   "f": 1.1,
+   "round": 2
+  },
+  {
+   "group": "volume",
+   "label": "volume round 2 L0 mlp x0.9",
+   "tune": 1.3363,
+   "layer": 0,
+   "part": "mlp.down_proj",
+   "f": 0.9,
+   "round": 2
+  },
+  {
+   "group": "volume",
+   "label": "volume round 2 L0 mlp x1.1",
+   "tune": 1.33532,
+   "layer": 0,
+   "part": "mlp.down_proj",
+   "f": 1.1,
+   "round": 2
+  },
+  {
+   "group": "volume",
+   "label": "volume round 2 L1 self_attn x0.9",
+   "tune": 1.33404,
+   "layer": 1,
+   "part": "self_attn.o_proj",
+   "f": 0.9,
+   "round": 2
+  },
+  {
+   "group": "volume",
+   "label": "volume round 2 L1 self_attn x1.1",
+   "tune": 1.33434,
+   "layer": 1,
+   "part": "self_attn.o_proj",
+   "f": 1.1,
+   "round": 2
+  },
+  {
+   "group": "volume",
+   "label": "volume round 2 L1 mlp x0.9",
+   "tune": 1.33426,
+   "layer": 1,
+   "part": "mlp.down_proj",
+   "f": 0.9,
+   "round": 2
+  },
+  {
+   "group": "volume",
+   "label": "volume round 2 L1 mlp x1.1",
+   "tune": 1.33337,
+   "layer": 1,
+   "part": "mlp.down_proj",
+   "f": 1.1,
+   "round": 2
+  },
+  {
+   "group": "volume",
+   "label": "volume round 2 L2 self_attn x0.9",
+   "tune": 1.33387,
+   "layer": 2,
+   "part": "self_attn.o_proj",
+   "f": 0.9,
+   "round": 2
+  },
+  {
+   "group": "volume",
+   "label": "volume round 2 L2 self_attn x1.1",
+   "tune": 1.33456,
+   "layer": 2,
+   "part": "self_attn.o_proj",
+   "f": 1.1,
+   "round": 2
+  },
+  {
+   "group": "volume",
+   "label": "volume round 2 L2 mlp x0.9",
+   "tune": 1.3344,
+   "layer": 2,
+   "part": "mlp.down_proj",
+   "f": 0.9,
+   "round": 2
+  },
+  {
+   "group": "volume",
+   "label": "volume round 2 L2 mlp x1.1",
+   "tune": 1.33379,
+   "layer": 2,
+   "part": "mlp.down_proj",
+   "f": 1.1,
+   "round": 2
+  },
+  {
+   "group": "volume",
+   "label": "volume round 2 L3 self_attn x0.9",
+   "tune": 1.33702,
+   "layer": 3,
+   "part": "self_attn.o_proj",
+   "f": 0.9,
+   "round": 2
+  },
+  {
+   "group": "volume",
+   "label": "volume round 2 L3 self_attn x1.1",
+   "tune": 1.33637,
+   "layer": 3,
+   "part": "self_attn.o_proj",
+   "f": 1.1,
+   "round": 2
+  },
+  {
+   "group": "volume",
+   "label": "volume round 2 L3 mlp x0.9",
+   "tune": 1.33848,
+   "layer": 3,
+   "part": "mlp.down_proj",
+   "f": 0.9,
+   "round": 2
+  },
+  {
+   "group": "volume",
+   "label": "volume round 2 L3 mlp x1.1",
+   "tune": 1.33847,
+   "layer": 3,
+   "part": "mlp.down_proj",
+   "f": 1.1,
+   "round": 2
+  },
+  {
+   "group": "combined",
+   "label": "combined + confidence x0.95",
+   "tune": 1.33827,
+   "c": 0.95
+  },
+  {
+   "group": "combined",
+   "label": "combined + confidence x0.97",
+   "tune": 1.33539,
+   "c": 0.97
+  },
+  {
+   "group": "combined",
+   "label": "combined + confidence x1.03",
+   "tune": 1.33287,
+   "c": 1.03
+  },
+  {
+   "group": "combined",
+   "label": "combined + confidence x1.05",
+   "tune": 1.33386,
+   "c": 1.05
+  }
+ ],
+ "simplify_kept": [],
+ "volume_kept": [],
+ "final_confidence": 1.03,
+ "tune_final": 1.33287,
+ "exam": {
+  "140M twin as trained": 1.37391,
+  "700M twin as trained": 1.31286,
+  "700M + simplify": 1.31286,
+  "700M + simplify + volume": 1.31286,
+  "700M + all edits": 1.31272,
+  "blend t=1.25 (past 700M)": 2.2489
+ }
+}
