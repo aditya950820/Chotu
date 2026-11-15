@@ -100,7 +100,7 @@ for f_ in [0.9, 0.95, 1.05, 1.1, 1.2]:
     tune(f"stretch x{f_}", {k: init[k] + f_ * (B[k] - init[k]) for k in keys}, "stretch", f=f_)
 
 # 3 swap parts
-is_emb = lambda k: "embed_tokens" in k
+is_emb = lambda k: "embed_tokens" in k or "lm_head" in k  # the word list is stored twice (input and tied output)
 tune("word list 140M + layers 700M", {k: (A if is_emb(k) else B)[k] for k in keys}, "swap")
 tune("word list 700M + layers 140M", {k: (B if is_emb(k) else A)[k] for k in keys}, "swap")
 
@@ -119,7 +119,7 @@ tune("140M: average of steps 2000, 2136", {k: (snaps[1][k] + snaps[2][k]) / 2 fo
 
 # 5 simplify: per matrix, keep only the strongest directions; greedy, keep a change only if the tune score improves
 cur, cur_s = dict(B), base["700M"]
-mats = [k for k in keys if B[k].dim() == 2 and "embed" not in k]
+mats = [k for k in keys if B[k].dim() == 2 and not is_emb(k)]  # thinking layers only
 simplify_kept = []
 for k in mats:
     U, S, Vh = torch.linalg.svd(B[k].float(), full_matrices=False)
