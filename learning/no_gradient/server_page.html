@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Counting vs Learning</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout concept: two desks, one prompt. Left desk recalls what it has read (coloured by how much it found); right desk learned by training (coloured by confidence). */
+:root{
+  --bg:#f4f5f8; --surface:#fff; --ink:#16192b; --muted:#596079; --line:#e2e5ee; --field:#f8f9fc;
+  --ng:#7a3fc4; --tw:#d9731b;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif; --body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f1220;--surface:#171b2e;--ink:#e7eaf5;--muted:#9ba3c0;--line:#262c48;--field:#12162a;--ng:#b48cf2;--tw:#f3a04f;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1220;--surface:#171b2e;--ink:#e7eaf5;--muted:#9ba3c0;--line:#262c48;--field:#12162a;--ng:#b48cf2;--tw:#f3a04f;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+.wrap{max-width:1080px;margin:0 auto;display:grid;gap:16px}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.12}
+h1{font-size:clamp(2rem,5vw,2.9rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.25rem;font-weight:800}
+h3{font-size:1rem;font-weight:600;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline}
+h3 small{font-family:var(--mono);font-weight:400;font-size:.76rem;color:var(--muted)}
+p{margin:0;max-width:74ch}
+.muted{color:var(--muted)}
+header{padding-block:32px 4px;display:grid;gap:10px}
+.eyebrow{font-family:var(--mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ng)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;align-content:start;min-width:0}
+textarea{width:100%;min-height:70px;resize:vertical;font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+textarea:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--ng);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{font:inherit;font-size:.84rem;padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px 18px;align-items:end}
+.ctl{display:grid;gap:4px;font-size:.84rem;color:var(--muted)}
+.ctl b{color:var(--ink);font-family:var(--mono);font-weight:500}
+.ctl input{width:100%;accent-color:var(--ng)}
+.go{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{font:inherit;font-weight:600;padding:9px 18px;border-radius:10px;border:1px solid var(--ink);background:var(--ink);color:var(--bg);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn:disabled{opacity:.5;cursor:default}
+.duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.duo{grid-template-columns:minmax(0,1fr)}}
+.ng h3 span{color:var(--ng)} .tw h3 span{color:var(--tw)}
+.out{font-family:var(--mono);font-size:.9rem;line-height:1.8;white-space:pre-wrap;word-break:break-word;min-height:8em;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:12px}
+.out .p{color:var(--muted)}
+.out span.t{border-radius:3px}
+.legend{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:.78rem;color:var(--muted)}
+.legend i{display:inline-block;width:22px;height:12px;border-radius:3px;vertical-align:middle;margin-right:4px}
+.guess{display:grid;gap:5px}
+.guess .row{display:grid;grid-template-columns:minmax(0,9rem) 1fr 3.4rem;gap:8px;align-items:center;font-family:var(--mono);font-size:.82rem}
+.guess .w{white-space:pre;overflow:hidden;text-overflow:ellipsis}
+.guess .bar{height:12px;border-radius:3px}
+.guess .n{text-align:right;color:var(--muted)}
+.err{color:#d2453d;font-size:.9rem}
+.tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);font-family:var(--mono);font-size:.74rem;padding:5px 8px;border-radius:6px;white-space:pre;z-index:5;transform:translate(-50%,-120%)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="eyebrow">Chotu · no gradient descent vs gradient descent</div>
+  <h1>Counting vs Learning</h1>
+  <p><b style="color:var(--ng)">Left: the no-gradient model.</b> It was never trained: for every next word it looks up the longest stretch of the text so far that also appears in __TOKENS__ tokens of our training data, counts what followed it there, and mixes that with words already used in this answer. <b style="color:var(--tw)">Right: the 700M twin</b>, a 7M-parameter network trained by gradient descent. Same prompt, same sampling settings, same random seed.</p>
+</header>
+
+<div class="card">
+  <textarea id="prompt" aria-label="Start of a text">In 1969, the first</textarea>
+  <div class="chips" id="presets"></div>
+  <div class="controls">
+    <label class="ctl" for="temp">Temperature <b id="temp-v">0.8</b><input id="temp" type="range" min="0" max="1.5" step="0.05" value="0.8"></label>
+    <label class="ctl" for="rep">Repetition penalty <b id="rep-v">1.2</b><input id="rep" type="range" min="1" max="2" step="0.05" value="1.2"></label>
+    <label class="ctl" for="len">Length (tokens) <b id="len-v">50</b><input id="len" type="range" min="10" max="120" step="10" value="50"></label>
+  </div>
+  <div class="go"><button class="btn" id="run">Write with both</button><button class="btn ghost" id="reseed">New seed</button><span class="muted" id="status">seed 1</span></div>
+  <div class="err" id="err" hidden></div>
+</div>
+
+<div class="duo">
+  <div class="card ng"><h3><span>No-gradient model</span><small id="ng-meta"></small></h3>
+    <div class="out" id="ng-out"></div>
+    <div class="legend"><span>Context found in training:</span><span><i style="background:color-mix(in srgb,var(--ng) 8%,transparent)"></i>0–2 tokens</span><span><i style="background:color-mix(in srgb,var(--ng) 30%,transparent)"></i>3–5</span><span><i style="background:color-mix(in srgb,var(--ng) 60%,transparent)"></i>6–12 (recalled phrase)</span></div>
+  </div>
+  <div class="card tw"><h3><span>700M twin</span><small id="tw-meta"></small></h3>
+    <div class="out" id="tw-out"></div>
+    <div class="legend"><span>Confidence in each word:</span><span><i style="background:color-mix(in srgb,var(--tw) 8%,transparent)"></i>low</span><span><i style="background:color-mix(in srgb,var(--tw) 40%,transparent)"></i>medium</span><span><i style="background:color-mix(in srgb,var(--tw) 75%,transparent)"></i>high</span></div>
+  </div>
+</div>
+<p class="muted" style="font-size:.84rem">Hover any word for details. A long purple run is a phrase the model found word for word in its training text; a jump in topic after it is where the stitching shows.</p>
+
+<div class="card">
+  <h2>What does each expect next?</h2>
+  <p class="muted">Top 8 guesses for the very next token after your prompt. ␣ marks a token starting with a space, ↵ a line break.</p>
+  <div class="duo"><div class="guess" id="ng-guess"></div><div class="guess" id="tw-guess"></div></div>
+</div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const mix = (c, a) => `color-mix(in srgb, ${css(c)} ${Math.round(Math.max(0, Math.min(1, a)) * 100)}%, transparent)`;
+const PRESETS = ['In 1969, the first', 'The capital of France is', 'Photosynthesis is the process by which', 'Water boils at', 'To make a cup of tea, you', 'The best way to learn a new language is', 'Once upon a time, there was a', 'The heart pumps blood'];
+let seed = 1, busy = false;
+const tip = document.createElement('div'); tip.className = 'tip'; tip.hidden = true; document.body.appendChild(tip);
+document.addEventListener('mouseover', (e) => { const t = e.target.closest('[data-tip]'); if (!t) { tip.hidden = true; return; } tip.textContent = t.dataset.tip; tip.hidden = false; });
+document.addEventListener('mousemove', (e) => { tip.style.left = Math.min(innerWidth - 110, Math.max(110, e.clientX)) + 'px'; tip.style.top = e.clientY + 'px'; });
+$('presets').innerHTML = PRESETS.map((p) => `<button type="button">${p}</button>`).join('');
+$('presets').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { $('prompt').value = b.textContent; run(); } });
+[['temp', 'temp-v'], ['rep', 'rep-v'], ['len', 'len-v']].forEach(([i, o]) => $(i).addEventListener('input', () => { $(o).textContent = $(i).value; }));
+$('run').addEventListener('click', run);
+$('reseed').addEventListener('click', () => { seed = 1 + Math.floor(Math.random() * 1e6); run(); });
+const pct = (p) => p >= .1 ? (100 * p).toFixed(0) + '%' : p >= .001 ? (100 * p).toFixed(1) + '%' : '<0.1%';
+const vis = (t) => t.replace(/^ /, '␣').replace(/\n/g, '↵') || '·';
+
+async function post(path, body) {
+  const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const j = await r.json(); if (!r.ok || j.error) throw new Error(j.error || r.status); return j;
+}
+function paint(el, prompt, toks, kind) {
+  el.innerHTML = ''; const p = document.createElement('span'); p.className = 'p'; p.textContent = prompt; el.appendChild(p);
+  toks.forEach((x) => { const s = document.createElement('span'); s.className = 't'; s.textContent = x.t;
+    if (kind === 'ng') { s.style.background = mix('--ng', x.deep >= 6 ? .6 : x.deep >= 3 ? .3 : .08);
+      s.dataset.tip = `found ${x.deep} token${x.deep === 1 ? '' : 's'} of context in training${x.repeat ? `, repeats ${x.repeat} earlier tokens` : ''}\nit gave this word ${pct(x.p)}`; }
+    else { s.style.background = mix('--tw', .08 + .7 * Math.min(1, x.p * 1.5)); s.dataset.tip = `it gave this word ${pct(x.p)}`; }
+    el.appendChild(s); });
+}
+function guessRows(el, list, color) {
+  const mx = list[0].p; el.innerHTML = '';
+  list.forEach((g) => { const r = document.createElement('div'); r.className = 'row';
+    const w = document.createElement('span'); w.className = 'w'; w.textContent = vis(g.t);
+    const b = document.createElement('span'); b.className = 'bar'; b.style.background = mix(color, .85); b.style.width = (100 * g.p / mx) + '%';
+    const n = document.createElement('span'); n.className = 'n'; n.textContent = pct(g.p);
+    r.append(w, b, n); el.appendChild(r); });
+}
+async function run() {
+  if (busy) return; busy = true; $('run').disabled = true; $('err').hidden = true;
+  const prompt = $('prompt').value, body = { prompt, temp: +$('temp').value, rep: +$('rep').value, length: +$('len').value, seed };
+  $('status').textContent = 'writing… (both models share this machine; a few seconds)';
+  try {
+    const t0 = performance.now();
+    const [w, g] = await Promise.all([post('/api/write', body), post('/api/next', body)]);
+    paint($('ng-out'), prompt, w.nograd, 'ng'); paint($('tw-out'), prompt, w.twin, 'tw');
+    const deepShare = w.nograd.filter((x) => x.deep >= 6).length / Math.max(1, w.nograd.length);
+    $('ng-meta').textContent = `${w.nograd.length} tokens · ${(100 * deepShare).toFixed(0)}% recalled phrases`;
+    $('tw-meta').textContent = `${w.twin.length} tokens`;
+    guessRows($('ng-guess'), g.nograd, '--ng'); guessRows($('tw-guess'), g.twin, '--tw');
+    $('status').textContent = `seed ${seed} · ${((performance.now() - t0) / 1000).toFixed(1)} s`;
+  } catch (e) { $('err').textContent = 'Could not write: ' + e.message; $('err').hidden = false; $('status').textContent = ''; }
+  busy = false; $('run').disabled = false;
+}
+run();
+</script>
+</body>
+</html>
