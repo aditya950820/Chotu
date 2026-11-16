@@ -1,0 +1,138 @@
+<title>Counting vs Learning</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout concept: two desks, one prompt. Left desk recalls what it has read (coloured by how much it found); right desk learned by training (coloured by confidence). */
+:root{
+  --bg:#f4f5f8; --surface:#fff; --ink:#16192b; --muted:#596079; --line:#e2e5ee; --field:#f8f9fc;
+  --ng:#7a3fc4; --tw:#d9731b;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif; --body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f1220;--surface:#171b2e;--ink:#e7eaf5;--muted:#9ba3c0;--line:#262c48;--field:#12162a;--ng:#b48cf2;--tw:#f3a04f;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1220;--surface:#171b2e;--ink:#e7eaf5;--muted:#9ba3c0;--line:#262c48;--field:#12162a;--ng:#b48cf2;--tw:#f3a04f;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+.wrap{max-width:1080px;margin:0 auto;display:grid;gap:16px}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.12}
+h1{font-size:clamp(2rem,5vw,2.9rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.25rem;font-weight:800}
+h3{font-size:1rem;font-weight:600;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline}
+h3 small{font-family:var(--mono);font-weight:400;font-size:.76rem;color:var(--muted)}
+p{margin:0;max-width:74ch}
+.muted{color:var(--muted)}
+header{padding-block:32px 4px;display:grid;gap:10px}
+.eyebrow{font-family:var(--mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ng)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;align-content:start;min-width:0}
+textarea{width:100%;min-height:70px;resize:vertical;font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+textarea:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--ng);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{font:inherit;font-size:.84rem;padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px 18px;align-items:end}
+.ctl{display:grid;gap:4px;font-size:.84rem;color:var(--muted)}
+.ctl b{color:var(--ink);font-family:var(--mono);font-weight:500}
+.ctl input{width:100%;accent-color:var(--ng)}
+.go{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{font:inherit;font-weight:600;padding:9px 18px;border-radius:10px;border:1px solid var(--ink);background:var(--ink);color:var(--bg);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn:disabled{opacity:.5;cursor:default}
+.duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.duo{grid-template-columns:minmax(0,1fr)}}
+.ng h3 span{color:var(--ng)} .tw h3 span{color:var(--tw)}
+.out{font-family:var(--mono);font-size:.9rem;line-height:1.8;white-space:pre-wrap;word-break:break-word;min-height:8em;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:12px}
+.out .p{color:var(--muted)}
+.out span.t{border-radius:3px}
+.legend{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:.78rem;color:var(--muted)}
+.legend i{display:inline-block;width:22px;height:12px;border-radius:3px;vertical-align:middle;margin-right:4px}
+.guess{display:grid;gap:5px}
+.guess .row{display:grid;grid-template-columns:minmax(0,9rem) 1fr 3.4rem;gap:8px;align-items:center;font-family:var(--mono);font-size:.82rem}
+.guess .w{white-space:pre;overflow:hidden;text-overflow:ellipsis}
+.guess .bar{height:12px;border-radius:3px}
+.guess .n{text-align:right;color:var(--muted)}
+.err{color:#d2453d;font-size:.9rem}
+.list{display:grid;gap:10px}.cat{display:grid;gap:6px}.cat b{font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}.chips button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}.seg{display:flex;gap:6px;flex-wrap:wrap}.seg button{font:inherit;font-size:.84rem;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}.tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:2px}.tile .k{font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}.tile .v{font-family:var(--display);font-size:1.5rem;font-weight:800}.tile .n{font-size:.84rem;color:var(--muted)}
+.tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);font-family:var(--mono);font-size:.74rem;padding:5px 8px;border-radius:6px;white-space:pre;z-index:5;transform:translate(-50%,-120%)}
+</style>
+<div class="wrap">
+<header>
+  <div class="eyebrow">Chotu · no gradient descent vs gradient descent</div>
+  <h1>Counting vs Learning</h1>
+  <p><b style="color:var(--ng)">Left: the no-gradient model.</b> Never trained. For every next word it finds the longest stretch of the text so far that also appears in 300M tokens of our training data, counts what followed it there, and mixes that with words already used in the answer. <b style="color:var(--tw)">Right: the 700M twin</b>, a 7M-parameter network trained by gradient descent. Same prompt, same settings, same random seed. These answers were produced by both models on 16 Nov; pick a prompt and a setting to compare.</p>
+  <div class="tiles">
+    <div class="tile"><span class="k">Exam score, no-gradient (2.3B tokens)</span><span class="v" style="color:var(--ng)">1.272</span><span class="n">bits per byte, lower is better</span></div>
+    <div class="tile"><span class="k">Exam score, 700M twin</span><span class="v" style="color:var(--tw)">1.313</span><span class="n">same locked exam, 196,608 tokens</span></div>
+    <div class="tile"><span class="k">Recalled word for word</span><span class="v" id="recall">—</span><span class="n">no-gradient tokens with 6+ tokens of matched context, all answers</span></div>
+  </div>
+</header>
+
+<div class="card">
+  <div class="list" id="list"></div>
+  <div class="ctl">Setting
+    <div class="seg" id="mode" role="group" aria-label="Setting"><button data-v="top" aria-pressed="false">Top guess</button><button data-v="s1" aria-pressed="true">Sample, seed 1</button><button data-v="s2" aria-pressed="false">Seed 2</button><button data-v="s3" aria-pressed="false">Seed 3</button></div>
+  </div>
+  <p class="muted" style="font-size:.84rem">Sampling uses temperature 0.8, the 40 likeliest words, and a repetition penalty of 1.2; "Top guess" always takes the likeliest word (same penalty). 50 tokens each.</p>
+</div>
+
+<div class="duo">
+  <div class="card ng"><h3><span>No-gradient model</span><small id="ng-meta"></small></h3>
+    <div class="out" id="ng-out"></div>
+    <div class="legend"><span>Context found in training:</span><span><i style="background:color-mix(in srgb,var(--ng) 8%,transparent)"></i>0–2 tokens</span><span><i style="background:color-mix(in srgb,var(--ng) 30%,transparent)"></i>3–5</span><span><i style="background:color-mix(in srgb,var(--ng) 60%,transparent)"></i>6–12 (recalled phrase)</span></div>
+  </div>
+  <div class="card tw"><h3><span>700M twin</span><small id="tw-meta"></small></h3>
+    <div class="out" id="tw-out"></div>
+    <div class="legend"><span>Confidence in each word:</span><span><i style="background:color-mix(in srgb,var(--tw) 8%,transparent)"></i>low</span><span><i style="background:color-mix(in srgb,var(--tw) 40%,transparent)"></i>medium</span><span><i style="background:color-mix(in srgb,var(--tw) 75%,transparent)"></i>high</span></div>
+  </div>
+</div>
+<p class="muted" style="font-size:.84rem">Hover a word for details. A long purple run is a phrase the model found word for word in its training text; a jump in topic right after it is where the stitching shows.</p>
+
+<div class="card">
+  <h2>What does each expect next?</h2>
+  <p class="muted">Top 8 guesses for the very next token after the prompt. ␣ marks a token starting with a space, ↵ a line break.</p>
+  <div class="duo"><div class="guess" id="ng-guess"></div><div class="guess" id="tw-guess"></div></div>
+</div>
+<p class="muted" style="font-size:.84rem">Why not type your own prompt here? The no-gradient model needs a 3.6 GB index of its training text, too big to run in a browser; it runs on a computer with <span style="font-family:var(--mono)">learning/no_gradient/server.py</span>. The twins alone run in the browser on the "Talk to the Twins" page.</p>
+</div>
+<script type="application/json" id="data">__DATA__</script>
+<script>
+const D = JSON.parse(document.getElementById('data').textContent);
+const $ = (id) => document.getElementById(id);
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const mix = (c, a) => `color-mix(in srgb, ${css(c)} ${Math.round(Math.max(0, Math.min(1, a)) * 100)}%, transparent)`;
+const pct = (p) => p >= .1 ? (100 * p).toFixed(0) + '%' : p >= .001 ? (100 * p).toFixed(1) + '%' : '<0.1%';
+const vis = (t) => t.replace(/^ /, '␣').replace(/\n/g, '↵') || '·';
+let cur = 0, mode = 's1';
+const tip = document.createElement('div'); tip.className = 'tip'; tip.hidden = true; document.body.appendChild(tip);
+document.addEventListener('mouseover', (e) => { const t = e.target.closest('[data-tip]'); if (!t) { tip.hidden = true; return; } tip.textContent = t.dataset.tip; tip.hidden = false; });
+document.addEventListener('mousemove', (e) => { tip.style.left = Math.min(innerWidth - 110, Math.max(110, e.clientX)) + 'px'; tip.style.top = e.clientY + 'px'; });
+// prompt list by category
+const cats = [...new Set(D.map((d) => d.category))];
+$('list').innerHTML = cats.map((c) => `<div class="cat"><b>${c}</b><div class="chips">${D.map((d, i) => d.category === c ? `<button type="button" data-i="${i}" aria-pressed="${i === cur}">${d.prompt.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</button>` : '').join('')}</div></div>`).join('');
+$('list').addEventListener('click', (e) => { const b = e.target.closest('button[data-i]'); if (!b) return; cur = +b.dataset.i; $('list').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b)); show(); });
+$('mode').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; mode = b.dataset.v; $('mode').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b)); show(); });
+// overall share of recalled tokens
+let deep = 0, all = 0; D.forEach((d) => Object.values(d.runs).forEach((r) => r.nograd.forEach((x) => { all++; if (x[1] >= 6) deep++; })));
+$('recall').textContent = (100 * deep / all).toFixed(0) + '%';
+function paint(el, prompt, toks, kind) {
+  el.innerHTML = ''; const p = document.createElement('span'); p.className = 'p'; p.textContent = prompt; el.appendChild(p);
+  toks.forEach((x) => { const s = document.createElement('span'); s.className = 't'; s.textContent = x[0];
+    if (kind === 'ng') { const d = x[1]; s.style.background = mix('--ng', d >= 6 ? .6 : d >= 3 ? .3 : .08); s.dataset.tip = `found ${d} token${d === 1 ? '' : 's'} of context in training\nit gave this word ${pct(x[2])}`; }
+    else { s.style.background = mix('--tw', .08 + .7 * Math.min(1, x[1] * 1.5)); s.dataset.tip = `it gave this word ${pct(x[1])}`; }
+    el.appendChild(s); });
+}
+function guessRows(el, list, color) {
+  const mx = list[0].p; el.innerHTML = '';
+  list.forEach((g) => { const r = document.createElement('div'); r.className = 'row';
+    const w = document.createElement('span'); w.className = 'w'; w.textContent = vis(g.t);
+    const b = document.createElement('span'); b.className = 'bar'; b.style.background = mix(color, .85); b.style.width = (100 * g.p / mx) + '%';
+    const n = document.createElement('span'); n.className = 'n'; n.textContent = pct(g.p);
+    r.append(w, b, n); el.appendChild(r); });
+}
+function show() {
+  const d = D[cur], r = d.runs[mode];
+  paint($('ng-out'), d.prompt, r.nograd, 'ng'); paint($('tw-out'), d.prompt, r.twin, 'tw');
+  const share = r.nograd.filter((x) => x[1] >= 6).length / Math.max(1, r.nograd.length);
+  $('ng-meta').textContent = `${r.nograd.length} tokens · ${(100 * share).toFixed(0)}% recalled`;
+  $('tw-meta').textContent = `${r.twin.length} tokens`;
+  guessRows($('ng-guess'), d.next.nograd, '--ng'); guessRows($('tw-guess'), d.next.twin, '--tw');
+}
+show();
+</script>
