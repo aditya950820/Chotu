@@ -5,9 +5,9 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 
 ## Now
 
-- **Current session:** Session 2 data done; chain steps 1–3 CPU-verified. Full evaluation, sample-reading gate and GPU rehearsal remain.
+- **Current session:** Session 2 data done; all four chain steps CPU-verified, including a fresh-volume end-to-end rehearsal and kill/resume. Full evaluation, sample-reading gate and actual GPU/pause rehearsal remain.
 - **Who's on what:**
-  - Adi: eval/export/private-upload tooling (chain step 3) ready for review; next: orchestrator, local branch only
+  - Adi: one-command chain (step 4) ready for review; next: cheap-GPU rehearsal using RUNBOOK.md, then H100 only after gates
   - Partner: —
 - **Blocked on:** nothing
 - **Paid resources running:** Jarvis Labs instance (GPU type: TODO), started 2026-10-24. Pause it when not in use. Status inherited; not checked this session. No paid resources started here.
@@ -23,6 +23,7 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
    - [ ] Partner: set up Colab per `docs/COLAB.md` and run `notebooks/colab_setup.ipynb` (Adi: done, 4/4 checks OK)
    - [ ] Partner: agree or object to the Colab proposal in `docs/DECISIONS.md`
 2. Session 2 gate: both read the 10 samples in `reports/data_report.md` (in the private HF dataset `magnateadi/chotu-fineweb-edu-10bt-tokens`). Don't start another data run; the shards are done. Then Session 3.
+3. Follow `RUNBOOK.md` on a cheap GPU: verify the persistent mount, CUDA throughput, real W&B, private upload permissions and actual automatic pause. Agree the 8k/tool proposals and inspect reports before the full H100 chain. CPU plumbing success is not a quality or GPU-performance gate.
 
 ## Open questions
 
@@ -37,6 +38,16 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Next:
 - Notes for the other person:
 -->
+
+### 2026-11-19 · Adi · One-command chain, step 4
+- Did: `run_all.sh` preserves the template torch build using a pip constraint, installs requirements/Jarvis SDK and transfers shutdown ownership to readable `run_chain.py`. Stages: preflight, verified resumable shards, chat prep, speed, frozen LR trial, pretrain, base evals/BPB, chat, final evals/tools/BPB, Q8 export, private upload and final report. Atomic stage markers skip done work; code/settings signatures and output checks guard resume. Training exit 1/SIGKILL retries up to two times; exits 20–23 do not retry. Every shutdown-capable child gets `--no-auto-stop`; the chain owns pause in `finally` with SIGINT/SIGTERM handling and a local `--no-stop` escape. Shutdown still attempts the API if log storage fails. Rehearsal W&B uses a separate project. Added CPU/local preflight options to `check_setup.py`, a fresh-instance RUNBOOK and links.
+- Checks: `OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 TOKENIZERS_PARALLELISM=false python -m pytest -q` → **105 passed in 13.71s**; exact **180,925,056** size gate passes. Orchestration tests cover order/skip, manual controls/config guards, retry/no-retry, mocked stop on success/failure/exception/signal, pause failure/full-log-volume fallback, dry-run estimates, shard integrity, LR settings/choice, separate rehearsal upload/project and child shutdown ownership. `bash -n scripts/run_all.sh` and staged whitespace checks passed.
+- Final-code CPU rehearsal: fresh `/home/ubuntu/chotu-chain-final/rehearsal`, private train_013 + all 14 val shards; SHA/size/EOT/document counts checked against revision **b7575cfca0033585475fff88dcecab40d994b5ff** and `.done`. **190,573,056 train / 50,147,762 val tokens**, **181,219 / 48,403 documents**. Shared HF/llama build caches reused; all stage outputs generated afresh. Command: `python scripts/run_chain.py --storage /home/ubuntu/chotu-chain-final --cache-dir /home/ubuntu/chotu-smoke --rehearsal --rehearsal-tokens 262144 --no-stop --skip-upload --device cpu --shards-subset --retries 0`.
+- Resume proof: SIGKILLed pretrain child at update 12 with retries explicitly off; chain exited 1 without writing that stage marker. Same command skipped the five completed stages, dispatched `RESUME step=10 stage=short`; replay losses 11/12 identical (**8.140087127685547 / 8.01860523223877**). `SWITCH step=24 seq_len=8192 theta=500000.0`; **31 unique updates**, loss **10.836890 → 7.554592**, best BPB **2.43219204**. Document-aligned packing left 8,192 tokens unused (31/32 planned updates), as already documented for pretraining.
+- Pipeline results: tiny speed **1,573 tok/s**, H100-equivalent MFU **0.00006756**; toy LR trials chose **0.003** (BPB **2.788737** vs **3.032097**). Eight chat updates: loss **8.322084 → 7.797956**, best val loss **7.797294**. Base/final BPB **2.432192 / 2.437280**. HellaSwag/ARC-Easy limit 2: base and final acc/acc_norm **0/1.0**, **0.5/0.5**; GPT-2 and SmolLM2 **0/0.5**, **0/0.5**; strict GPT-2 gate not met, smoke-only. APIGen limit 2 exact/name **50%** (one gold no-call), JSON **0%**; BFCL simple/multiple/parallel limit 2 accuracy/JSON **0%**; proposed tool gate failed nonfatally. Q8_0 checks context **8192**, vocabulary **49152**, theta **500000**, ChatML metadata; llama.cpp decoded **8** tokens, exit **0**. All 12 stage markers exist; upload is explicitly skipped and no HF repo was created/uploaded.
+- Outputs: `reports/final_report.md`, per-stage `logs/`, `runs/` and `export/` under the fresh rehearsal directory above. Launcher evidence: `/home/ubuntu/chotu-smoke/chain-final-first.log`, `chain-final-resume.log`, `chain-dry-run.txt`, `step4-pytest.log`. Earlier development rehearsal also exercised actual SIGTERM handling (exit 143); final-code signal/pause paths are mocked in tests.
+- Full H100 dry plan: speed 26,214,400 + LR 2×500M + main ~10B tokens; at 74k–150k tok/s **20.42–41.39** short-window compute hours, conservative planning **22.42–66.08 hours / ₹7,398–₹21,808** at ₹330/h, excluding storage/retries; not a spending guarantee. Preflight computes disk from shard metadata, five runs' checkpoints/exports, scratch/data/build/cache and 20% margin.
+- Unverified / next: no GPU, full-data/full-size run, live W&B/Jarvis pause, actual private upload or Ollama runtime; installation wrapper syntax/dry-run verified, real CUDA-template installation not executed. Rehearsal scores are not quality results. No paid resources started; inherited Jarvis status above remains unverified. Use RUNBOOK on the cheap GPU first and confirm the machine really pauses.
 
 ### 2026-11-19 · Adi · Evals, export and upload, chain step 3
 - Did: `eval_lm.py` runs the five frozen harness tasks and cached GPT-2 / SmolLM2 baselines under identical zero-shot settings, comparison/gate table and optional trainer BPB. `eval_tools.py` runs greedy ChatML calls on held-out APIGen and pinned official BFCL Python simple/multiple/parallel, reporting JSON validity, exact/allowed-value matching, failure examples and nonfatal proposed gates. `export_gguf.py` converts Q8_0, writes an explicit Ollama ChatML/tools Modelfile, checks GGUF metadata and runs real llama.cpp CPU generation. `upload.py` validates local artifacts, guards private visibility (including recheck after creation), and submits a model/card/reports commit only on explicit invocation. Usage/details: `EVALUATION_EXPORT.md`.

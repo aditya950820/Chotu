@@ -1,5 +1,9 @@
 # Jarvis Labs (proposed GPU provider)
 
+For the complete training chain, follow **[RUNBOOK.md](RUNBOOK.md)**: cheap-GPU
+rehearsal first, then one command on the H100, resumable stages and an owned
+final pause. The setup below is the earlier data-preparation workflow.
+
 Prices checked 2026-10-24 ([pricing](https://jarvislabs.ai/in/gpu-cloud-pricing)), per GPU per hour:
 H100 SXM 80 GB ₹330, A100 80 GB ₹141, A100 40 GB ₹84, L4 ₹41. Storage ₹0.013/GB/hour (about ₹940/month for 100 GB), billed **even while paused**.
 
