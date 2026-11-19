@@ -5,12 +5,12 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 
 ## Now
 
-- **Current session:** Session 2 · Data done (10.06B tokens on HF); next: read samples, then Session 3
+- **Current session:** Session 2 data done; pretraining chain step 1 CPU-verified. Sample-reading gate and Session 3 GPU rehearsal remain.
 - **Who's on what:**
-  - Adi: 8k context + tool-calling proposal ready for partner review (local branch; not pushed)
+  - Adi: pretraining script (chain step 1) ready for review; next: chat tuning, local branch only
   - Partner: —
 - **Blocked on:** nothing
-- **Paid resources running:** Jarvis Labs instance (GPU type: TODO), started 2026-10-24. Pause it when not in use.
+- **Paid resources running:** Jarvis Labs instance (GPU type: TODO), started 2026-10-24. Pause it when not in use. Status inherited; not checked this session. No paid resources started here.
 
 ## Next up
 
@@ -37,6 +37,15 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Next:
 - Notes for the other person:
 -->
+
+### 2026-11-19 · Adi · Pretraining chain, step 1
+- Did: memmapped deterministic single-pass batches, long-document tail indexing, a readable pretraining loop, WSD, exact decoded-target UTF-8 BPB, atomic/resumable checkpoints, optional W&B, kill-rule exit codes and standalone Jarvis shutdown. Usage and choices: `PRETRAINING.md`. No chat/eval/export/orchestrator work yet.
+- Tests: `OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 python -m pytest -q` → **32 passed in 8.91s**, including exact synthetic CPU weights/loss after resume before and after the rotary/8k switch. The 180,925,056 size gate passes unchanged.
+- Real data: ran public `prepare_data.py --max-docs 2000 --max-files 2` (existing first-row-group mode returned 1,000 docs/file). Then downloaded only private `train_013.bin` (381,146,112 bytes) and all 14 val shards to `/home/ubuntu/chotu-smoke`; no large train shards downloaded and no credentials saved in git.
+- Final smoke (private shards): 60 planned / **58 actual** updates, batch=micro=8,192, LR .003, warmup 5, long fraction .15, decay .2. SIGKILL after update 27; automatic resume from 25 replayed updates 26/27 with identical losses. Switch after update 51: 2,048/theta 10,000 → 8,192/theta 500,000. Loss 10.83689 → 7.40003; final/best validation BPB 2.355529. Exit 0, done marker and exactly the last two checkpoints (55,58), 58 unique metric rows. Logs: `/home/ubuntu/chotu-smoke/private-before-kill.log`, `private-resume.log`; run: `runs/private-resume-60` under the same storage.
+- Full train_013 tail stats (seed 42, batch 524,288, long fraction .08): 190,573,056 train tokens; short prefix 175,112,192; tail 15,460,863 tokens / 14,640 complete docs. ≥2,048: 1,390 docs / 6,161,799 tokens. ≥8,192: 138 docs / 1,949,912 tokens. Counts include EOT. Doc-start alignment/whole batches yield 357 of 363 planned updates, 3,402,239 unused tokens, 241 preferred starts. JSON: `/home/ubuntu/chotu-smoke/train-013-tail-stats.json`.
+- Choices / caveats: every long window starts at a document boundary; prefer ≥4,096-token docs within a 4,096-token lookahead. No repeated targets, but alignment scraps lower the realized long fraction/token count (reported, not hidden). Decay matrices except embeddings; no decay norms/vectors. Unrecovered 200-update spikes alert and stop (23). Standalone CUDA jobs pause Jarvis in `finally`; later chain driver must explicitly take over shutdown ownership. CUDA/compile/Liger, live W&B and real Jarvis pause are untested here. Synthetic tests mock the shutdown call. No claim of trained 8k quality.
+- Next: review, then step 2 chat tuning. Use the existing Python 3.13 `~/chotu-venv`. Commit locally only; no push requested. Frozen 8k/tool decisions still need partner agreement.
 
 ### 2026-11-19 · Adi · Proposal: 8k context + tool calling
 - Did: proposed both frozen-decision changes; added staged context config, plain-text ChatML tool formatting/parsing, assistant-only masks, and tests. No training scripts or paid runs.
