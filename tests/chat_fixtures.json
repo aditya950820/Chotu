@@ -1,0 +1,19 @@
+{
+  "apigen": {
+    "messages": [
+      {
+        "content": "You are an expert in composing functions. You are given a question and a set of possible functions. \nBased on the question, you will need to make one or more function/tool calls to achieve the purpose. \nIf none of the functions can be used, point it out and refuse to answer. \nIf the given question lacks the parameters required by the function, also point it out.\n\nYou have access to the following tools:\n<tools>[{\"type\":\"function\",\"function\":{\"name\":\"use_cuda\",\"description\":\"Checks if a CUDA device is available.\",\"parameters\":{\"type\":\"object\",\"properties\":{}}}}]</tools>\n\nThe output MUST strictly adhere to the following format, and NO other text MUST be included.\nThe example format is as follows. Please make sure the parameter type is correct. If no function call is needed, please make the tool calls an empty list '[]'.\n<tool_call>[\n{\"name\": \"func_name1\", \"arguments\": {\"argument1\": \"value1\", \"argument2\": \"value2\"}},\n... (more tool calls as required)\n]</tool_call>",
+        "role": "system"
+      },
+      {"content": "Is CUDA available?", "role": "user"},
+      {"content": "<tool_call>[{\"name\": \"use_cuda\", \"arguments\": {}}]</tool_call>", "role": "assistant"}
+    ]
+  },
+  "smol": {
+    "messages": [
+      {"content": "Your response should contain less than 10 words. No other constraints apply.\n", "role": "user"},
+      {"content": "Sure, here is a short response.", "role": "assistant"}
+    ],
+    "source": "smol-contraints"
+  }
+}

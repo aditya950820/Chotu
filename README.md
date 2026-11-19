@@ -9,4 +9,5 @@ A ~181M-parameter English chat LLM built from scratch by two people, to learn ho
 - `docs/PROJECT_SETUP.md`: how each of us sets up Claude with the same context
 - `docs/COLAB.md` and `notebooks/colab_setup.ipynb`: running on Google Colab
 - `docs/JARVIS.md`: Jarvis Labs GPU machines (setup, pause, costs)
+- **`docs/RUNBOOK.md`: one-command train/evaluate/export/private-upload chain, rehearsal and resume**
 - `notebooks/eda_data.ipynb`: end-to-end look at the training data (live, explained)
