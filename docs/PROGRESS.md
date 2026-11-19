@@ -5,9 +5,9 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 
 ## Now
 
-- **Current session:** Session 2 data done; pretraining chain step 1 CPU-verified. Sample-reading gate and Session 3 GPU rehearsal remain.
+- **Current session:** Session 2 data done; training chain steps 1–2 CPU-verified. Sample-reading gate and GPU rehearsal remain.
 - **Who's on what:**
-  - Adi: pretraining script (chain step 1) ready for review; next: chat tuning, local branch only
+  - Adi: chat preparation/SFT (chain step 2) ready for review; next: evals, local branch only
   - Partner: —
 - **Blocked on:** nothing
 - **Paid resources running:** Jarvis Labs instance (GPU type: TODO), started 2026-10-24. Pause it when not in use. Status inherited; not checked this session. No paid resources started here.
@@ -37,6 +37,16 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Next:
 - Notes for the other person:
 -->
+
+### 2026-11-19 · Adi · Chat preparation and tuning, chain step 2
+- Did: `prepare_chat.py` streams revision-pinned train sources into uint16 IDs / uint8 assistant masks / int64 offsets; SHA-256 ~1% holdouts, counted conversion drops, raw APIGen eval JSONL and marked-token report. Shared `train.py --stage chat` adds padded length buckets, token-weighted assistant loss, two-epoch SFT, held-out selection, atomic HF `best/`, resumable checkpoints and done marker. Pretraining now exports HF `final/`; validation defaults to 1,048,576 fixed tokens evaluated within the microbatch budget. `--no-auto-stop` explicitly transfers shutdown ownership. Usage: `CHAT_TUNING.md` / `PRETRAINING.md`.
+- Schema: inspected the real 83,144-row APIGen train parquet. System text contains `<tools>[{"type":"function","function":{...}}]</tools>`; assistant emits one `<tool_call>[{"name":...,"arguments":{...}}, ...]</tool_call>`. Only system/user/assistant roles, no tool results. Preserve refusals; replace incompatible source formatting instruction and render one call per tag. A raw positive-call example and real smoltalk example are captured in `tests/chat_fixtures.json`; positive fixture matches the actual parquet row exactly.
+- Preparation CPU smoke: 2,000 rows/source; smol 2,000 converted, 1,984 kept (16 over 8k), 1,963 train / 21 val; APIGen 2,000 converted/kept, 1,981 train / 19 val. No other drops in this limited sample. Conversation shares 49.80% / 50.20%; assistant-token shares 89.97% / 10.03% (1,303,396 / 145,254 assistant tokens). Length p50/p90/p99/max: smol 909.5/1,360/1,773.58/8,018; APIGen 452/799.5/1,141.05/1,834. Gold JSON roundtrip **3,156/3,156 = 100%**. Report has five marked-loss samples per source, and held-out raw JSONL has 19 rows. Arrays occupy 7,942,408 bytes.
+- Full source metadata: smol train **460,341 rows / 922,475,727 parquet bytes**, revision `f73fe857d519ff6ac5af2ea67c4d3834da7b8bcc`; APIGen train **83,144 rows / 49,798,856 bytes**, revision `5feaf2fd3ffca7c237fc38d1861bc30365d48ffa`. Limited processing times 4.49s + 2.96s project to **17.2 + 2.0 ≈ 19.3 minutes** for full preparation, excluding setup/cold-download overhead. First-2k composition and network variability make this approximate; full preparation was not run. Natural full-source proportions differ from this equal-count smoke.
+- Tests: `OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 TOKENIZERS_PARALLELISM=false python -m pytest -q` → **43 passed in 12.08s**, including real fixture conversion, stored masks, padding/buckets, exact chat crash/resume weights/losses, best selection through a validation regression, epoch-end evaluation and no-auto-stop. Existing size gate remains 180,925,056. An additional one-update real-shard tiny run published `final/`; `AutoModelForCausalLM` and tokenizer loaded with vocabulary 49,152.
+- Chat CPU smoke: initialized tiny from step-1 checkpoint 58, SIGKILL after update 22, resumed checkpoint 20; replay losses 21–22 identical. Completed 40 unique updates, loss **8.2334 → 7.2814**; held-out loss at updates 10/20/30/40 **7.6260 / 7.5756 / 7.5532 / 7.5383**. Last checkpoints 35 and 40, done marker present. `AutoModelForCausalLM.from_pretrained(best)` and tokenizer load: context 8,192 / theta 500,000 / vocab 49,152. Logs: `chat-before-kill.log`, `chat-resume.log`. The chat done-metric key was corrected after the smoke process started; tests cover it and checkpoint-40 finalization is rechecked separately without extra training updates.
+- Choices: proposed SFT peak LR 3e-4, 20-update warmup then linear decay, at most two epochs, 32,768 padded-token updates / 8,192-token microbatches; no source resampling. Best uses token-weighted held-out assistant CE. Pretraining quality/throughput/spike thresholds do not apply to SFT; nonfinite loss/gradient stops do. HF `best/` and `final/` are atomic relative symlinks under the run's `hf/`; retain targets or copy dereferencing links.
+- Notes for the other person: preparation report at `/home/ubuntu/chotu-chat-smoke/reports/chat_report.md`, raw heldout at `chat/apigen-heldout.jsonl`; CPU logs under `/home/ubuntu/chotu-smoke/`. No paid resources started. Full-data SFT, CUDA/compile/Liger, live W&B/Jarvis and tool/chat quality remain unverified; proposals still need agreement. Next: step 3 evaluations, then export/orchestration. Do not push this branch yet.
 
 ### 2026-11-19 · Adi · Pretraining chain, step 1
 - Did: memmapped deterministic single-pass batches, long-document tail indexing, a readable pretraining loop, WSD, exact decoded-target UTF-8 BPB, atomic/resumable checkpoints, optional W&B, kill-rule exit codes and standalone Jarvis shutdown. Usage and choices: `PRETRAINING.md`. No chat/eval/export/orchestrator work yet.

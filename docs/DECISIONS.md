@@ -3,6 +3,12 @@
 Every change to a frozen decision (see CLAUDE.md) gets an entry here first, agreed by both people.
 Newest at the top. Format: date · who · decision · why · what it replaces.
 
+### 2026-11-19 · Adi · PROPOSED: chat preparation and SFT recipe
+- Decision: pin `datasets==5.2.0` for revision-pinned streaming preparation of all smol-smoltalk train plus smoltalk `apigen-80k` train. Hash-hold out 1% of each, normalize APIGen's JSON call lists into our per-call tags, and preserve actual assistant-only loss masks in memmapped arrays. No tool results are fabricated where the source has none.
+- Why: make the PR #2 tool-calling proposal runnable with inspectable real data. Start with the natural source mix (report conversation and assistant-token shares), at most 2 epochs, peak SFT LR 3e-4, 20-update warmup then linear decay, 32,768 padded-token updates / 8,192-token microbatches. Select best held-out assistant loss; still evaluate BFCL/chat regressions before accepting quality.
+- Replaces: no executable chat preparation/SFT recipe; `datasets` was deferred in requirements. Frozen architecture/tokenizer/parameter count stay unchanged.
+- Status: needs partner's agreement; CPU smoke is a plumbing check, not validation of this recipe's quality.
+
 ### 2026-11-19 · Adi · PROPOSED: context 8,192
 - Decision: pretrain at 2,048 (RoPE theta 10,000), then use the final ~5–10% of tokens at 8,192 with RoPE theta 500,000 and long FineWeb-Edu documents. Chat tuning drops conversations over 8,192. Export GGUF / Ollama with `num_ctx 8192`.
 - Why: our EDA found 9.4% of docs exceed 2,048 but hold 41.5% of tokens. A short long-context stage avoids full 8k pretraining's estimated ~2–3x slowdown. Parameter count stays 180,925,056; bf16/fp16 KV cache is ~335 MB at 8k (batch 1), separate from weights.

@@ -1,7 +1,8 @@
 # Pretraining (chain step 1)
 
-One readable loop: `scripts/train.py --stage pretrain`. Chat tuning, evaluations,
-export and the chain driver are later steps. The 8k tail is still a proposal
+One readable loop: `scripts/train.py --stage pretrain`; chat tuning shares it
+(see `CHAT_TUNING.md`). Evaluations, GGUF export and the chain driver are later
+steps. The 8k tail is still a proposal
 pending partner agreement; `--long-frac 0` disables it.
 
 ```sh
@@ -26,8 +27,9 @@ on the GPU host if desired; it is not required for CPU rehearsal.
 whole train shards once; windows then move sequentially, never sampling with
 replacement. Targets are shifted by one token. Adjacent windows can share
 one context token, but no target position is trained twice. Validation uses
-the first fixed 8,192 target tokens (whole 2k windows) in sorted val shards,
-at both stages. `--val-tokens` controls this budget. BPB sums CE in nats and
+the first fixed 1,048,576 target tokens (whole 2k windows) in sorted val shards,
+at both stages, batched within `--micro-tokens`. `--val-tokens` controls this
+budget; set it explicitly small for tests/smoke. BPB sums CE in nats and
 divides by ln(2) and actual UTF-8 bytes from decoding each target row, including
 EOT text; no average bytes/token approximation. Incomplete final windows are
 excluded. This is a fixed-window metric, not a claim of full-document BPB.
@@ -66,6 +68,10 @@ bit-for-bit; CUDA bitwise reproducibility is not claimed. A `done.json` marker
 makes completed reruns no-ops. Metrics beyond the last durable checkpoint are
 removed on resume, then recomputed. SIGKILL/power failure loses only work since
 that checkpoint; SIGTERM/SIGINT finish the current update, checkpoint and exit.
+Normal completion also publishes `final/`, a Hugging Face `save_pretrained`
+model plus tokenizer, for chat initialization or evaluation. This is an atomic
+relative symlink to a complete directory under the run's `hf/` subdirectory;
+keep the target when copying a run or dereference the symlink.
 
 `metrics.jsonl` and stdout contain step, loss, LR, gradient norm, tokens/s,
 sequence length, theta, validation and best BPB. MFU is the approximate
@@ -93,13 +99,13 @@ Exit codes:
 - 24: graceful signal stop with checkpoint.
 - 25: Jarvis pause failed; overrides the training code, which is printed. **Pause manually.**
 
-CUDA jobs always invoke `scripts/stop_machine.py` in `finally`, including after
+Standalone CUDA jobs invoke `scripts/stop_machine.py` in `finally`, including after
 failure. Configure `.env` `JL_API_KEY`, `JL_MACHINE_ID`, install `jarvislabs`, and
 verify `stop_machine.py --dry-run` **before renting time**. CPU runs never pause
 a machine. SIGKILL cannot run cleanup: the later chain driver must own an
-independent shutdown guard. The future orchestrator must explicitly transfer
-shutdown ownership before composing GPU stages; do not use this standalone
-entry point unchanged as a mid-chain subprocess.
+independent shutdown guard. The orchestrator must pass `--no-auto-stop` to
+transfer shutdown ownership; this skips both Jarvis credential checks and
+the pause call. Never use that flag without an independent shutdown owner.
 
 ## Checks
 
