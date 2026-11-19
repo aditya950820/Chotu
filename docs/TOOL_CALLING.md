@@ -1,6 +1,6 @@
-# 8k context + tool calling — proposal and report
+# 8k context + tool calling — agreed plan and report
 
-Proposed 2026-11-19 by Adi; needs partner's agreement. No training or capability claim yet.
+Agreed 2026-11-19 by both people; Aditya confirmed partner agreement. CPU rehearsals establish plumbing, not trained capabilities.
 
 ## Format
 
@@ -26,20 +26,20 @@ Every turn ends in a newline. `chotu/chat_format.py` renders text, parses calls 
 
 ## Data and long context
 
-Start rehearsal with a proposed 80/20 conversation mix: smol-smoltalk / function-calling conversations (smoltalk `apigen-80k` or Salesforce xLAM-60k). Check licenses, actual schemas, parallel coverage and contamination before selecting a source. Normalize into this format, deduplicate and hold out conversations before mixing. Report both conversation and assistant-token shares; tune the mix on held-out chat and tool scores, not training loss alone.
+Use the natural source mix of smol-smoltalk and smoltalk `apigen-80k`, as agreed in `DECISIONS.md`; the earlier 80/20 suggestion is superseded. Check licenses, actual schemas, parallel coverage and contamination. Normalize into this format, deduplicate and hold out conversations before mixing. Report both conversation and assistant-token shares; tune future mix changes on held-out chat and tool scores, not training loss alone.
 
-Pretrain at 2,048 with theta 10,000 (`PRETRAINING_WINDOW`); reserve the final ~5–10% of the same token budget for 8,192 with theta 500,000 (`long_context_config()`). The base config declares 8,192 capacity but keeps stage-1 theta; a future training loader must explicitly select 2,048 windows. Select long FineWeb-Edu documents without replaying held-out documents or already consumed tokens. Existing packed shards alone do not preserve the document selection needed here: plan document-aware preparation before training. EDA: 9.4% of documents exceed 2,048 and contain 41.5% of tokens; this does not establish the supply above 8,192. Measure that supply first.
+Pretrain at 2,048 with theta 10,000 (`PRETRAINING_WINDOW`); reserve the final ~5–10% of the same token budget for 8,192 with theta 500,000 (`long_context_config()`). The base config declares 8,192 capacity but keeps stage-1 theta; the training loader explicitly selects 2,048 windows. Select long FineWeb-Edu documents without replaying held-out documents or already consumed tokens. The loader indexes EOT-delimited documents in the unread shard tail, aligns 8k windows to document starts and prefers documents ≥4,096 tokens. It reports the tail supply above 2,048 and 8,192. EDA: 9.4% of documents exceed 2,048 and contain 41.5% of tokens; this alone does not establish the supply above 8,192.
 
 Full 8k pretraining is estimated ~2–3x slower; measure throughput in rehearsal. Parameters remain 180,925,056. Batch-1 bf16/fp16 KV cache at 8k is ~335 MB (32 layers, 5 KV heads, 64 head dimension, K+V), in addition to ~190 MB Q8_0 weights and runtime buffers. GGUF / Ollama needs `num_ctx 8192`; test recall across positions before claiming usable 8k context.
 
-## Evals and proposed bar
+## Evals and agreed bar
 
-Keep existing lm-evaluation-harness and bits-per-byte gates. Separately pin a BFCL version and run its simple, multiple and parallel subsets with supplied schemas; report per-subset accuracy and JSON-validity rate. Proposed initial gate: BFCL simple accuracy ≥50% and JSON validity ≥95% on held-out calls. These are targets, not measured results; review them after the tiny rehearsal. Report parallel/multiple scores even if poor. Aim for strong single and parallel calls against given schemas, not reliable long multi-step agents. Check chat regressions and short/long-context validation separately.
+Keep existing lm-evaluation-harness and bits-per-byte gates. Separately pin a BFCL version and run its simple, multiple and parallel subsets with supplied schemas; report per-subset accuracy and JSON-validity rate. Agreed initial gate: BFCL simple accuracy ≥50% and JSON validity ≥95% on held-out calls. These are targets, not measured results; review them after the tiny rehearsal. Report parallel/multiple scores even if poor. Aim for strong single and parallel calls against given schemas, not reliable long multi-step agents. Check chat regressions and short/long-context validation separately.
 
 ## Sessions 3–5 and report
 
 - Session 3: rehearse the 2k→8k stage change, checkpoint/resume and throughput on the tiny twin; retain all stop-machine gates.
 - Session 4: normalize tool data, inspect assistant masks, rehearse chat/tool tuning, BFCL and JSON checks; test GGUF tool tags and 8k runtime settings.
-- Session 5: only after agreement and rehearsal, add the long-context tail before mixed chat tuning; run both eval families, export and stop the machine as before.
+- Session 5: after GPU rehearsal and the remaining quality/data gates, add the long-context tail before mixed chat tuning; run both eval families, export and stop the machine as before.
 
-This change supplies config, format code and automated tests only. It adds no training scripts, dataset downloads or tool executor. CPU 8k forward checks model execution, not trained long-context quality. Test results are recorded in `PROGRESS.md`.
+The implementation now includes preparation, training, evaluation, export and orchestration; see `RUNBOOK.md`. It adds no tool executor. CPU 8k forward checks model execution, not trained long-context quality. Test results are recorded in `PROGRESS.md`.
