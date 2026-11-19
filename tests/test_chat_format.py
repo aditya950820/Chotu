@@ -3,8 +3,10 @@ import json
 import pytest
 from transformers import AutoTokenizer
 
+from chotu.chat_data import convert_chat
 from chotu.chat_format import parse_tool_calls, render_conversation, tokenize_conversation
 from chotu.config import TOKENIZER_ID
+from chotu.tool_eval import apigen_score
 
 
 @pytest.fixture(scope="module")
@@ -47,6 +49,60 @@ def test_unclosed_and_empty():
     assert parse_tool_calls("No tools") == ([], [])
     assert parse_tool_calls("<tool_call>{}")[1] == ["unclosed tool_call"]
     assert render_conversation([]) == ""
+
+
+@pytest.mark.parametrize("value", ["</tool_call>", "<tool_call>", 'both <tool_call> and </tool_call> with "quotes" and \\'])
+def test_literal_tags_in_arguments(value):
+    calls = [{"name": "echo", "arguments": {"nested": [{"text": value}]}}]
+    text = render_conversation([{"role": "assistant", "tool_calls": calls}])
+    assert parse_tool_calls(text) == (calls, [])
+    tags = text.split("\n", 1)[1].removesuffix("<|im_end|>\n")
+    assert parse_tool_calls(tags, allow_text=False) == (calls, [])
+    assert apigen_score(tags, calls) == {"json_valid": True, "exact_match": True, "name_accuracy": True}
+
+
+def test_apigen_list_conversion_with_literal_tags():
+    calls = [{"name": "echo", "arguments": {"text": "<tool_call>literal</tool_call>"}}]
+    tools = [{"name": "echo", "parameters": {"type": "object"}}]
+    row = {"messages": [
+        {"role": "system", "content": "<tools>" + json.dumps(tools) + "</tools>"},
+        {"role": "user", "content": "Echo these tags."},
+        {"role": "assistant", "content": "<tool_call>" + json.dumps(calls) + "</tool_call>"},
+    ]}
+    messages, schemas, normalized = convert_chat(row, "apigen")
+    assert normalized == calls
+    assert parse_tool_calls(render_conversation(messages, schemas)) == (calls, [])
+
+
+@pytest.mark.parametrize("constant", ["NaN", "Infinity", "-Infinity"])
+def test_nonfinite_nested_json_rejected(constant):
+    bad = '<tool_call>{"name":"bad","arguments":{"nested":[{"value":' + constant + '}]}}</tool_call>'
+    valid = '<tool_call>{"name":"ok","arguments":{}}</tool_call>'
+    calls, errors = parse_tool_calls(bad + valid)
+    assert calls == [{"name": "ok", "arguments": {}}]
+    assert len(errors) == 1 and "non-finite" in errors[0]
+    value = {"nested": [{"value": float(constant)}]}
+    with pytest.raises(ValueError):
+        render_conversation([{"role": "assistant", "tool_calls": [{"name": "bad", "arguments": value}]}])
+    with pytest.raises(ValueError):
+        render_conversation([], tools=[{"name": "bad", "parameters": value}])
+
+
+def test_deep_json_recovers_later_call():
+    depth = 100_000
+    bad = '<tool_call>{"name":"bad","arguments":{"nested":' + '[' * depth + '0' + ']' * depth + '}}</tool_call>'
+    calls, errors = parse_tool_calls(bad + '<tool_call>{"name":"ok","arguments":{}}</tool_call>')
+    assert calls == [{"name": "ok", "arguments": {}}]
+    assert len(errors) == 1 and "recursion" in errors[0].lower()
+
+
+def test_missing_closer_and_strict_text():
+    valid = '<tool_call>{"name":"ok","arguments":{}} \n\t</tool_call>'
+    assert parse_tool_calls('<tool_call>{"name":"unclosed","arguments":{}}' + valid) == (
+        [{"name": "ok", "arguments": {}}], ["unclosed tool_call"])
+    assert parse_tool_calls("prose " + valid, allow_text=False)[1] == ["text outside tool_call"]
+    assert parse_tool_calls(valid + " prose", allow_text=False)[1] == ["text outside tool_call"]
+    assert parse_tool_calls("", allow_text=False) == ([], [])
 
 
 def test_assistant_mask(tokenizer):

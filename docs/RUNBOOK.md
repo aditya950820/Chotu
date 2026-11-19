@@ -1,7 +1,7 @@
 # One-command chain on Jarvis
 
-**Do the cheap-GPU rehearsal first.** The 8k/tool recipe is still proposed;
-both partners must accept it and read the data samples before the paid full
+**Do the cheap-GPU rehearsal first.** Both partners agreed the 8k/tool recipe
+on 2026-11-19 (Aditya confirmed); read the data samples before the paid full
 run. H100 SXM 80 GB is ₹330/hour, plus storage charges even while paused.
 The dry-run budget is an estimate, not a spending limit.
 

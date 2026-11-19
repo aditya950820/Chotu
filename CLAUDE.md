@@ -42,21 +42,21 @@ Every notebook is a learning tool, not only a runner. For each step:
 
 | Decision | Choice |
 | --- | --- |
-| Architecture | Decoder-only Hugging Face Qwen3 layout: 32 layers, 640 hidden, 10 query / 5 KV heads, head_dim 64, SwiGLU MLP 1,792, RMSNorm, RoPE (theta 10,000), QK-norm, tied embeddings, no biases |
+| Architecture | Decoder-only Hugging Face Qwen3 layout: 32 layers, 640 hidden, 10 query / 5 KV heads, head_dim 64, SwiGLU MLP 1,792, RMSNorm, RoPE (theta 10,000 for 2k pretraining; 500,000 for the 8k stage), QK-norm, tied embeddings, no biases |
 | Config gotcha | Set every Qwen3 field explicitly. The defaults (head_dim 128, untied embeddings) silently change the model |
 | Size | 180.9M parameters, asserted by a test |
-| Context | 8,192 tokens; pretrain at 2,048, final ~5–10% at 8,192 with RoPE theta 500,000 (proposed 2026-11-19, see DECISIONS.md) |
+| Context | 8,192 tokens; pretrain at 2,048, final ~5–10% at 8,192 with RoPE theta 500,000 |
 | Tokenizer | SmolLM2's 49,152-token BPE (`HuggingFaceTB/SmolLM2-135M`), used as-is. It splits digits one by one and has `<\|im_start\|>` / `<\|im_end\|>` |
 | Pretraining data | FineWeb-Edu `sample-10BT` only, one pass (about 10B tokens), tokenized to uint16 shards with end-of-text between documents, 0.5% held out for validation |
 | Training recipe | AdamW (0.9, 0.95), weight decay 0.1, gradient clipping 1.0, bf16, 524,288-token batch, warmup-stable-decay (~700 warmup steps, decay over the final 20%) |
 | Learning rate | Picked by a test of 1.5e-3 vs 3e-3 (0.5B tokens each, 100-step warmup, 15% decay, judged by validation bits-per-byte) |
 | Speed | torch.compile, FlashAttention via SDPA, fused AdamW, fused cross-entropy (e.g. Liger kernels) |
-| Chat tuning | `HuggingFaceTB/smol-smoltalk` + tool-calling data, ChatML / Hermes-style tool tags, loss on assistant tokens only (`<\|im_end\|>` included), drop conversations over 8,192 tokens, up to 2 epochs, keep the best held-out checkpoint (proposed 2026-11-19, see DECISIONS.md) |
-| Evals | lm-evaluation-harness: HellaSwag, ARC-Easy, ARC-Challenge, PIQA, WinoGrande, plus validation bits-per-byte; BFCL simple/multiple/parallel + JSON validity outside lm-eval-harness (proposed 2026-11-19, see DECISIONS.md) |
+| Chat tuning | `HuggingFaceTB/smol-smoltalk` + smoltalk `apigen-80k`, ChatML / Hermes-style tool tags, loss on assistant tokens only (`<\|im_end\|>` included), drop conversations over 8,192 tokens, up to 2 epochs, keep the best held-out checkpoint |
+| Evals | lm-evaluation-harness: HellaSwag, ARC-Easy, ARC-Challenge, PIQA, WinoGrande, plus validation bits-per-byte; BFCL simple/multiple/parallel + JSON validity outside lm-eval-harness |
 | Success bar | Beat GPT-2 124M on HellaSwag and ARC-Easy, scored on our own harness |
-| Local file | GGUF Q8_0 (about 190 MB), run with llama.cpp / Ollama using an explicit ChatML template, a stop on `<\|im_end\|>`, and 8,192 context (`num_ctx 8192`) (proposed 2026-11-19, see DECISIONS.md) |
+| Local file | GGUF Q8_0 (about 190 MB), run with llama.cpp / Ollama using an explicit ChatML template, a stop on `<\|im_end\|>`, and 8,192 context (`num_ctx 8192`) |
 | Target tasks | Short Q&A, summaries, rewriting, simple instructions, chat |
-| Not in v1 | Multilingual, retrieval, own tokenizer, DPO, 4-bit files (proposed 2026-11-19, see DECISIONS.md) |
+| Not in v1 | Multilingual, retrieval, own tokenizer, DPO, 4-bit files |
 
 ## Kill rules for the H100 run
 

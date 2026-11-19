@@ -17,13 +17,12 @@ BFCL_FILES = {"simple": "simple_python", "multiple": "multiple", "parallel": "pa
 
 
 def parsed_output(text):
-    calls, errors = parse_tool_calls(text)
-    remainder = re.sub(r"<tool_call>.*?</tool_call>", "", text, flags=re.DOTALL).strip()
+    calls, errors = parse_tool_calls(text, allow_text=False)
     # No calls is not a successful JSON generation, even if the parser has no errors.
-    valid = bool(calls) and not errors and not remainder
+    valid = bool(calls) and not errors
     try:
         json.dumps(calls, allow_nan=False)
-    except ValueError:
+    except (ValueError, RecursionError):
         valid = False
     return calls, valid
 

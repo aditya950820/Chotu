@@ -1,9 +1,9 @@
 # Pretraining (chain step 1)
 
 One readable loop: `scripts/train.py --stage pretrain`; chat tuning shares it
-(see `CHAT_TUNING.md`). Evaluations, GGUF export and the chain driver are later
-steps. The 8k tail is still a proposal
-pending partner agreement; `--long-frac 0` disables it.
+(see `CHAT_TUNING.md`). Evaluations, GGUF export and the chain driver are described
+in `EVALUATION_EXPORT.md` and `RUNBOOK.md`. The 8k tail was agreed on
+2026-11-19 (Aditya confirmed partner agreement); `--long-frac 0` disables it.
 
 ```sh
 source ~/chotu-venv/bin/activate

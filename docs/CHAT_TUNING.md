@@ -1,8 +1,8 @@
 # Chat and tool-call tuning (chain step 2)
 
-The 8k/tool-calling recipe remains **proposed**, pending partner agreement.
+The 8k/tool-calling recipe is **agreed as of 2026-11-19**; Aditya confirmed partner agreement.
 Architecture, tokenizer and parameter count are unchanged. CPU smoke checks
-the pipeline, not model quality or the proposed BFCL target.
+the pipeline, not model quality or achievement of the agreed BFCL target.
 
 ## Preparation
 

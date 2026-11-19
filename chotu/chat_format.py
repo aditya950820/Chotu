@@ -5,9 +5,12 @@ Parsing returns (calls, errors). Tokenization returns None when over the limit.
 This module formats calls, but never executes them.
 """
 import json
-import re
 
 from chotu.config import FINAL_CONTEXT
+
+
+def _reject_constant(value):
+    raise ValueError(f"non-finite JSON constant: {value}")
 
 
 def _validate_call(call):
@@ -24,7 +27,7 @@ def _turns(messages, tools=None):
         instruction = ('Available tools are listed below. Use tool_call tags around '
                        'a JSON object with name and arguments; '
                        'use multiple calls for parallel requests.\n<tools>\n'
-                       + json.dumps(tools, ensure_ascii=False) + '\n</tools>')
+                       + json.dumps(tools, ensure_ascii=False, allow_nan=False) + '\n</tools>')
         if messages and messages[0]["role"] == "system":
             messages[0]["content"] = messages[0].get("content", "") + "\n" + instruction
         else:
@@ -40,7 +43,7 @@ def _turns(messages, tools=None):
             if role != "assistant":
                 raise ValueError("only assistants can call tools")
             for call in message["tool_calls"]:
-                content += "<tool_call>" + json.dumps(_validate_call(call), ensure_ascii=False) + "</tool_call>"
+                content += "<tool_call>" + json.dumps(_validate_call(call), ensure_ascii=False, allow_nan=False) + "</tool_call>"
         if role == "tool":
             content = "<tool_response>" + content + "</tool_response>"
         yield role, f"<|im_start|>{role}\n", content + "<|im_end|>", "\n"
@@ -51,18 +54,43 @@ def render_conversation(messages, tools=None):
     return "".join(header + body + newline for _, header, body, newline in _turns(messages, tools))
 
 
-def parse_tool_calls(text):
-    """Keep valid calls and report invalid or unclosed blocks without raising."""
+def parse_tool_calls(text, *, allow_text=True):
+    """Decode one JSON object per tag, retaining later calls after bad blocks.
+
+    Source APIGen lists are normalized by chat_data.convert_chat before parsing.
+    Set allow_text=False to reject prose outside calls when scoring generation.
+    """
     calls, errors = [], []
-    pattern = r"<tool_call>(.*?)(?:</tool_call>|(?=<tool_call>)|$)"
-    for match in re.finditer(pattern, text, re.DOTALL):
-        if not match.group(0).endswith("</tool_call>"):
+    decoder = json.JSONDecoder(parse_constant=_reject_constant)
+    cursor, outside_text = 0, False
+    while True:
+        start = text.find("<tool_call>", cursor)
+        if start < 0:
+            outside_text |= bool(text[cursor:].strip())
+            break
+        outside_text |= bool(text[cursor:start].strip())
+        body = start + len("<tool_call>")
+        while body < len(text) and text[body] in " \t\r\n":
+            body += 1
+        try:
+            call, end = decoder.raw_decode(text, body)
+        except (ValueError, RecursionError) as error:
+            errors.append(str(error))
+            cursor = body
+            continue
+        while end < len(text) and text[end] in " \t\r\n":
+            end += 1
+        cursor = end
+        if not text.startswith("</tool_call>", end):
             errors.append("unclosed tool_call")
             continue
+        cursor += len("</tool_call>")
         try:
-            calls.append(_validate_call(json.loads(match.group(1))))
+            calls.append(_validate_call(call))
         except (ValueError, TypeError) as error:
             errors.append(str(error))
+    if not allow_text and outside_text:
+        errors.append("text outside tool_call")
     return calls, errors
 
 

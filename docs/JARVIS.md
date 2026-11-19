@@ -1,4 +1,4 @@
-# Jarvis Labs (proposed GPU provider)
+# Jarvis Labs (agreed GPU provider, 2026-11-19)
 
 For the complete training chain, follow **[RUNBOOK.md](RUNBOOK.md)**: cheap-GPU
 rehearsal first, then one command on the H100, resumable stages and an owned

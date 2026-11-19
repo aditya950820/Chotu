@@ -5,9 +5,9 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 
 ## Now
 
-- **Current session:** Session 2 data done; all four chain steps CPU-verified, including a fresh-volume end-to-end rehearsal and kill/resume. Full evaluation, sample-reading gate and actual GPU/pause rehearsal remain.
+- **Current session:** 8k context, tool calling and all logged proposals agreed by both people on 2026-11-19 (Aditya confirmed). All four chain steps CPU-verified; parser hardening is on PR #3. PR #2 → main and PR #3 → PR #2 are still open at the live status check; neither is recorded as merged. Full evaluation, sample-reading gate and actual GPU/pause rehearsal remain.
 - **Who's on what:**
-  - Adi: one-command chain (step 4) ready for review; next: cheap-GPU rehearsal using RUNBOOK.md, then H100 only after gates
+  - Adi: parser fixes and agreed-decision documentation on PR #3; next: merge PR #2 into main, then integrate PR #3 into main, followed by cheap-GPU rehearsal using RUNBOOK.md
   - Partner: —
 - **Blocked on:** nothing
 - **Paid resources running:** Jarvis Labs instance (GPU type: TODO), started 2026-10-24. Pause it when not in use. Status inherited; not checked this session. No paid resources started here.
@@ -18,16 +18,16 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
    - [x] Hugging Face token and W&B key work (checked by `scripts/check_setup.py`)
    - [x] Model config + size test: 180,925,056 params, tests pass
    - [ ] Both: rewrite `prompts/test_prompts.md` in your own words
-   - [ ] Provider: Jarvis Labs proposed (`docs/JARVIS.md`); run its first-time setup and `stop_machine.py --dry-run`
+   - [ ] Provider: Jarvis Labs agreed (`docs/JARVIS.md`); run its first-time setup and `stop_machine.py --dry-run`
    - [ ] Partner: get collaborator access, clone, make own `.env`, run `python scripts/check_setup.py`
    - [ ] Partner: set up Colab per `docs/COLAB.md` and run `notebooks/colab_setup.ipynb` (Adi: done, 4/4 checks OK)
-   - [ ] Partner: agree or object to the Colab proposal in `docs/DECISIONS.md`
+   - [x] Partner: Colab decisions agreed 2026-11-19; Aditya confirmed
 2. Session 2 gate: both read the 10 samples in `reports/data_report.md` (in the private HF dataset `magnateadi/chotu-fineweb-edu-10bt-tokens`). Don't start another data run; the shards are done. Then Session 3.
-3. Follow `RUNBOOK.md` on a cheap GPU: verify the persistent mount, CUDA throughput, real W&B, private upload permissions and actual automatic pause. Agree the 8k/tool proposals and inspect reports before the full H100 chain. CPU plumbing success is not a quality or GPU-performance gate.
+3. Follow `RUNBOOK.md` on a cheap GPU: verify the persistent mount, CUDA throughput, real W&B, private upload permissions and actual automatic pause. The 8k/tool decisions are agreed; inspect rehearsal reports before the full H100 chain. CPU plumbing success is not a quality or GPU-performance gate.
 
 ## Open questions
 
-- Adi: partner, agree or object to the 2026-11-19 proposals for staged 8,192 context and tool calling in v1? Both remain unapproved; see `DECISIONS.md` and `TOOL_CALLING.md`.
+- No decision approvals pending: Aditya confirmed both people's agreement on 2026-11-19. Remaining GPU/quality/data checks are gates, not pending design approval.
 
 ## Log
 
@@ -38,6 +38,13 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Next:
 - Notes for the other person:
 -->
+
+### 2026-11-19 · Adi · Decisions agreed and tool parser hardened
+- Agreement: Aditya confirmed partner agreement on 2026-11-19. All seven formerly proposed decision entries are now AGREED, including 8k context, tool calling, SFT/dependency pins, eval/export pins and provider/Colab choices. Updated frozen values and current guides; historical log entries retain their original proposal status as history.
+- Parser: decode JSON before checking closing tags, preserving literal opening/closing tags inside argument strings. Reject nested NaN/Infinity/-Infinity on parsing and rendering, including tools JSON. Catch excessive-nesting RecursionError and retain later valid calls. Tool scoring uses the same JSON-aware boundaries instead of a delimiter regex; APIGen list-in-one-tag normalization remains intact.
+- Merge status: live GitHub checks show PR #2 open against main and PR #3 open against the PR #2 branch. Neither has merged into main yet; no merge performed here. Merge PR #2 first, then integrate PR #3 into main after review. This corrects the requested merged-status wording to match observed state.
+- Verification: Python 3.13 `python -m pytest -q` → **114 passed in 13.86s**; focused chat-format/evaluation/chat-training tests → **64 passed in 7.00s**. Exact **180,925,056** model-size gate passes. New regressions cover literal tags/escaped strings, APIGen source-list conversion, nested nonfinite values, deep nesting recovery, missing closers and strict scorer text handling. The first nesting fixture did not trigger Python 3.13's C decoder guard because it accepts nesting beyond the Python recursion limit; the corrected fixture uses 100,000 levels and passes. Grep finds no remaining uppercase PROPOSED entries; historical proposal wording is retained only as history.
+- Paid resources: none started; inherited Jarvis status above remains unverified. No GPU, upload or pause calls needed for this patch.
 
 ### 2026-11-19 · Adi · One-command chain, step 4
 - Did: `run_all.sh` preserves the template torch build using a pip constraint, installs requirements/Jarvis SDK and transfers shutdown ownership to readable `run_chain.py`. Stages: preflight, verified resumable shards, chat prep, speed, frozen LR trial, pretrain, base evals/BPB, chat, final evals/tools/BPB, Q8 export, private upload and final report. Atomic stage markers skip done work; code/settings signatures and output checks guard resume. Training exit 1/SIGKILL retries up to two times; exits 20–23 do not retry. Every shutdown-capable child gets `--no-auto-stop`; the chain owns pause in `finally` with SIGINT/SIGTERM handling and a local `--no-stop` escape. Shutdown still attempts the API if log storage fails. Rehearsal W&B uses a separate project. Added CPU/local preflight options to `check_setup.py`, a fresh-instance RUNBOOK and links.

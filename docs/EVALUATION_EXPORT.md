@@ -1,7 +1,7 @@
 # Evaluation, export and private upload (chain step 3)
 
 These scripts do not establish quality from a tiny smoke. Full evaluations
-are required before deciding whether the model clears the proposed gates.
+are required before deciding whether the model clears the agreed gates.
 All paths below are on persistent storage. Nothing is uploaded automatically.
 
 ## Language-model evaluation
