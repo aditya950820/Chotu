@@ -3,6 +3,12 @@
 Every change to a frozen decision (see CLAUDE.md) gets an entry here first, agreed by both people.
 Newest at the top. Format: date · who · decision · why · what it replaces.
 
+### 2026-11-19 · Adi · PROPOSED: reproducible eval/export tooling
+- Decision: pin `lm_eval[hf]==0.4.13`, `sentencepiece==0.2.3`, `cmake==4.4.5`; use revision-pinned Gorilla BFCL Python simple/multiple/parallel data and llama.cpp (commits in `PROGRESS.md`). Use the checkout's bundled gguf Python module. All LM models get identical zero-shot raw prompts, fp32 and 1,024 context (GPT-2 capacity); compare acc/acc_norm, success on strictly greater GPT-2 acc_norm for HellaSwag and ARC-Easy.
+- Why: make step-3 reports/export repeatable, cache baselines separately by model/settings/revision, and keep uploads private and explicitly invoked. BFCL JSON scorer is a re-implementation, not official-harness equivalence; CPU smoke is not a quality result.
+- Replaces: deferred lm-eval/gguf tooling requirements; does not change architecture/tokenizer or approve the PR #2 context/tool proposals.
+- Status: needs partner's agreement. Full evaluation, Ollama runtime and real private upload remain gates for later work.
+
 ### 2026-11-19 · Adi · PROPOSED: chat preparation and SFT recipe
 - Decision: pin `datasets==5.2.0` for revision-pinned streaming preparation of all smol-smoltalk train plus smoltalk `apigen-80k` train. Hash-hold out 1% of each, normalize APIGen's JSON call lists into our per-call tags, and preserve actual assistant-only loss masks in memmapped arrays. No tool results are fabricated where the source has none.
 - Why: make the PR #2 tool-calling proposal runnable with inspectable real data. Start with the natural source mix (report conversation and assistant-token shares), at most 2 epochs, peak SFT LR 3e-4, 20-update warmup then linear decay, 32,768 padded-token updates / 8,192-token microbatches. Select best held-out assistant loss; still evaluate BFCL/chat regressions before accepting quality.
