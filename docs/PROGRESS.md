@@ -7,7 +7,7 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 
 - **Current session:** Session 2 · Data done (10.06B tokens on HF); next: read samples, then Session 3
 - **Who's on what:**
-  - Adi: —
+  - Adi: 8k context + tool-calling proposal ready for partner review (local branch; not pushed)
   - Partner: —
 - **Blocked on:** nothing
 - **Paid resources running:** Jarvis Labs instance (GPU type: TODO), started 2026-10-24. Pause it when not in use.
@@ -26,7 +26,7 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 
 ## Open questions
 
-- (add questions for the other person here, with your name)
+- Adi: partner, agree or object to the 2026-11-19 proposals for staged 8,192 context and tool calling in v1? Both remain unapproved; see `DECISIONS.md` and `TOOL_CALLING.md`.
 
 ## Log
 
@@ -37,6 +37,13 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Next:
 - Notes for the other person:
 -->
+
+### 2026-11-19 · Adi · Proposal: 8k context + tool calling
+- Did: proposed both frozen-decision changes; added staged context config, plain-text ChatML tool formatting/parsing, assistant-only masks, and tests. No training scripts or paid runs.
+- Result / numbers: main baseline: 7 passed in 9.94s. Proposal: 18 passed in 4.71s (`PYTHONPATH=. OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 pytest -q --durations=3`); CPU 8k tiny forward 0.62s. Both stage configs: exactly 180,925,056 parameters.
+- Environment: default Python 3.10 could not install pinned NumPy; used an isolated Python 3.13 environment with unchanged requirements via uv. New test collection needs repo root on `PYTHONPATH` (or `python -m pytest`). Transformers 5.20.2 uses `rope_parameters`; config sets that and exposes the requested theta alias.
+- Next: partner review, then rehearse long-context stage and tool data/evals in Sessions 3–4. Session 2 sample-reading gate still applies.
+- Notes for the other person: proposals are not approvals. Work committed locally only, no push access. Paid-resource status above is inherited and was not checked in this session.
 
 ### 2026-10-31 · Adi · Learning: lesson 4 (batch size lab)
 - Did: lesson 4. `learning/batch_size/compass.py` measures how much gradient directions from 1–256 windows agree (at the random start and after 256 strides); race of 4 batch sizes on the same 2,048 windows. Page "Ask the Crowd" built by `learning/batch_size/build.py`; logs in `learning/batch_size/runs/`.

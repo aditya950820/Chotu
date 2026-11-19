@@ -3,6 +3,18 @@
 Every change to a frozen decision (see CLAUDE.md) gets an entry here first, agreed by both people.
 Newest at the top. Format: date · who · decision · why · what it replaces.
 
+### 2026-11-19 · Adi · PROPOSED: context 8,192
+- Decision: pretrain at 2,048 (RoPE theta 10,000), then use the final ~5–10% of tokens at 8,192 with RoPE theta 500,000 and long FineWeb-Edu documents. Chat tuning drops conversations over 8,192. Export GGUF / Ollama with `num_ctx 8192`.
+- Why: our EDA found 9.4% of docs exceed 2,048 but hold 41.5% of tokens. A short long-context stage avoids full 8k pretraining's estimated ~2–3x slowdown. Parameter count stays 180,925,056; bf16/fp16 KV cache is ~335 MB at 8k (batch 1), separate from weights.
+- Replaces: fixed 2,048-token context; long context excluded from v1.
+- Status: needs partner's agreement. Config and format code are a reviewable proposal, not evidence of trained 8k capability.
+
+### 2026-11-19 · Adi · PROPOSED: tool calling in v1
+- Decision: mix function-calling conversations (e.g. smoltalk `apigen-80k` / Salesforce xLAM-60k) into chat tuning. Use Hermes-style plain-text `<tool_call>` tags, parallel calls, tool responses, and assistant-only loss. Keep the tokenizer unchanged.
+- Why: calling against given schemas is a useful, bounded capability for a small local model. Aim for strong single/parallel calls; expect weak long multi-step agents. Evaluate BFCL simple/multiple/parallel and JSON-validity rate outside lm-evaluation-harness.
+- Replaces: tool use excluded from v1; chat tuning on smol-smoltalk alone.
+- Status: needs partner's agreement. Data mix, licenses and evaluation targets need rehearsal before the H100 run. See `TOOL_CALLING.md`.
+
 ### 2026-10-24 · Adi · PROPOSED: Jarvis Labs as the GPU provider
 - Decision: use Jarvis Labs for rented GPUs (cheap GPU for Sessions 2–4 if needed, H100 SXM for Session 5). See `docs/JARVIS.md`.
 - Why: a machine is already set up there; H100 SXM ₹330/h (about $3.8) is within the plan's $3.25–4 range; pause keeps storage.
