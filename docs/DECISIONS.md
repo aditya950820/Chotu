@@ -3,6 +3,14 @@
 Every change to a frozen decision (see CLAUDE.md) gets an entry here first, agreed by both people.
 Newest at the top. Format: date · who · decision · why · what it replaces.
 
+### 2026-11-22 · pranay · PROPOSED: speed-review follow-ups (needs Adi)
+- Decision 1: pin `liger-kernel==0.8.5` (installed by `run_all.sh`) and make it required for the full model. It is the frozen "fused cross-entropy"; missing it was a main cause of the 5% MFU test.
+- Decision 2: the kill rule "MFU under 10% (about 74k tok/s on an SXM H100)" keeps 74k on an H100 SXM but scales with peak on other cards (A100 ≈ 23k, H100 PCIe ≈ 57k). Without this, a healthy A100 fallback run could be killed at step 50.
+- Decision 3 (open question, nothing changed in code): the agreed provider entry says H100 SXM for Session 5; the latest PROGRESS plan says H200 Spot on a ₹3,600 budget. Agree which one. If H200 Spot: the go/no-go needs about 200–210k tok/s, not 180k (see `docs/SPEED.md`), and a preemption costs up to 100 steps.
+- Why: see the 2026-11-22 review section in `docs/SPEED.md`.
+- Replaces: unpinned/optional Liger; a fixed 74k floor on every card.
+- Status: PROPOSED 2026-11-22 by pranay; Adi to agree or object.
+
 ### 2026-11-19 · Adi + partner · AGREED: reproducible eval/export tooling
 - Decision: pin `lm_eval[hf]==0.4.13`, `sentencepiece==0.2.3`, `cmake==4.4.5`; use revision-pinned Gorilla BFCL Python simple/multiple/parallel data and llama.cpp (commits in `PROGRESS.md`). Use the checkout's bundled gguf Python module. All LM models get identical zero-shot raw prompts, fp32 and 1,024 context (GPT-2 capacity); compare acc/acc_norm, success on strictly greater GPT-2 acc_norm for HellaSwag and ARC-Easy.
 - Why: make step-3 reports/export repeatable, cache baselines separately by model/settings/revision, and keep uploads private and explicitly invoked. BFCL JSON scorer is a re-implementation, not official-harness equivalence; CPU smoke is not a quality result.

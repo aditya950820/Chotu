@@ -14,4 +14,4 @@ datasets==5.2.0  # streaming chat preparation
 lm_eval[hf]==0.4.13  # identical zero-shot settings for target and baselines
 sentencepiece==0.2.3  # llama.cpp conversion; gguf comes from its pinned checkout
 cmake==4.4.5  # CPU llama.cpp generation sanity build
-# Optional on GPU: liger-kernel. llama.cpp / gguf commit pinned in docs/PROGRESS.md.
+# On GPU: liger-kernel==0.8.5 (installed by scripts/run_all.sh; train.py refuses the full model without it). llama.cpp / gguf commit pinned in docs/PROGRESS.md.

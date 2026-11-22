@@ -8,7 +8,7 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - **Current session:** 8k context, tool calling and all logged proposals agreed by both people on 2026-11-19 (Aditya confirmed). All four chain steps CPU-verified; parser hardening is on PR #3. PR #2 → main and PR #3 → PR #2 are still open at the live status check; neither is recorded as merged. Full evaluation, sample-reading gate and actual GPU/pause rehearsal remain.
 - **Who's on what:**
   - Adi: parser fixes and agreed-decision documentation on PR #3; next: merge PR #2 into main, then integrate PR #3 into main, followed by cheap-GPU rehearsal using RUNBOOK.md
-  - Partner: —
+  - Partner (pranay): speed review PR (attention kernel choice, required Liger pin, card-scaled kill floor, sweep upgrades); needs Adi's agreement on the DECISIONS proposal
 - **Blocked on:** nothing
 - **Paid resources running:** Jarvis Labs instance (GPU type: TODO), started 2026-10-24. Pause it when not in use. Status inherited; not checked this session. No paid resources started here.
 
@@ -30,6 +30,12 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - No decision approvals pending: Aditya confirmed both people's agreement on 2026-11-19. Remaining GPU/quality/data checks are gates, not pending design approval.
 
 ## Log
+
+### 2026-11-22 · pranay · Speed review: can we reach 30–35% MFU?
+- Did: reviewed Adi's speed fixes. They're correct: Liger, one sync per step, prefetch and the honest MFU formula. Added speed-only changes: `--attention {auto,flash,cudnn,efficient}` (non-auto forbids the slow math fallback); a startup probe that prints which fast kernels accept our real shapes (`fused_kernels_ok=`); `liger-kernel==0.8.5` pinned and required for the full model; kill-rule tok/s floor scaled by card peak (H100 SXM unchanged at 74k); `wall_tokens_per_second`, `gpu_mem_gb` and `CKPT seconds=` logging; a 5-config sweep (auto/flash/cuDNN, 131k, max-autotune) with saved logs and failure reasons. Recipe unchanged.
+- Result: estimate for H100 SXM is **25–35% MFU (155k–218k tok/s at 2k)**. 30% is realistic, 35% is the top end, and above ~40% is unlikely at 640 hidden. A100-80GB: 40–50% but only 78k–98k tok/s (28–35 h for 10B). Reasoning: `docs/SPEED.md`. Tests: 110 passed offline; the 9 failures/errors all need the HF tokenizer download or `lm_eval`, which this sandbox can't reach. With a stub tokenizer, `test_pretrain`, `test_chain` and the size gate all pass (50 passed). No GPU run.
+- Next: Adi reviews the PROPOSED entry in `DECISIONS.md`. Then run `speed_sweep.py` on the card we agree on. If `fused_kernels_ok=math only`, stop and report.
+- Notes for the other person: the ₹3,600 / H200 Spot go/no-go of 180k tok/s is too low. With the LR test and the slower 8k stage, it needs ~200–210k tok/s. Also, tok/s about halves after `SWITCH` to 8k; that's expected. The agreed provider entry says H100 SXM, so H200 Spot needs your OK.
 
 <!-- Template:
 ### YYYY-MM-DD · Name · Session N
