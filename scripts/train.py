@@ -340,9 +340,9 @@ def run(a):
             raise ValueError("tail cannot supply one long-context batch; use more tokens or smaller batch")
         val = ShardStream(storage, "val")
         paths = stream.paths + val.paths
-    signature = {k: v for k, v in vars(a).items() if k not in {
-        "out", "name", "ckpt_every", "eval_every", "no_compile", "device", "no_auto_stop",
-        "compile_mode", "peak_tflops", "attention", "allow_unfused_ce", "min_tok_s"}}
+    speed_only = {"out", "name", "ckpt_every", "eval_every", "no_compile", "device", "no_auto_stop",
+                  "compile_mode", "peak_tflops", "attention", "allow_unfused_ce", "min_tok_s"}
+    signature = {k: v for k, v in vars(a).items() if k not in speed_only}
     if not chat:
         for key in ("init", "epochs", "max_steps"):
             signature.pop(key)
@@ -358,7 +358,8 @@ def run(a):
     signature = json.loads(json.dumps(signature))
     checkpoints = sorted(out.glob("checkpoint-*.pt"))
     saved = torch.load(checkpoints[-1], map_location="cpu", weights_only=False) if checkpoints else None
-    if saved and saved["signature"] != signature:
+    # Older checkpoints may still hold keys that are now speed-only (e.g. min_tok_s).
+    if saved and {k: v for k, v in saved["signature"].items() if k not in speed_only} != signature:
         raise ValueError("resume command or shard manifest differs from checkpoint")
     if (out / "done.json").exists():
         if not saved:
@@ -400,7 +401,9 @@ def run(a):
             switch_context(model)
         model.load_state_dict(saved["model"])
         optimizer.load_state_dict(saved["optimizer"])
+        floor = rules.min_tok_s  # this run's card/override, not the one the checkpoint ran on
         rules.__dict__.update(saved["rules"])
+        rules.min_tok_s = floor
         torch.set_rng_state(saved["rng"])
         random.setstate(saved["python_rng"])
         np.random.set_state(saved["numpy_rng"])
@@ -547,6 +550,8 @@ def run(a):
         marker.write_text(json.dumps({"step": batches.steps,
                                      "best_val_loss" if chat else "best_val_bpb": best}))
         os.replace(marker, out / "done.json")
+        print(f"WALL tokens_per_second={run_tokens / max(1e-9, time.monotonic() - run_clock):,.0f} "
+              "(includes eval and checkpoint time)", flush=True)
         print(f"DONE steps={batches.steps} best_{'val_loss' if chat else 'val_bpb'}={best}", flush=True)
     except TrainingStop as error:
         print(f"STOP code={error.code}: {error}", flush=True)

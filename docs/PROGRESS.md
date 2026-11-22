@@ -9,7 +9,7 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - **Who's on what:**
   - Adi: parser fixes and agreed-decision documentation on PR #3; next: merge PR #2 into main, then integrate PR #3 into main, followed by cheap-GPU rehearsal using RUNBOOK.md
   - Partner (pranay): speed review PR (attention kernel choice, required Liger pin, card-scaled kill floor, sweep upgrades); needs Adi's agreement on the DECISIONS proposal
-- **Blocked on:** nothing
+- **Blocked on:** speed-review PR #4 merges only after Adi agrees to the 2026-11-22 PROPOSED entry in `DECISIONS.md`
 - **Paid resources running:** Jarvis Labs instance (GPU type: TODO), started 2026-10-24. Pause it when not in use. Status inherited; not checked this session. No paid resources started here.
 
 ## Next up
@@ -27,7 +27,7 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 
 ## Open questions
 
-- No decision approvals pending: Aditya confirmed both people's agreement on 2026-11-19. Remaining GPU/quality/data checks are gates, not pending design approval.
+- Pending approval (Adi): 2026-11-22 PROPOSED entry in `DECISIONS.md` (Liger pin, card-scaled kill floor, H100 SXM vs H200 Spot). Everything logged before it was agreed 2026-11-19.
 
 ## Log
 
