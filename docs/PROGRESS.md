@@ -39,6 +39,11 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Notes for the other person:
 -->
 
+### 2026-11-22 · Adi · One-command H200 launch
+- Did: `scripts/launch.sh` (Mac: copies code + .env + chat data, starts tmux) and `scripts/gpu_up.sh` (H200: parallel installs/shard download/chat copy/llama.cpp prebuild, speed sweep as soon as first shards land, go/no-go ≥180k tok/s else pause, then full chain + CPU rehearsal of later stages on spare cores). Sweep tuned for H200 (65k/131k/262k microbatch, stops at out of memory). `export_gguf.py --prebuild`. Checklist rewritten for H200 only.
+- Result: `pytest -q` 115 passed (lm_eval missing locally); shell syntax checked; go/no-go gate tested with fake reports. Not yet run on a real machine.
+- Next: add JL_API_KEY to Mac .env, rent H200 Spot (PyTorch template), run `launch.sh`. Decide on the LR test with partner.
+
 ### 2026-11-22 · Adi · Chat data prepared on the Mac (free)
 - Did: ran `prepare_chat.py --storage ~/chotu-chat` on the Mac (~15 min). Output `~/chotu-chat/chat/` (1.2 GB) + `reports/chat_report.md`; copy both to the GPU volume so the chain's chat_data stage skips.
 - Result: smol-smoltalk 456,925 kept of 460,341 (3,297 over 8,192 tokens, 119 duplicates) → 452,365 train / 4,560 val, 298M assistant tokens. APIGen 82,920 kept of 83,144 → 82,109 train / 811 val, 130,219 tool calls, all valid. Tool chats ≈ 15% of conversations, 2% of assistant tokens.

@@ -6,7 +6,7 @@
 Each config trains the full 181M model for --steps updates on real shards (outputs go to
 <storage>/runs/sweep-*/, deleted afterwards). Steps 1-5 include compile warm-up and are not
 measured. Nothing here changes the training recipe: batch, LR and data stay frozen;
-only microbatch size and compile mode vary. Writes <storage>/reports/speed-sweep.json.
+only microbatch size (65k/131k/262k, until out of memory) and compile mode vary. Writes <storage>/reports/speed-sweep.json.
 """
 import argparse
 import json
@@ -18,11 +18,9 @@ import sys
 import time
 
 TRAIN = Path(__file__).with_name("train.py")
-CONFIGS = [  # (microbatch tokens, compile mode)
-    (65536, "default"),
-    (131072, "default"),
-    (131072, "max-autotune-no-cudagraphs"),
-]
+# Microbatch sizes tried smallest first; stop at the first that runs out of memory
+# (H200: 65k ≈ 45 GB, 131k ≈ 90 GB of activations). The best size then tries autotuned compile.
+MICRO_SIZES = [65536, 131072, 262144]  # H200 141 GB; 262k usually runs out of memory
 
 
 def run_config(a, micro, mode):
@@ -55,13 +53,21 @@ def main():
     ap.add_argument("--storage", required=True)
     ap.add_argument("--steps", type=int, default=20)
     ap.add_argument("--no-stop", action="store_true", help="do not pause the machine at the end")
+    ap.add_argument("--quick", action="store_true", help="skip the slower autotuned-compile trial")
     a = ap.parse_args()
     results = []
     try:
-        for micro, mode in CONFIGS:
-            results.append(run_config(a, micro, mode))
+        for micro in MICRO_SIZES:
+            results.append(run_config(a, micro, "default"))
             print("SWEEP " + json.dumps(results[-1]), flush=True)
+            if not results[-1]["ok"]:
+                break
         good = [r for r in results if r["ok"]]
+        if good and not a.quick:
+            top = max(good, key=lambda r: r["tokens_per_second"])
+            results.append(run_config(a, top["micro_tokens"], "max-autotune-no-cudagraphs"))
+            print("SWEEP " + json.dumps(results[-1]), flush=True)
+            good = [r for r in results if r["ok"]]
         best = max(good, key=lambda r: r["tokens_per_second"]) if good else None
         report = dict(results=results, best=best,
                       hours_for_10B=round(10e9 / best["tokens_per_second"] / 3600, 1) if best else None)

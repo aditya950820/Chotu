@@ -50,6 +50,15 @@ def llama_source(cache):
     return source
 
 
+def build_llama(source, jobs):
+    """CPU llama-simple build; a second call is a fast no-op, so setup can prebuild it."""
+    build = source / "build"
+    run(["cmake", "-S", source, "-B", build, "-DGGML_CUDA=OFF", "-DLLAMA_CURL=OFF",
+         "-DLLAMA_BUILD_TESTS=OFF", "-DLLAMA_BUILD_SERVER=OFF", "-DLLAMA_BUILD_APP=OFF", "-DCMAKE_BUILD_TYPE=Release"])
+    run(["cmake", "--build", build, "--target", "llama-simple", "-j", jobs])
+    return build
+
+
 def check_metadata(path, source, config):
     sys.path.insert(0, str(source / "gguf-py"))
     gguf = importlib.import_module("gguf")
@@ -87,13 +96,24 @@ def check_metadata(path, source, config):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--model", required=True)
-    ap.add_argument("--out", required=True)
+    ap.add_argument("--model")
+    ap.add_argument("--out")
     ap.add_argument("--cache-dir", help="persistent build cache; default OUT/cache")
     ap.add_argument("--jobs", type=int, default=2)
+    ap.add_argument("--prebuild", action="store_true",
+                    help="only fetch and build llama.cpp into --cache-dir (setup runs this in parallel)")
     a = ap.parse_args()
     if a.jobs < 1:
         ap.error("jobs must be positive")
+    if a.prebuild:
+        if not a.cache_dir:
+            ap.error("--prebuild needs --cache-dir")
+        cache = Path(a.cache_dir).resolve()
+        cache.mkdir(parents=True, exist_ok=True)
+        build_llama(llama_source(cache), a.jobs)
+        return
+    if not a.model or not a.out:
+        ap.error("--model and --out are required")
     model, out = Path(a.model).resolve(), Path(a.out).resolve()
     if not model.is_dir():
         ap.error("model must be a local HF directory")
@@ -110,10 +130,7 @@ def main():
     metadata = check_metadata(temporary, source, config)
     temporary.replace(target)
     (out / "Modelfile").write_text(modelfile(target.name))
-    build = source / "build"
-    run(["cmake", "-S", source, "-B", build, "-DGGML_CUDA=OFF", "-DLLAMA_CURL=OFF",
-         "-DLLAMA_BUILD_TESTS=OFF", "-DLLAMA_BUILD_SERVER=OFF", "-DLLAMA_BUILD_APP=OFF", "-DCMAKE_BUILD_TYPE=Release"])
-    run(["cmake", "--build", build, "--target", "llama-simple", "-j", a.jobs])
+    build = build_llama(source, a.jobs)
     result = run([build / "bin/llama-simple", "-m", target, "-n", "8", "-ngl", "0",
                   "<|im_start|>user\nHello<|im_end|>\n<|im_start|>assistant\n"],
                  capture_output=True, text=True, timeout=180)

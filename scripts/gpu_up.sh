@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+# One command on a fresh Jarvis H200 (PyTorch template). Safe to rerun after a Spot interruption:
+# finished work is skipped and training resumes from its last checkpoint.
+#
+#   bash scripts/gpu_up.sh      # usually started for you by scripts/launch.sh (on the Mac)
+#
+# Order, built so the GPU is never idle waiting on something that could overlap:
+#   t=0   in parallel: packages → llama.cpp prebuild | first shards → rest of shards | chat data
+#   ~3m   speed sweep on the real model as soon as packages + first shards are in (GPU busy)
+#   ~15m  go/no-go on tokens/sec, wait for downloads, then the full chain (it pauses the machine itself)
+#         + a CPU-only rehearsal of the later stages (chat/evals/export) on spare cores, for early warning
+# Needs .env: HF_TOKEN WANDB_API_KEY WANDB_ENTITY WANDB_PROJECT JL_API_KEY JL_MACHINE_ID
+#             CHOTU_STORAGE GIT_NAME GIT_EMAIL   (optional: MIN_TOK_S, NO_STOP=1)
+set -Eeuo pipefail
+cd "$(dirname "$0")/.."
+set -a; source .env; set +a
+for key in HF_TOKEN WANDB_API_KEY JL_API_KEY JL_MACHINE_ID CHOTU_STORAGE GIT_NAME GIT_EMAIL; do
+  [[ -n "${!key:-}" ]] || { echo "missing $key in .env" >&2; exit 2; }
+done
+S=$CHOTU_STORAGE
+LOGS=$S/setup-logs
+mkdir -p "$LOGS" "$S/reports"
+MIN_TOK_S=${MIN_TOK_S:-180000}
+NCPU=$(nproc)
+export TOKENIZERS_PARALLELISM=false PYTHONUNBUFFERED=1
+handed_over=0
+stamp() { echo "[$(date +%H:%M:%S)] $*"; }
+
+pause_machine() {
+  [[ "${NO_STOP:-0}" == 1 ]] && { stamp "NO_STOP=1: machine left running"; return; }
+  python scripts/stop_machine.py || echo 'MACHINE PAUSE FAILED: PAUSE IT MANUALLY NOW' >&2
+}
+# Until the chain takes over, every exit (failure or no-go) pauses the GPU.
+trap 'code=$?; if (( ! handed_over )); then (( code == 0 )) || stamp "SETUP FAILED (exit $code); logs in $LOGS"; pause_machine; fi' EXIT
+
+stamp "checks"
+python - <<'EOF'
+import shutil, sys, os, torch
+assert sys.version_info >= (3, 11), f"need Python >= 3.11, got {sys.version}"
+assert torch.cuda.is_available(), "template torch has no CUDA"
+name = torch.cuda.get_device_name(0)
+print(f"GPU {name} | torch {torch.__version__} | CUDA {torch.version.cuda} | Python {sys.version.split()[0]}")
+if "H200" not in name:
+    print(f"WARNING: tuned for H200, got {name}")
+free = shutil.disk_usage(os.environ["CHOTU_STORAGE"]).free / 2**30
+assert free >= 100, f"need >= 100 GiB free on the volume, have {free:.0f}"
+EOF
+git config --global user.name "$GIT_NAME"     # check_setup refuses non-human identities
+git config --global user.email "$GIT_EMAIL"
+python -m pip install -q huggingface_hub==2.3.0 python-dotenv jarvislabs   # seconds; downloads need it now
+python scripts/stop_machine.py --dry-run >/dev/null || { echo "Jarvis key / machine id wrong" >&2; exit 2; }
+
+# --- parallel setup ----------------------------------------------------------------------------
+stamp "packages + llama.cpp prebuild (background)"
+(
+  req=$(mktemp); constraint=$(mktemp)
+  grep -v '^torch==' requirements.txt > "$req"
+  python -c 'import torch; print("torch==" + torch.__version__)' > "$constraint"   # keep template torch
+  python -m pip install -q -r "$req" -c "$constraint" jarvislabs liger-kernel
+  python -c 'import liger_kernel, transformers; print("liger + transformers OK")'
+  python scripts/export_gguf.py --prebuild --cache-dir "$S/cache" --jobs $(( NCPU / 2 ))
+) > "$LOGS/packages.log" 2>&1 &
+packages=$!
+packages_ok=0
+wait_packages() {
+  (( packages_ok )) && return
+  wait "$packages" || { tail -20 "$LOGS/packages.log"; exit 1; }
+  packages_ok=1
+}
+
+stamp "shards: first train/val shard, then the rest (background)"
+(
+  python - <<'EOF'
+import os
+from pathlib import Path
+from huggingface_hub import snapshot_download
+repo, storage = "magnateadi/chotu-fineweb-edu-10bt-tokens", os.environ["CHOTU_STORAGE"]
+snapshot_download(repo, repo_type="dataset", local_dir=storage, max_workers=8,
+                  allow_patterns=["shards/train_000.bin", "shards/val_000.bin"])
+Path(storage, "setup-logs/first-shards.ready").touch()
+snapshot_download(repo, repo_type="dataset", local_dir=storage, max_workers=16)
+print("all shards downloaded")
+EOF
+) > "$LOGS/shards.log" 2>&1 &
+shards=$!
+
+stamp "chat data (background)"
+(
+  # launch.sh copies the Mac-prepared data (writes .done last). Fall back to preparing it here.
+  for _ in $(seq 1 480); do [[ -f "$S/chat/.done" ]] && break; sleep 5; done
+  if [[ -f "$S/chat/.done" ]]; then echo "chat data present"; else
+    echo "chat data not copied after 40 min; preparing it here"
+    while kill -0 "$packages" 2>/dev/null; do sleep 5; done   # needs the installed packages
+    python scripts/prepare_chat.py --storage "$S"
+  fi
+) > "$LOGS/chat.log" 2>&1 &
+chat=$!
+
+# --- speed sweep as soon as possible -----------------------------------------------------------
+gpu=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -1)
+if [[ -f "$S/reports/speed-sweep.json" && "$(cat "$S/reports/speed-sweep.gpu" 2>/dev/null)" == "$gpu" ]]; then
+  stamp "speed sweep already done on this GPU type; skipping"
+else
+  rm -f "$S/reports/speed-sweep.json"
+  stamp "waiting for packages + first shards"
+  wait_packages
+  until [[ -f "$LOGS/first-shards.ready" ]]; do
+    kill -0 "$shards" 2>/dev/null || { tail -20 "$LOGS/shards.log"; exit 1; }
+    sleep 2
+  done
+  stamp "speed sweep (real 181M model)"
+  python scripts/speed_sweep.py --storage "$S" --no-stop 2>&1 | tee "$LOGS/sweep.log" | grep -E '^(SWEEP|Best|SPEED| *[0-9])' || true
+  [[ -f "$S/reports/speed-sweep.json" ]] || { echo "sweep wrote no report" >&2; exit 1; }
+  echo "$gpu" > "$S/reports/speed-sweep.gpu"
+fi
+python - "$S/reports/speed-sweep.json" "$MIN_TOK_S" <<'EOF'
+import json, sys
+best = json.load(open(sys.argv[1]))["best"]
+if not best or best["tokens_per_second"] < float(sys.argv[2]):
+    sys.exit(f"NO-GO: best {best and round(best['tokens_per_second'])} tok/s < {sys.argv[2]}. Pausing; nothing else spent.")
+print(f"GO: {best['tokens_per_second']:,.0f} tok/s, MFU {best['mfu']:.1%}, micro {best['micro_tokens']}, "
+      f"compile {best['compile_mode']} -> ~{10e9 / best['tokens_per_second'] / 3600:.1f} h for 10B tokens")
+EOF
+
+stamp "waiting for remaining downloads, packages and chat data"
+wait_packages
+wait "$shards" || { tail -20 "$LOGS/shards.log"; exit 1; }
+wait "$chat" || { tail -20 "$LOGS/chat.log"; exit 1; }
+[[ -f "$S/chat/.done" ]] || { echo "chat data missing" >&2; exit 1; }
+
+# --- early warning: CPU rehearsal of every later stage, on spare cores, while the GPU trains ----
+if [[ ! -f "$S/rehearsal/stages/final_report.done.json" ]]; then
+  stamp "CPU rehearsal of chat/evals/export in background -> $LOGS/rehearsal.log"
+  OMP_NUM_THREADS=8 MKL_NUM_THREADS=8 nohup nice -n 19 python scripts/run_chain.py --storage "$S" \
+    --rehearsal --device cpu --shards-subset --skip-upload --no-stop --retries 0 \
+    > "$LOGS/rehearsal.log" 2>&1 &
+fi
+
+stamp "handing over to the full chain (it pauses the machine when done or on failure)"
+handed_over=1
+exec bash scripts/run_all.sh --storage "$S" --build-jobs "$NCPU"

@@ -1,29 +1,32 @@
-# Launch checklist (A100 test → H200 run)
+# Launch checklist: H200, one command
 
-Goal: no paid minute spent waiting on something we could have done for free.
+Goal: the GPU is never idle waiting on something that could have been done earlier or in parallel.
 
-## Before renting anything (free)
-- [ ] Chat data prepared on the Mac: `python scripts/prepare_chat.py --storage ~/chotu-chat`
-      (creates `~/chotu-chat/chat/` + `reports/chat_report.md`; copy only those, not `chat-cache/`).
-- [ ] Jarvis dashboard: no old instance billing; check whether a paused instance can resume on another GPU type.
-- [ ] Keys ready for the machine's `.env`: `HF_TOKEN` (read dataset + write private model), `WANDB_API_KEY`,
-      `WANDB_ENTITY`, `WANDB_PROJECT`, `JL_API_KEY`, `JL_MACHINE_ID` (of the new machine).
-- [ ] Decide with partner: keep or skip the LR test (budget: skipping saves ~₹330 on H200 Spot).
+## Before renting (free)
+- [x] Chat data prepared on the Mac: `~/chotu-chat/` (done 2026-11-22, 1.2 GB).
+- [ ] Mac `.env` has `HF_TOKEN`, `WANDB_API_KEY`, `WANDB_ENTITY`, `WANDB_PROJECT` **and `JL_API_KEY`**.
+- [ ] Jarvis dashboard: no old instance billing.
+- [ ] Both agree: keep or skip the LR test (the chain runs it unless we change the frozen decision).
 
-## A100-40GB test (~1–1.5 h, ~₹100–130)
-Template: Jarvis PyTorch, newest version, Python ≥ 3.11, persistent volume ≥ 100 GB.
-1. `python --version; python -c "import torch; print(torch.__version__, torch.cuda.is_available())"`
-2. Clone, own git name/email, `.env`, `export CHOTU_STORAGE=<volume>/chotu`.
-3. In parallel: `run_all.sh --only-stage preflight --no-stop`, then shards download; `scp` chat data from the Mac.
-4. `bash scripts/run_all.sh --rehearsal --skip-upload --no-stop`: whole chain on the tiny model.
-5. `python scripts/speed_sweep.py --storage $CHOTU_STORAGE --no-stop`: real 181M speed / MFU / data wait.
-6. Kill-and-resume test, then `python scripts/stop_machine.py` and confirm in the dashboard it really paused.
+## Rent
+Jarvis **H200**, Spot, **PyTorch template (newest)**, persistent storage of at least 100 GB. Copy the SSH command and the machine ID.
 
-**Gotcha:** the real (non-rehearsal) chain writes `chain-config.json` with hashes of the code. If we fix code after
-the A100 test, delete that file before the H200 launch. It's safe only because data stages don't depend on the code.
+## Launch (on the Mac)
+```
+bash scripts/launch.sh <user@host> <ssh-port> <jarvis-machine-id>
+```
+It copies the code and `.env` (secrets never printed), starts `scripts/gpu_up.sh` in tmux, and copies the chat data in parallel.
 
-## H200 Spot run
-1. Resume the same volume if Jarvis allows it; otherwise repeat A100 steps 1–3.
-2. Speed check (sweep, ~10 min). Go only if ≥ ~180k tok/s.
-3. `tmux new -s chotu; bash scripts/run_all.sh` (pauses itself at the end or on failure).
-4. Watch steps 50 and 300 against the kill rules; after a Spot interruption, resume and rerun the same command.
+What `gpu_up.sh` does on the H200:
+| Time | GPU | In parallel |
+|---|---|---|
+| 0–3 min | checks (Python ≥ 3.11, CUDA, ≥ 100 GiB free, Jarvis key) | packages, first shards, chat copy |
+| ~3–15 min | **speed sweep** on the real model (65k → 131k → 262k microbatch, then autotuned compile) | rest of shards, llama.cpp prebuild |
+| ~15 min | **go/no-go**: ≥ 180k tok/s (`MIN_TOK_S`), otherwise **pause and stop** | |
+| then | full chain: preflight → … → pretrain → chat → evals → export → upload → **pause** | CPU rehearsal of the later stages on spare cores (early warning) |
+
+## Watch / recover
+- Watch: `ssh -p <port> <user@host> -t tmux attach -t chotu`; logs are in `<storage>/setup-logs/` and `<storage>/logs/`.
+- Early warning: if `setup-logs/rehearsal.log` fails, fix the code **before pretraining ends**. Later stages read the current files.
+- Spot interruption: resume the instance, then rerun the same `launch.sh` command. Done work is skipped, and training resumes from its last checkpoint (≤ 100 steps ≈ 4–5 min lost).
+- If code changes after the first full-chain launch, the chain refuses to resume until `<storage>/chain-config.json` is deleted. Delete it only if the change doesn't affect training maths.
