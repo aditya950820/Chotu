@@ -343,7 +343,8 @@ class Chain:
         if not self.a.rehearsal and "chat" not in extra and sweep.exists():
             best = read_json(sweep).get("best")
             if best:
-                extra = (*extra, "--micro-tokens", best["micro_tokens"], "--compile-mode", best["compile_mode"])
+                extra = (*extra, "--micro-tokens", best["micro_tokens"], "--compile-mode", best["compile_mode"],
+                         "--attention", best.get("attention", "auto"))
         return self.command("train.py", "--model", "tiny" if self.a.rehearsal else "chotu",
             "--storage", self.storage, "--name", name, "--device", self.a.device,
             "--no-auto-stop", *extra)

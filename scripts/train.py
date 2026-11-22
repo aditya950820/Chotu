@@ -37,6 +37,8 @@ PEAK_TFLOPS = [("H100 PCIe", 756), ("H100", 989), ("H200", 989), ("B200", 2250),
                ("A100", 312), ("A30", 165), ("L40S", 362), ("L4", 121),
                ("RTX PRO 6000", 504)]
 LOSS_CHUNK = 8192  # tokens per lm_head chunk when Liger is missing (bounds logits memory)
+H100_MIN_TOK_S = 74_000  # frozen kill rule: "MFU under 10%, about 74k tokens/s on an SXM H100"
+ATTENTION = ("auto", "flash", "cudnn", "efficient")
 
 
 def peak_flops(device, override=None):
@@ -54,6 +56,48 @@ def peak_flops(device, override=None):
 def flops_per_token(params, cfg, seq_len):
     """Training FLOPs per token: 6N for the weights plus attention scores (PaLM appendix B)."""
     return 6 * params + 12 * cfg.num_hidden_layers * cfg.num_attention_heads * cfg.head_dim * seq_len
+
+
+def min_tokens_per_second(peak):
+    """The frozen 74k tok/s floor is for an H100 SXM; other cards get the same fraction of their peak."""
+    return H100_MIN_TOK_S * peak / 989e12
+
+
+def set_attention(name, device):
+    """Pick the SDPA kernel. Anything but 'auto' turns off the slow math kernel, so a silent
+    fallback becomes a loud error. Speed only: the attention maths is the same."""
+    if device.type != "cuda" or name == "auto":
+        return
+    backends = torch.backends.cuda
+    backends.enable_flash_sdp(name == "flash")
+    backends.enable_cudnn_sdp(name == "cudnn")
+    backends.enable_mem_efficient_sdp(name == "efficient")
+    backends.enable_math_sdp(False)
+
+
+def probe_attention(cfg, device, seq_len):
+    """Run one attention call with the model's real shapes through the fast kernels only.
+
+    The model calls SDPA with is_causal=True and enable_gqa=True (10 query / 5 KV heads). If no
+    fused kernel accepts that, PyTorch quietly uses the math kernel, which is many times slower.
+    """
+    if device.type != "cuda":
+        return "cpu"
+    from torch.nn.attention import SDPBackend, sdpa_kernel
+    q = torch.randn(1, cfg.num_attention_heads, seq_len, cfg.head_dim, device=device, dtype=torch.bfloat16)
+    kv = torch.randn(1, cfg.num_key_value_heads, seq_len, cfg.head_dim, device=device, dtype=torch.bfloat16)
+    working = []
+    for backend in (SDPBackend.FLASH_ATTENTION, SDPBackend.CUDNN_ATTENTION, SDPBackend.EFFICIENT_ATTENTION):
+        try:
+            with sdpa_kernel([backend]):
+                F.scaled_dot_product_attention(q, kv, kv, is_causal=True, enable_gqa=True)
+            working.append(backend.name.lower())
+        except RuntimeError:
+            pass
+    if not working:
+        print("WARNING: no fused attention kernel accepts our shapes; SDPA will use the slow math "
+              "kernel. Expect very low MFU.", flush=True)
+    return ",".join(working) or "math only"
 
 
 def prefetch(batches, start, steps, micro_tokens, pin):
@@ -117,7 +161,7 @@ def chat_lr(step, steps, peak, warmup):
 
 
 class KillRules:
-    def __init__(self, min_tok_s=74000):
+    def __init__(self, min_tok_s=H100_MIN_TOK_S):
         self.min_tok_s = min_tok_s
         self.losses, self.speeds = [], []
         self.spike_since = None
@@ -296,9 +340,9 @@ def run(a):
             raise ValueError("tail cannot supply one long-context batch; use more tokens or smaller batch")
         val = ShardStream(storage, "val")
         paths = stream.paths + val.paths
-    signature = {k: v for k, v in vars(a).items() if k not in {
-        "out", "name", "ckpt_every", "eval_every", "no_compile", "device", "no_auto_stop",
-        "compile_mode", "peak_tflops"}}
+    speed_only = {"out", "name", "ckpt_every", "eval_every", "no_compile", "device", "no_auto_stop",
+                  "compile_mode", "peak_tflops", "attention", "allow_unfused_ce", "min_tok_s"}
+    signature = {k: v for k, v in vars(a).items() if k not in speed_only}
     if not chat:
         for key in ("init", "epochs", "max_steps"):
             signature.pop(key)
@@ -314,7 +358,8 @@ def run(a):
     signature = json.loads(json.dumps(signature))
     checkpoints = sorted(out.glob("checkpoint-*.pt"))
     saved = torch.load(checkpoints[-1], map_location="cpu", weights_only=False) if checkpoints else None
-    if saved and saved["signature"] != signature:
+    # Older checkpoints may still hold keys that are now speed-only (e.g. min_tok_s).
+    if saved and {k: v for k, v in saved["signature"].items() if k not in speed_only} != signature:
         raise ValueError("resume command or shard manifest differs from checkpoint")
     if (out / "done.json").exists():
         if not saved:
@@ -347,14 +392,18 @@ def run(a):
     groups = [{"params": [p for n, p in model.named_parameters() if p.ndim >= 2 and "embed_tokens" not in n], "weight_decay": 0.1},
               {"params": [p for n, p in model.named_parameters() if p.ndim < 2 or "embed_tokens" in n], "weight_decay": 0.0}]
     optimizer = torch.optim.AdamW(groups, lr=a.lr, betas=(0.9, 0.95), fused=device.type == "cuda")
-    rules, best, start, stage = KillRules(a.min_tok_s), float("inf"), 0, "chat" if chat else "short"
+    peak = peak_flops(device, a.peak_tflops)
+    rules = KillRules(a.min_tok_s if a.min_tok_s is not None else min_tokens_per_second(peak))
+    best, start, stage = float("inf"), 0, "chat" if chat else "short"
     if saved:
         stage, start, best = saved["stage"], saved["step"], saved["best"]
         if stage == "long":
             switch_context(model)
         model.load_state_dict(saved["model"])
         optimizer.load_state_dict(saved["optimizer"])
+        floor = rules.min_tok_s  # this run's card/override, not the one the checkpoint ran on
         rules.__dict__.update(saved["rules"])
+        rules.min_tok_s = floor
         torch.set_rng_state(saved["rng"])
         random.setstate(saved["python_rng"])
         np.random.set_state(saved["numpy_rng"])
@@ -390,8 +439,12 @@ def run(a):
             from liger_kernel.transformers import LigerFusedLinearCrossEntropyLoss
             fused_ce = LigerFusedLinearCrossEntropyLoss()
         except ImportError:
-            print("WARNING: liger-kernel missing; using slower chunked cross-entropy "
-                  "(frozen decision expects fused CE: pip install liger-kernel)", flush=True)
+            if a.model == "chotu" and not a.allow_unfused_ce:
+                raise RuntimeError("liger-kernel is missing; the frozen recipe uses fused cross-entropy. "
+                                   "pip install liger-kernel==0.8.5 (or pass --allow-unfused-ce)")
+            print("WARNING: liger-kernel missing; using slower chunked cross-entropy", flush=True)
+        if not chat:
+            set_attention(a.attention, device)
 
     def compiled():
         if device.type != "cuda" or a.no_compile:
@@ -399,10 +452,12 @@ def run(a):
         return torch.compile(model.model, mode=None if a.compile_mode == "default" else a.compile_mode)
 
     forward = compiled()
-    peak = peak_flops(device, a.peak_tflops)
     print(f"SPEED device={torch.cuda.get_device_name(device) if device.type == 'cuda' else 'cpu'} "
           f"peak={peak / 1e12:.0f}TFLOPS fused_ce={fused_ce is not None} "
-          f"compile={'off' if forward is model.model else a.compile_mode} micro_tokens={a.micro_tokens}", flush=True)
+          f"compile={'off' if forward is model.model else a.compile_mode} micro_tokens={a.micro_tokens} "
+          f"attention={a.attention if not chat else 'auto'} "
+          f"fused_kernels_ok={probe_attention(model.config, device, FINAL_CONTEXT if chat else PRETRAINING_WINDOW)} "
+          f"min_tok_s={rules.min_tok_s:,.0f}", flush=True)
     stop_requested = False
 
     def request_stop(signum, frame):
@@ -412,7 +467,8 @@ def run(a):
     old_handlers = {sig: signal.signal(sig, request_stop) for sig in (signal.SIGTERM, signal.SIGINT)}
     try:
         model.train()
-        clock = time.monotonic()
+        clock = run_clock = time.monotonic()
+        run_tokens = 0
         for step, microbatches, data_wait in prefetch(batches, start, batches.steps, a.micro_tokens,
                                                       pin=device.type == "cuda"):
             if not chat and step >= batches.switch_step and stage != "long":
@@ -454,12 +510,16 @@ def run(a):
             now = time.monotonic()
             step_seconds, clock = now - clock, now
             speed = token_count / step_seconds
+            run_tokens += token_count
             if a.kill_rules and not chat:
                 rules.check(step + 1, loss_sum, speed)
             record = dict(step=step + 1, loss=loss_sum, lr=lr, grad_norm=grad_norm,
                           tokens_per_second=speed,
                           mfu=flops_per_token(params, model.config, length) * speed / peak,
                           data_wait_frac=data_wait / step_seconds,
+                          # Includes eval/checkpoint time: what the bill actually sees.
+                          wall_tokens_per_second=run_tokens / (now - run_clock),
+                          gpu_mem_gb=torch.cuda.max_memory_allocated(device) / 2**30 if device.type == "cuda" else None,
                           seq_len=length, theta=model.config.rope_theta, val_bpb=None, val_loss=None)
             epoch_end = chat and step + 1 in batches.epoch_ends
             if (step + 1) % a.eval_every == 0 or step + 1 == batches.steps or epoch_end:
@@ -478,7 +538,9 @@ def run(a):
             if wandb_run:
                 wandb_call(wandb_run.log, data=record, step=step + 1)
             if (step + 1) % a.ckpt_every == 0 or step + 1 == batches.steps or stop_requested:
+                saving = time.monotonic()
                 save_checkpoint(out, model, optimizer, step + 1, stage, rules, best, signature)
+                print(f"CKPT step={step + 1} seconds={time.monotonic() - saving:.1f}", flush=True)
             if stop_requested:
                 raise TrainingStop(24, "signal received; checkpoint saved")
             clock = time.monotonic()  # exclude logging/eval/checkpoint time from speed
@@ -488,6 +550,8 @@ def run(a):
         marker.write_text(json.dumps({"step": batches.steps,
                                      "best_val_loss" if chat else "best_val_bpb": best}))
         os.replace(marker, out / "done.json")
+        print(f"WALL tokens_per_second={run_tokens / max(1e-9, time.monotonic() - run_clock):,.0f} "
+              "(includes eval and checkpoint time)", flush=True)
         print(f"DONE steps={batches.steps} best_{'val_loss' if chat else 'val_bpb'}={best}", flush=True)
     except TrainingStop as error:
         print(f"STOP code={error.code}: {error}", flush=True)
@@ -527,10 +591,15 @@ def parser():
     ap.add_argument("--compile-mode", default="default",
                     choices=["default", "max-autotune-no-cudagraphs", "max-autotune"],
                     help="speed only; try max-autotune-no-cudagraphs in the speed sweep")
+    ap.add_argument("--attention", choices=ATTENTION, default="auto",
+                    help="pretraining SDPA kernel, speed only; non-auto forbids the slow math fallback")
+    ap.add_argument("--allow-unfused-ce", action="store_true",
+                    help="let the full model train without liger-kernel (slow; not the frozen recipe)")
     ap.add_argument("--peak-tflops", type=float, help="override the card's dense bf16 peak for MFU")
     ap.add_argument("--no-auto-stop", action="store_true", help="orchestrator owns machine shutdown")
     ap.add_argument("--kill-rules", action="store_true")
-    ap.add_argument("--min-tok-s", type=float, default=74000)
+    ap.add_argument("--min-tok-s", type=float,
+                    help="kill-rule floor; default 74k on an H100 SXM, scaled by peak on other cards")
     ap.add_argument("--device", choices=["cpu", "cuda"])
     return ap
 

@@ -234,3 +234,31 @@ def test_prefetch_keeps_order_and_reports_errors():
             assert wait >= 0 and int(micro[0][0][0, 0]) == step
             seen.append(step)
     assert seen == [1, 2]
+
+
+def test_kill_rule_floor_scales_with_the_card():
+    # Frozen rule: 10% MFU is about 74k tok/s on an H100 SXM; an A100 gets the same fraction of its peak.
+    assert train.min_tokens_per_second(989e12) == 74_000
+    assert round(train.min_tokens_per_second(312e12)) == 23_345
+    assert train.parser().parse_args(["--stage", "pretrain", "--storage", "x"]).min_tok_s is None
+
+
+def test_attention_choice_is_speed_only_and_cpu_safe():
+    cpu = torch.device("cpu")
+    before = torch.backends.cuda.math_sdp_enabled()
+    train.set_attention("flash", cpu)  # never touches global kernel flags off-GPU
+    assert torch.backends.cuda.math_sdp_enabled() == before
+    assert train.probe_attention(chotu_config(), cpu, 2048) == "cpu"
+    args = train.parser().parse_args(["--stage", "pretrain", "--storage", "x", "--attention", "cudnn"])
+    assert args.attention == "cudnn"
+
+
+def test_sweep_reports_why_a_config_failed():
+    spec = importlib.util.spec_from_file_location(
+        "speed_sweep", Path(__file__).resolve().parents[1] / "scripts/speed_sweep.py")
+    sweep = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(sweep)
+    log = "SPEED device=x\nstep 1\ntorch.OutOfMemoryError: CUDA out of memory. Tried to allocate 2 GiB\n"
+    assert "out of memory" in sweep.failure_reason(log)
+    assert sweep.failure_reason("only line") == "only line"
+    assert {attention for _, _, attention in sweep.CONFIGS} >= {"auto", "flash", "cudnn"}

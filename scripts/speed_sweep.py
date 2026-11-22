@@ -3,10 +3,11 @@
     python scripts/speed_sweep.py --storage /home/jl/chotu            # sweep, then pause
     python scripts/speed_sweep.py --storage ... --no-stop             # keep the machine on
 
+Configs vary microbatch size, compile mode and attention kernel (flash / cuDNN).
 Each config trains the full 181M model for --steps updates on real shards (outputs go to
 <storage>/runs/sweep-*/, deleted afterwards). Steps 1-5 include compile warm-up and are not
 measured. Nothing here changes the training recipe: batch, LR and data stay frozen;
-only microbatch size and compile mode vary. Writes <storage>/reports/speed-sweep.json.
+only speed settings vary. Writes <storage>/reports/speed-sweep.json.
 """
 import argparse
 import json
@@ -18,35 +19,51 @@ import sys
 import time
 
 TRAIN = Path(__file__).with_name("train.py")
-CONFIGS = [  # (microbatch tokens, compile mode)
-    (65536, "default"),
-    (131072, "default"),
-    (131072, "max-autotune-no-cudagraphs"),
+CONFIGS = [  # (microbatch tokens, compile mode, attention kernel)
+    (65536, "default", "auto"),
+    (65536, "default", "flash"),
+    (65536, "default", "cudnn"),
+    (131072, "default", "flash"),
+    (65536, "max-autotune-no-cudagraphs", "flash"),
 ]
 
 
-def run_config(a, micro, mode):
-    name = f"sweep-{micro}-{mode}"
+def failure_reason(log):
+    """Last error-looking line of the child's output, so a failure is not just "failed"."""
+    lines = [line for line in log.splitlines() if "Error" in line or "error" in line or "STOP" in line]
+    return (lines[-1] if lines else (log.splitlines() or ["no output"])[-1])[-300:]
+
+
+def run_config(a, micro, mode, attention):
+    name = f"sweep-{micro}-{mode}-{attention}"
     out = Path(a.storage) / "runs" / name
     shutil.rmtree(out, ignore_errors=True)
     command = [sys.executable, str(TRAIN), "--stage", "pretrain", "--storage", a.storage, "--name", name,
                "--lr", "0.003", "--total-tokens", str(a.steps * 524288), "--batch-tokens", "524288",
-               "--micro-tokens", str(micro), "--compile-mode", mode, "--long-frac", "0",
+               "--micro-tokens", str(micro), "--compile-mode", mode, "--attention", attention, "--long-frac", "0",
                "--warmup-steps", "5", "--ckpt-every", "100000", "--eval-every", "100000",
                "--val-tokens", "8192", "--no-auto-stop"]
     started = time.monotonic()
-    code = subprocess.run(command).returncode
+    log_path = Path(a.storage) / "reports" / f"{name}.log"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    with log_path.open("w") as log:  # keep the child's output for reading afterwards
+        child = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        for line in child.stdout:
+            print(line, end="", flush=True)
+            log.write(line)
+        code = child.wait()
     rows = [json.loads(line) for line in (out / "metrics.jsonl").read_text().splitlines()] \
         if (out / "metrics.jsonl").exists() else []
     measured = [r for r in rows if r["step"] > 5]
     shutil.rmtree(out, ignore_errors=True)  # a 2 GB checkpoint per config is not worth keeping
     if code or not measured:
-        return dict(micro_tokens=micro, compile_mode=mode, ok=False, exit=code,
-                    note="failed (out of memory is the usual reason at larger microbatches)")
-    return dict(micro_tokens=micro, compile_mode=mode, ok=True,
+        return dict(micro_tokens=micro, compile_mode=mode, attention=attention, ok=False, exit=code,
+                    reason=failure_reason(log_path.read_text()), log=str(log_path))
+    return dict(micro_tokens=micro, compile_mode=mode, attention=attention, ok=True,
                 tokens_per_second=statistics.median(r["tokens_per_second"] for r in measured),
                 mfu=statistics.median(r["mfu"] for r in measured),
                 data_wait_frac=statistics.median(r.get("data_wait_frac", 0) for r in measured),
+                gpu_mem_gb=max((r.get("gpu_mem_gb") or 0) for r in measured),
                 final_loss=measured[-1]["loss"], wall_seconds=round(time.monotonic() - started))
 
 
@@ -58,8 +75,8 @@ def main():
     a = ap.parse_args()
     results = []
     try:
-        for micro, mode in CONFIGS:
-            results.append(run_config(a, micro, mode))
+        for micro, mode, attention in CONFIGS:
+            results.append(run_config(a, micro, mode, attention))
             print("SWEEP " + json.dumps(results[-1]), flush=True)
         good = [r for r in results if r["ok"]]
         best = max(good, key=lambda r: r["tokens_per_second"]) if good else None
@@ -68,15 +85,17 @@ def main():
         path = Path(a.storage) / "reports" / "speed-sweep.json"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(report, indent=2))
-        print(f"\n{'micro':>7} {'compile':<28} {'tok/s':>9} {'MFU':>6} {'data wait':>9}")
+        print(f"\n{'micro':>7} {'compile':<28} {'attn':<6} {'tok/s':>9} {'MFU':>6} {'data wait':>9} {'GB':>5}")
         for r in results:
             if r["ok"]:
-                print(f"{r['micro_tokens']:>7} {r['compile_mode']:<28} {r['tokens_per_second']:>9,.0f} "
-                      f"{r['mfu']:>6.1%} {r['data_wait_frac']:>9.1%}")
+                print(f"{r['micro_tokens']:>7} {r['compile_mode']:<28} {r['attention']:<6} "
+                      f"{r['tokens_per_second']:>9,.0f} {r['mfu']:>6.1%} {r['data_wait_frac']:>9.1%} "
+                      f"{r['gpu_mem_gb']:>5.1f}")
             else:
-                print(f"{r['micro_tokens']:>7} {r['compile_mode']:<28} {'failed':>9}")
+                print(f"{r['micro_tokens']:>7} {r['compile_mode']:<28} {r['attention']:<6} failed: {r['reason']}")
         if best:
-            print(f"\nBest: micro {best['micro_tokens']}, compile {best['compile_mode']} -> "
+            print(f"\nBest: micro {best['micro_tokens']}, compile {best['compile_mode']}, "
+                  f"attention {best['attention']} -> "
                   f"10B tokens in ~{report['hours_for_10B']} h. Report: {path}")
     finally:
         if not a.no_stop:

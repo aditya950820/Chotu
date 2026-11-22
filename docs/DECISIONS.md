@@ -3,6 +3,14 @@
 Every change to a frozen decision (see CLAUDE.md) gets an entry here first, agreed by both people.
 Newest at the top. Format: date · who · decision · why · what it replaces.
 
+### 2026-11-22 · pranay · PROPOSED: speed-review follow-ups (needs Adi)
+- Decision 1: pin `liger-kernel==0.8.5` (installed by `run_all.sh`) and make it required for the full model. It is the frozen "fused cross-entropy"; missing it was a main cause of the 5% MFU test.
+- Decision 2: the kill rule "MFU under 10% (about 74k tok/s on an SXM H100)" keeps 74k on an H100 SXM but scales with peak on other cards (A100 ≈ 23k, H100 PCIe ≈ 57k). Without this, a healthy A100 fallback run could be killed at step 50.
+- Decision 3: pranay chose **H200 Spot on Jarvis Labs** (₹217/h, ₹3,600 budget) for the main run on 2026-11-22. This replaces the agreed H100 SXM entry below. Go/no-go is about 200–210k tok/s at 2k context, not 180k (see `docs/SPEED.md`). Keep `--ckpt-every 100`, so a preemption costs at most 100 steps; auto-resume handles the restart. The kill-rule floor stays 74k tok/s, because the H200 has the same compute peak as the H100 SXM.
+- Why: see the 2026-11-22 review section in `docs/SPEED.md`.
+- Replaces: unpinned/optional Liger; a fixed 74k floor on every card; H100 SXM (on-demand) as the Session 5 GPU.
+- Status: PROPOSED 2026-11-22 by pranay, who has chosen H200 Spot; Adi to agree or object to all three.
+
 ### 2026-11-19 · Adi + partner · AGREED: reproducible eval/export tooling
 - Decision: pin `lm_eval[hf]==0.4.13`, `sentencepiece==0.2.3`, `cmake==4.4.5`; use revision-pinned Gorilla BFCL Python simple/multiple/parallel data and llama.cpp (commits in `PROGRESS.md`). Use the checkout's bundled gguf Python module. All LM models get identical zero-shot raw prompts, fp32 and 1,024 context (GPT-2 capacity); compare acc/acc_norm, success on strictly greater GPT-2 acc_norm for HellaSwag and ARC-Easy.
 - Why: make step-3 reports/export repeatable, cache baselines separately by model/settings/revision, and keep uploads private and explicitly invoked. BFCL JSON scorer is a re-implementation, not official-harness equivalence; CPU smoke is not a quality result.
