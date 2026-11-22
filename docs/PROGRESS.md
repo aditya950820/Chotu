@@ -39,6 +39,11 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Notes for the other person:
 -->
 
+### 2026-11-22 · Adi · Chat data prepared on the Mac (free)
+- Did: ran `prepare_chat.py --storage ~/chotu-chat` on the Mac (~15 min). Output `~/chotu-chat/chat/` (1.2 GB) + `reports/chat_report.md`; copy both to the GPU volume so the chain's chat_data stage skips.
+- Result: smol-smoltalk 456,925 kept of 460,341 (3,297 over 8,192 tokens, 119 duplicates) → 452,365 train / 4,560 val, 298M assistant tokens. APIGen 82,920 kept of 83,144 → 82,109 train / 811 val, 130,219 tool calls, all valid. Tool chats ≈ 15% of conversations, 2% of assistant tokens.
+- Next: A100 test per `docs/LAUNCH_CHECKLIST.md`.
+
 ### 2026-11-22 · Adi · Speed fixes for the 5% MFU H100 test
 - Did: fixed six speed problems in `train.py` (main one: liger-kernel was never installed on the GPU, so the loss ran as 256 tiny checkpointed chunks per microbatch; also per-microbatch GPU syncs, no data prefetch, MFU formula missing attention). Added `scripts/speed_sweep.py` (15-min GPU check, pauses machine) and `docs/SPEED.md`. Chain auto-uses the sweep's fastest settings. Recipe unchanged.
 - Result: `pytest -q` 115 passed, size gate OK; 1 local-only failure (lm_eval not installed on the Mac). Real GPU speed not measured yet.
