@@ -210,3 +210,27 @@ def test_exact_resume_and_stage_switch(shards, monkeypatch, interruption):
             train.run(train.parser().parse_args(args + ["--name", "resumed", "--lr", "0.01"]))
     finally:
         torch.set_num_threads(old_threads)
+
+
+def test_mfu_counts_attention_and_card_peak():
+    cfg = chotu_config()
+    per_token = train.flops_per_token(180_925_056, cfg, 2048)
+    assert per_token == 6 * 180_925_056 + 12 * 32 * 10 * 64 * 2048
+    assert 1.4 < per_token / (6 * 180_925_056) < 1.5  # attention adds ~46% at 2k context
+    assert train.peak_flops(torch.device("cpu")) == 989e12
+    assert train.peak_flops(torch.device("cpu"), 165) == 165e12
+
+
+def test_prefetch_keeps_order_and_reports_errors():
+    class Fake:
+        def batch(self, step, micro):
+            if step == 3:
+                raise RuntimeError("bad shard")
+            yield torch.full((1, 2), step), torch.full((1, 2), step)
+
+    seen = []
+    with pytest.raises(RuntimeError, match="bad shard"):
+        for step, micro, wait in train.prefetch(Fake(), 1, 6, 2, pin=False):
+            assert wait >= 0 and int(micro[0][0][0, 0]) == step
+            seen.append(step)
+    assert seen == [1, 2]

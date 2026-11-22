@@ -337,6 +337,13 @@ class Chain:
         return dict(outputs=[str(self.storage / "chat/.done"), str(self.reports / "chat_report.md")])
 
     def train(self, name, *extra):
+        # Pretraining uses the fastest speed-only settings found by scripts/speed_sweep.py,
+        # if it was run on this storage. Later flags win in argparse, so this overrides.
+        sweep = self.storage / "reports/speed-sweep.json"
+        if not self.a.rehearsal and "chat" not in extra and sweep.exists():
+            best = read_json(sweep).get("best")
+            if best:
+                extra = (*extra, "--micro-tokens", best["micro_tokens"], "--compile-mode", best["compile_mode"])
         return self.command("train.py", "--model", "tiny" if self.a.rehearsal else "chotu",
             "--storage", self.storage, "--name", name, "--device", self.a.device,
             "--no-auto-stop", *extra)

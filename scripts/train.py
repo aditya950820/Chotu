@@ -5,6 +5,7 @@ import json
 import math
 import os
 from pathlib import Path
+import queue
 import random
 import signal
 import shutil
@@ -13,6 +14,7 @@ import sys
 import time
 import traceback
 import tempfile
+import threading
 
 import numpy as np
 import torch
@@ -27,6 +29,69 @@ from chotu.config import (EXPECTED_PARAMS, FINAL_CONTEXT, PRETRAINING_WINDOW,
                           TOKENIZER_ID, chotu_config, long_context_config, tiny_config)
 from chotu.data import PretrainBatches, ShardStream
 from chotu.chat_data import ChatBatches, ChatExamples
+
+
+# Dense bf16 peak TFLOPS (no sparsity), matched by substring of the CUDA device name.
+# Unsure about a card? Pass --peak-tflops from its datasheet.
+PEAK_TFLOPS = [("H100 PCIe", 756), ("H100", 989), ("H200", 989), ("B200", 2250),
+               ("A100", 312), ("A30", 165), ("L40S", 362), ("L4", 121),
+               ("RTX PRO 6000", 504)]
+LOSS_CHUNK = 8192  # tokens per lm_head chunk when Liger is missing (bounds logits memory)
+
+
+def peak_flops(device, override=None):
+    """Card's dense bf16 peak; CPU/unknown cards report H100-equivalent MFU."""
+    if override:
+        return override * 1e12
+    if device.type == "cuda":
+        name = torch.cuda.get_device_name(device)
+        for key, tflops in PEAK_TFLOPS:
+            if key in name:
+                return tflops * 1e12
+    return 989e12
+
+
+def flops_per_token(params, cfg, seq_len):
+    """Training FLOPs per token: 6N for the weights plus attention scores (PaLM appendix B)."""
+    return 6 * params + 12 * cfg.num_hidden_layers * cfg.num_attention_heads * cfg.head_dim * seq_len
+
+
+def prefetch(batches, start, steps, micro_tokens, pin):
+    """Read the next steps' batches on a background thread while the GPU trains.
+
+    Yields (step, microbatches, seconds the GPU waited for data). Order is unchanged,
+    so resume and determinism behave exactly as before.
+    """
+    ready = queue.Queue(maxsize=2)
+    finished = threading.Event()
+
+    def work():
+        try:
+            for step in range(start, steps):
+                micro = [tuple(t.pin_memory() if pin else t for t in batch)
+                         for batch in batches.batch(step, micro_tokens)]
+                while not finished.is_set():
+                    try:
+                        ready.put((step, micro), timeout=0.5)
+                        break
+                    except queue.Full:
+                        pass
+                if finished.is_set():
+                    return
+        except BaseException as error:  # hand reader errors to the training thread
+            ready.put(error)
+
+    thread = threading.Thread(target=work, daemon=True)
+    thread.start()
+    try:
+        for _ in range(start, steps):
+            clock = time.monotonic()
+            item = ready.get()
+            if isinstance(item, BaseException):
+                raise item
+            yield item[0], item[1], time.monotonic() - clock
+    finally:
+        finished.set()
 
 
 class TrainingStop(Exception):
@@ -122,9 +187,11 @@ def validate(model, stream, tokenizer, device, tokens=1_048_576, batch_tokens=81
         x, y = stream.batch(offsets[start:start + batch_size], length)
         with torch.autocast("cuda", dtype=torch.bfloat16) if device.type == "cuda" else nullcontext():
             hidden = model.model(x.to(device), use_cache=False).last_hidden_state
-            for chunk, target in zip(hidden.reshape(-1, hidden.shape[-1]).split(256),
-                                     y.to(device).reshape(-1).split(256)):
-                nats += F.cross_entropy(model.lm_head(chunk).float(), target, reduction="sum").item()
+            total = torch.zeros((), device=device)
+            for chunk, target in zip(hidden.reshape(-1, hidden.shape[-1]).split(LOSS_CHUNK),
+                                     y.to(device).reshape(-1).split(LOSS_CHUNK)):
+                total += F.cross_entropy(model.lm_head(chunk).float(), target, reduction="sum")
+            nats += total.item()
         rows.extend(y.tolist())
     model.train()
     return bits_per_byte(nats, rows, tokenizer)
@@ -139,7 +206,7 @@ def causal_loss(model, hidden, targets, fused_ce=None):
         return F.cross_entropy(model.lm_head(chunk).float(), target, reduction="sum")
 
     return sum(checkpoint(chunk_loss, chunk, target, use_reentrant=False)
-               for chunk, target in zip(flat.split(256), targets.split(256))) / (targets != -100).sum()
+               for chunk, target in zip(flat.split(LOSS_CHUNK), targets.split(LOSS_CHUNK))) / (targets != -100).sum()
 
 
 @torch.no_grad()
@@ -230,7 +297,8 @@ def run(a):
         val = ShardStream(storage, "val")
         paths = stream.paths + val.paths
     signature = {k: v for k, v in vars(a).items() if k not in {
-        "out", "name", "ckpt_every", "eval_every", "no_compile", "device", "no_auto_stop"}}
+        "out", "name", "ckpt_every", "eval_every", "no_compile", "device", "no_auto_stop",
+        "compile_mode", "peak_tflops"}}
     if not chat:
         for key in ("init", "epochs", "max_steps"):
             signature.pop(key)
@@ -316,12 +384,25 @@ def run(a):
             print(f"W&B unavailable: {type(error).__name__}", flush=True)
     fused_ce = None
     if device.type == "cuda":
+        torch.backends.cuda.matmul.allow_tf32 = True  # any leftover fp32 matmuls use tensor cores
+        torch.backends.cudnn.allow_tf32 = True
         try:
             from liger_kernel.transformers import LigerFusedLinearCrossEntropyLoss
             fused_ce = LigerFusedLinearCrossEntropyLoss()
         except ImportError:
-            pass
-    forward = torch.compile(model.model) if device.type == "cuda" and not a.no_compile else model.model
+            print("WARNING: liger-kernel missing; using slower chunked cross-entropy "
+                  "(frozen decision expects fused CE: pip install liger-kernel)", flush=True)
+
+    def compiled():
+        if device.type != "cuda" or a.no_compile:
+            return model.model
+        return torch.compile(model.model, mode=None if a.compile_mode == "default" else a.compile_mode)
+
+    forward = compiled()
+    peak = peak_flops(device, a.peak_tflops)
+    print(f"SPEED device={torch.cuda.get_device_name(device) if device.type == 'cuda' else 'cpu'} "
+          f"peak={peak / 1e12:.0f}TFLOPS fused_ce={fused_ce is not None} "
+          f"compile={'off' if forward is model.model else a.compile_mode} micro_tokens={a.micro_tokens}", flush=True)
     stop_requested = False
 
     def request_stop(signum, frame):
@@ -331,48 +412,54 @@ def run(a):
     old_handlers = {sig: signal.signal(sig, request_stop) for sig in (signal.SIGTERM, signal.SIGINT)}
     try:
         model.train()
-        for step in range(start, batches.steps):
+        clock = time.monotonic()
+        for step, microbatches, data_wait in prefetch(batches, start, batches.steps, a.micro_tokens,
+                                                      pin=device.type == "cuda"):
             if not chat and step >= batches.switch_step and stage != "long":
                 switch_context(model)
                 stage = "long"
-                forward = torch.compile(model.model) if device.type == "cuda" and not a.no_compile else model.model
+                forward = compiled()
                 print(f"SWITCH step={step} seq_len=8192 theta={model.config.rope_theta}", flush=True)
             length = FINAL_CONTEXT if stage in {"long", "chat"} else PRETRAINING_WINDOW
             lr = chat_lr(step, batches.steps, a.lr, a.warmup_steps) if chat else wsd_lr(step, batches.steps, a.lr, a.warmup_steps, a.decay_frac)
             for group in optimizer.param_groups:
                 group["lr"] = lr
             optimizer.zero_grad(set_to_none=True)
-            if device.type == "cuda":
-                torch.cuda.synchronize()
-            clock, loss_sum = time.monotonic(), 0.0
-            microbatches = list(batches.batch(step, a.micro_tokens))
-            total_targets = sum((batch[1] != -100).sum().item() for batch in microbatches)
+            # Target counts come from CPU tensors, so nothing here waits for the GPU.
+            total_targets = sum(int((batch[1] != -100).sum()) for batch in microbatches)
             token_count = sum(batch[0].numel() for batch in microbatches)
+            loss_sum = torch.zeros((), device=device)
             for batch in microbatches:
                 x, y = batch[:2]
-                attention = batch[2].to(device) if chat else None
+                weight = int((y != -100).sum()) / total_targets
+                attention = batch[2].to(device, non_blocking=True) if chat else None
                 if chat:
                     length = x.shape[1]
-                x, y = x.to(device), y.to(device)
+                x, y = x.to(device, non_blocking=True), y.to(device, non_blocking=True)
                 with torch.autocast("cuda", dtype=torch.bfloat16) if device.type == "cuda" else nullcontext():
                     hidden = forward(x, attention_mask=attention, use_cache=False).last_hidden_state
                     loss = causal_loss(model, hidden, y, fused_ce)
-                    if not torch.isfinite(loss):
-                        raise TrainingStop(20 if a.kill_rules else 1, "non-finite loss")
-                    weight = (y != -100).sum().item() / total_targets
-                    (loss * weight).backward()
-                    loss_sum += loss.item() * weight
-            grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0).item()
+                (loss * weight).backward()
+                loss_sum += loss.detach() * weight
+            grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            # The step's single GPU sync: read loss and gradient norm together.
+            loss_sum, grad_norm = (float(v) for v in torch.stack([loss_sum, grad_norm.float()]).tolist())
+            if not math.isfinite(loss_sum):
+                raise TrainingStop(20 if a.kill_rules else 1, "non-finite loss")
             if not math.isfinite(grad_norm):
                 raise TrainingStop(20 if a.kill_rules else 1, "non-finite gradient")
             optimizer.step()
             if device.type == "cuda":
                 torch.cuda.synchronize()
-            speed = token_count / (time.monotonic() - clock)
+            now = time.monotonic()
+            step_seconds, clock = now - clock, now
+            speed = token_count / step_seconds
             if a.kill_rules and not chat:
                 rules.check(step + 1, loss_sum, speed)
             record = dict(step=step + 1, loss=loss_sum, lr=lr, grad_norm=grad_norm,
-                          tokens_per_second=speed, mfu=6 * params * speed / 989e12,
+                          tokens_per_second=speed,
+                          mfu=flops_per_token(params, model.config, length) * speed / peak,
+                          data_wait_frac=data_wait / step_seconds,
                           seq_len=length, theta=model.config.rope_theta, val_bpb=None, val_loss=None)
             epoch_end = chat and step + 1 in batches.epoch_ends
             if (step + 1) % a.eval_every == 0 or step + 1 == batches.steps or epoch_end:
@@ -394,6 +481,7 @@ def run(a):
                 save_checkpoint(out, model, optimizer, step + 1, stage, rules, best, signature)
             if stop_requested:
                 raise TrainingStop(24, "signal received; checkpoint saved")
+            clock = time.monotonic()  # exclude logging/eval/checkpoint time from speed
         if not chat:
             export_model(out, model, tokenizer, "final")
         marker = out / "done.tmp"
@@ -436,6 +524,10 @@ def parser():
     ap.add_argument("--val-tokens", type=int, default=1_048_576)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--no-compile", action="store_true")
+    ap.add_argument("--compile-mode", default="default",
+                    choices=["default", "max-autotune-no-cudagraphs", "max-autotune"],
+                    help="speed only; try max-autotune-no-cudagraphs in the speed sweep")
+    ap.add_argument("--peak-tflops", type=float, help="override the card's dense bf16 peak for MFU")
     ap.add_argument("--no-auto-stop", action="store_true", help="orchestrator owns machine shutdown")
     ap.add_argument("--kill-rules", action="store_true")
     ap.add_argument("--min-tok-s", type=float, default=74000)

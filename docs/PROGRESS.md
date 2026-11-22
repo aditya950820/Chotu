@@ -39,6 +39,12 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Notes for the other person:
 -->
 
+### 2026-11-22 · Adi · Speed fixes for the 5% MFU H100 test
+- Did: fixed six speed problems in `train.py` (main one: liger-kernel was never installed on the GPU, so the loss ran as 256 tiny checkpointed chunks per microbatch; also per-microbatch GPU syncs, no data prefetch, MFU formula missing attention). Added `scripts/speed_sweep.py` (15-min GPU check, pauses machine) and `docs/SPEED.md`. Chain auto-uses the sweep's fastest settings. Recipe unchanged.
+- Result: `pytest -q` 115 passed, size gate OK; 1 local-only failure (lm_eval not installed on the Mac). Real GPU speed not measured yet.
+- Next: rent H200 Spot ~15 min, run `speed_sweep.py`; go for full 10B on the ₹3,600 budget only if ≥ ~180k tok/s.
+- Notes for the other person: MFU numbers now count attention and use the card's own peak, so they are not comparable to older logs (old 5% ≈ 7% new). PROGRESS lists a Jarvis instance started 2026-10-24 as possibly running; please check it isn't billing.
+
 ### 2026-11-19 · Adi · Decisions agreed and tool parser hardened
 - Agreement: Aditya confirmed partner agreement on 2026-11-19. All seven formerly proposed decision entries are now AGREED, including 8k context, tool calling, SFT/dependency pins, eval/export pins and provider/Colab choices. Updated frozen values and current guides; historical log entries retain their original proposal status as history.
 - Parser: decode JSON before checking closing tags, preserving literal opening/closing tags inside argument strings. Reject nested NaN/Infinity/-Infinity on parsing and rendering, including tools JSON. Catch excessive-nesting RecursionError and retain later valid calls. Tool scoring uses the same JSON-aware boundaries instead of a delimiter regex; APIGen list-in-one-tag normalization remains intact.

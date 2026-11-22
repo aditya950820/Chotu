@@ -30,6 +30,7 @@ req=$(mktemp)
 constraint=$(mktemp)
 python -c 'from pathlib import Path; print("\n".join(x for x in Path("requirements.txt").read_text().splitlines() if not x.startswith("torch==")))' > "$req"
 python -c 'import torch; print("torch==" + torch.__version__)' > "$constraint"
-python -m pip install -r "$req" -c "$constraint" jarvislabs
+# liger-kernel = the frozen "fused cross-entropy"; without it the loss path is several times slower.
+python -m pip install -r "$req" -c "$constraint" jarvislabs liger-kernel
 owned=1
 python scripts/run_chain.py "$@"
