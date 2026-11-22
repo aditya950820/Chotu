@@ -27,7 +27,7 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 
 ## Open questions
 
-- Pending approval (Adi): 2026-11-22 PROPOSED entry in `DECISIONS.md` (Liger pin, card-scaled kill floor, H100 SXM vs H200 Spot). Everything logged before it was agreed 2026-11-19.
+- Pending approval (Adi): 2026-11-22 PROPOSED entry in `DECISIONS.md`: Liger pin, card-scaled kill floor, and H200 Spot (pranay's choice) replacing H100 SXM for the main run. Everything logged before it was agreed 2026-11-19.
 
 ## Log
 
@@ -35,7 +35,7 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - Did: reviewed Adi's speed fixes. They're correct: Liger, one sync per step, prefetch and the honest MFU formula. Added speed-only changes: `--attention {auto,flash,cudnn,efficient}` (non-auto forbids the slow math fallback); a startup probe that prints which fast kernels accept our real shapes (`fused_kernels_ok=`); `liger-kernel==0.8.5` pinned and required for the full model; kill-rule tok/s floor scaled by card peak (H100 SXM unchanged at 74k); `wall_tokens_per_second`, `gpu_mem_gb` and `CKPT seconds=` logging; a 5-config sweep (auto/flash/cuDNN, 131k, max-autotune) with saved logs and failure reasons. Recipe unchanged.
 - Result: estimate for H100 SXM is **25–35% MFU (155k–218k tok/s at 2k)**. 30% is realistic, 35% is the top end, and above ~40% is unlikely at 640 hidden. A100-80GB: 40–50% but only 78k–98k tok/s (28–35 h for 10B). Reasoning: `docs/SPEED.md`. Tests: 110 passed offline; the 9 failures/errors all need the HF tokenizer download or `lm_eval`, which this sandbox can't reach. With a stub tokenizer, `test_pretrain`, `test_chain` and the size gate all pass (50 passed). No GPU run.
 - Next: Adi reviews the PROPOSED entry in `DECISIONS.md`. Then run `speed_sweep.py` on the card we agree on. If `fused_kernels_ok=math only`, stop and report.
-- Notes for the other person: the ₹3,600 / H200 Spot go/no-go of 180k tok/s is too low. With the LR test and the slower 8k stage, it needs ~200–210k tok/s. Also, tok/s about halves after `SWITCH` to 8k; that's expected. The agreed provider entry says H100 SXM, so H200 Spot needs your OK.
+- Notes for the other person: the ₹3,600 / H200 Spot go/no-go of 180k tok/s is too low. With the LR test and the slower 8k stage, it needs ~200–210k tok/s. Also, tok/s about halves after `SWITCH` to 8k; that's expected. pranay has chosen H200 Spot for the main run; it replaces the agreed H100 SXM entry, so it needs your OK in `DECISIONS.md`.
 
 <!-- Template:
 ### YYYY-MM-DD · Name · Session N

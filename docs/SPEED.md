@@ -51,7 +51,7 @@ Not verified: real GPU speed. That is the point of the sweep above.
 
 ### Things the plan does not yet account for
 1. **The 8k stage is half the speed in tok/s.** Attention is two thirds of the work at 8k. Same MFU, about 51% of the 2k tok/s. Over the final 8% of tokens this adds about 8% to the main run. It is not a bug when tok/s halves after `SWITCH`.
-2. **The ₹3,600 H200 Spot go/no-go (≥180k tok/s) is too low.** It counts only the main 10B. Add the 8k slowdown, the LR test (2 × 0.5B tokens) and the sweep, and 16.6 h (₹3,600 / ₹217) needs about **200k tok/s at 2k (≈32% MFU) before evals, chat tuning and Spot restarts**. Plan on ~210k, or a bigger budget.
+2. **Chosen card: H200 Spot (pranay, 2026-11-22; pending Adi in `DECISIONS.md`).** Its ₹3,600 go/no-go of ≥180k tok/s is too low. It counts only the main 10B. Add the 8k slowdown, the LR test (2 × 0.5B tokens) and the sweep, and 16.6 h (₹3,600 / ₹217) needs about **200k tok/s at 2k (≈32% MFU) before evals, chat tuning and Spot restarts**. Plan on ~210k, or a bigger budget.
 3. **Logged tok/s leaves out eval and checkpoint time.** Each checkpoint is ~2.2 GB (weights + AdamW). On a network volume that can be 5–20 s every 100 steps (~4.5 min at 2k speed), so 2–7% of wall time. New `wall_tokens_per_second` and `CKPT seconds=` lines show the real cost. On Spot, keep `--ckpt-every 100`; on an on-demand card, 250 is a reasonable trade.
 4. **The A100 fallback would have hit the speed kill rule.** The fixed 74k tok/s floor is an H100 number; an A100 at a healthy 40% does ~78k, and 35% would have been killed at step 50. The floor now scales with the card's peak (H100 SXM still 74k, A100 23k). See the proposal in `DECISIONS.md`.
 
