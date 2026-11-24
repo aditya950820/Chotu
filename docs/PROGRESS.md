@@ -5,12 +5,12 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 
 ## Now
 
-- **Current session:** 8k context, tool calling and all logged proposals agreed by both people on 2026-11-19 (Aditya confirmed). All four chain steps CPU-verified; parser hardening is on PR #3. PR #2 → main and PR #3 → PR #2 are still open at the live status check; neither is recorded as merged. Full evaluation, sample-reading gate and actual GPU/pause rehearsal remain.
+- **Current session:** H200 run in progress, paused overnight on purpose at pretraining step 14,318 / 18,868 (76%). LR test done (3e-3). Resume tomorrow.
 - **Who's on what:**
-  - Adi: parser fixes and agreed-decision documentation on PR #3; next: merge PR #2 into main, then integrate PR #3 into main, followed by cheap-GPU rehearsal using RUNBOOK.md
+  - Adi: H200 chain (pretraining → chat → evals → export → upload); resume after Jarvis top-up
   - Partner: —
-- **Blocked on:** Adi: new HF/Jarvis keys in Mac `.env`, Jarvis top-up to ≥ ₹4,200, then rent H200 (150 GB)
-- **Paid resources running:** Jarvis Labs instance (GPU type: TODO), started 2026-10-24. Pause it when not in use. Status inherited; not checked this session. No paid resources started here.
+- **Blocked on:** Jarvis top-up (balance ₹735, need ≈ ₹1,400 to finish)
+- **Paid resources running:** Jarvis H200 Spot instance 586332, **Paused** 2026-11-24 19:10 UTC, 150 GB storage still billed (~₹2/h). Private HF repo `magnateadi/chotu-run-backup` holds the checkpoint and logs.
 
 ## Next up
 
@@ -30,6 +30,13 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - No decision approvals pending: Aditya confirmed both people's agreement on 2026-11-19. Remaining GPU/quality/data checks are gates, not pending design approval.
 
 ## Log
+
+### 2026-11-24 · Adi · H200 run: LR test done, pretraining 76% done, paused overnight
+- Did: launched the full chain on a Jarvis H200 Spot (150 GB). Fixed on the way: template Python 3.10 → Python 3.12 venv on the volume (template torch 2.11 cu130); pause script follows Jarvis's new machine id after each resume; gradient pre-check before the sweep; shard check allows a literal `<|endoftext|>` inside 2 documents (SHA-256 of all shards matched); restore never overwrites a live volume. Added `tools/watchdog.py` (Mac: auto-resume after Spot interruptions, never after deliberate stops, low-balance alert) and `tools/live_dashboard.py` (interactive, validation loss in nats, LR panel, phases, balance; classic page at `/classic`).
+- Results: speed 190,611 tok/s, MFU 30.6% (65k microbatch, max-autotune-no-cudagraphs). LR test (0.5B tokens each): **3e-3 chosen**, final val BPB 1.1425 vs 1.1556 (ahead at every eval, both stable). Pretraining (lr 3e-3, 18,868 steps): stopped politely at **step 14,318**, loss 2.95, stable (grad norm ~0.09). Validation set = 4.586 bytes/token, so val nats = BPB × 3.1788. The 131k microbatch gave a NaN gradient in the sweep (65k is clean); the first machine also gave one NaN at 65k, cause not reproduced.
+- State now: instance **586332 Paused** (storage kept, ~₹2/h). Checkpoint `checkpoint-00014318.pt` on the volume **and** in private HF `magnateadi/chotu-run-backup` (with all logs, metrics, stage markers, LR-trial exports). Watchdog hold file `~/.chotu-watchdog-hold` is set so nothing resumes on its own. Jarvis balance ₹735.
+- Next: top up Jarvis (remaining ≈ 6.4 h ≈ ₹1,400), then resume: `rm ~/.chotu-watchdog-hold` with the watchdog running, or ask Claude. About 3.6 h pretraining left (decay from step 15,095, 8k switch at 17,648), then chat tuning, evals, export, upload (~2.6 h).
+- Notes for the other person: do NOT change `scripts/*.py`, `chotu/*.py` or `requirements.txt` until the run ends; the chain refuses to resume on changed code. Dashboard link and key are in `<storage>/dashboard/key` (ask Adi). Pause by hand only with the hold file first, or the watchdog resumes it.
 
 ### 2026-11-24 · Adi · Live dashboard, HF backups, storage fix
 - Decided: keep the LR test (frozen decision unchanged). W&B not used.
