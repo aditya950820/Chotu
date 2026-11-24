@@ -59,6 +59,11 @@ def main():
     try:
         for micro in MICRO_SIZES:
             results.append(run_config(a, micro, "default"))
+            if not results[-1]["ok"] and micro == MICRO_SIZES[0]:
+                # The smallest size cannot be out of memory on an H200: retry once so a one-off
+                # failure (e.g. a transient non-finite step) is not mistaken for a slow machine.
+                print("SWEEP retrying the smallest microbatch once", flush=True)
+                results[-1] = run_config(a, micro, "default")
             print("SWEEP " + json.dumps(results[-1]), flush=True)
             if not results[-1]["ok"]:
                 break

@@ -130,7 +130,8 @@ chat=$!
 
 # --- speed sweep as soon as possible -----------------------------------------------------------
 gpu=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -1)
-if [[ -f "$S/reports/speed-sweep.json" && "$(cat "$S/reports/speed-sweep.gpu" 2>/dev/null)" == "$gpu" ]]; then
+sweep_ok() { python -c 'import json,sys; sys.exit(not (json.load(open(sys.argv[1])).get("best") or {}).get("tokens_per_second"))' "$S/reports/speed-sweep.json" 2>/dev/null; }
+if sweep_ok && [[ "$(cat "$S/reports/speed-sweep.gpu" 2>/dev/null)" == "$gpu" ]]; then
   stamp "speed sweep already done on this GPU type; skipping"
 else
   rm -f "$S/reports/speed-sweep.json"
@@ -140,6 +141,11 @@ else
     kill -0 "$shards" 2>/dev/null || { tail -20 "$LOGS/shards.log"; exit 1; }
     sleep 2
   done
+  stamp "gradient check: fused loss vs plain loss on the real model (catches a broken GPU/kernel)"
+  if ! python scripts/check_loss.py --storage "$S" > "$LOGS/loss-check.log" 2>&1; then
+    tail -30 "$LOGS/loss-check.log"; echo "gradient check failed: GPU or kernel gives wrong gradients" >&2; exit 1
+  fi
+  grep -E '"(fused_ce|cosine)"' "$LOGS/loss-check.log" || true
   stamp "speed sweep (real 181M model)"
   python scripts/speed_sweep.py --storage "$S" --no-stop 2>&1 | tee "$LOGS/sweep.log" | grep -E '^(SWEEP|Best|SPEED| *[0-9])' || true
   [[ -f "$S/reports/speed-sweep.json" ]] || { echo "sweep wrote no report" >&2; exit 1; }

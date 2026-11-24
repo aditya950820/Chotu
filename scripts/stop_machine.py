@@ -29,11 +29,32 @@ if a.list:
     for inst in client.instances.list():
         print(inst)
     sys.exit(0)
-mid = os.getenv("JL_MACHINE_ID")
-if not mid:
-    sys.exit("Set JL_MACHINE_ID in .env (run with --list to find it)")
-inst = client.instances.get(mid)
-print("this machine:", inst)
+def field(inst, name):
+    return inst.get(name) if isinstance(inst, dict) else getattr(inst, name, None)
+
+
+def this_machine():
+    """Jarvis gives an instance a NEW id on every resume, so a saved id goes stale. Use it if it is
+    still valid, otherwise the account's only running instance (or the one with this machine's IP)."""
+    mid = os.getenv("JL_MACHINE_ID")
+    if mid:
+        try:
+            return client.instances.get(int(mid))
+        except Exception:
+            print(f"saved JL_MACHINE_ID {mid} is stale (Jarvis changes it on resume); looking it up")
+    running = [i for i in client.instances.list() if str(field(i, "status")).lower() == "running"]
+    if len(running) > 1:
+        import socket
+        local = set(socket.gethostbyname_ex(socket.gethostname())[2])
+        running = [i for i in running if field(i, "private_ip") in local] or running
+    if len(running) != 1:
+        sys.exit(f"cannot tell which instance this is ({len(running)} running): pause it in the Jarvis dashboard")
+    return running[0]
+
+
+inst = this_machine()
+mid = field(inst, "machine_id")
+print("this machine:", mid, field(inst, "gpu_type"), field(inst, "status"))
 if a.dry_run:
     print("dry run: key and machine id work; not pausing")
 else:
