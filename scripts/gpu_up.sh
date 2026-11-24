@@ -17,7 +17,8 @@ set -a; source .env; set +a
 for key in HF_TOKEN JL_API_KEY JL_MACHINE_ID CHOTU_STORAGE GIT_NAME GIT_EMAIL; do
   [[ -n "${!key:-}" ]] || { echo "missing $key in .env" >&2; exit 2; }
 done
-stamp() { echo "[$(date +%H:%M:%S)] $*"; }
+step="start"
+stamp() { step="$*"; echo "[$(date +%H:%M:%S)] $*"; }
 S=$CHOTU_STORAGE
 LOGS=$S/setup-logs
 mkdir -p "$LOGS" "$S/reports" "$S/logs"
@@ -54,7 +55,9 @@ pause_machine() {
 }
 # Until the chain takes over, every exit (failure or no-go) pauses the GPU.
 final_backup() { timeout 900 python scripts/backup.py --once --storage "$S" >> "$LOGS/backup.log" 2>&1 || echo "final backup failed (see $LOGS/backup.log)"; }
-trap 'code=$?; if (( ! handed_over )); then (( code == 0 )) || stamp "SETUP FAILED (exit $code); logs in $LOGS"; final_backup; pause_machine; fi' EXIT
+# setup-exit.json tells tools/watchdog.py (on the Mac) this pause was deliberate, so it won't auto-resume.
+setup_exit() { python -c 'import json,sys; from datetime import datetime, timezone; json.dump(dict(time=datetime.now(timezone.utc).isoformat(), code=int(sys.argv[2]), reason=sys.argv[3]), open(sys.argv[1], "w"))' "$S/dashboard/setup-exit.json" "$1" "$2" || true; }
+trap 'code=$?; if (( ! handed_over )); then (( code == 0 )) || echo "SETUP FAILED (exit $code) during: $step; logs in $LOGS"; setup_exit "$code" "during: $step"; final_backup; pause_machine; fi' EXIT
 
 stamp "checks"
 python - <<'EOF'
