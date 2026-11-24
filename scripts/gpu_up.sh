@@ -17,6 +17,7 @@ set -a; source .env; set +a
 for key in HF_TOKEN JL_API_KEY JL_MACHINE_ID CHOTU_STORAGE GIT_NAME GIT_EMAIL; do
   [[ -n "${!key:-}" ]] || { echo "missing $key in .env" >&2; exit 2; }
 done
+stamp() { echo "[$(date +%H:%M:%S)] $*"; }
 S=$CHOTU_STORAGE
 LOGS=$S/setup-logs
 mkdir -p "$LOGS" "$S/reports" "$S/logs"
@@ -46,7 +47,6 @@ MIN_TOK_S=${MIN_TOK_S:-180000}
 NCPU=$(nproc)
 export TOKENIZERS_PARALLELISM=false PYTHONUNBUFFERED=1
 handed_over=0
-stamp() { echo "[$(date +%H:%M:%S)] $*"; }
 
 pause_machine() {
   [[ "${NO_STOP:-0}" == 1 ]] && { stamp "NO_STOP=1: machine left running"; return; }
