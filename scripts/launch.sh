@@ -18,7 +18,7 @@ chat=${CHAT_DIR:-$HOME/chotu-chat}
 ssh_cmd=(ssh -p "$port" -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=30 "$target")
 
 set -a; source .env; set +a
-for key in HF_TOKEN WANDB_API_KEY JL_API_KEY; do
+for key in HF_TOKEN JL_API_KEY; do   # W&B is optional
   [[ -n "${!key:-}" ]] || { echo "add $key to your Mac .env first" >&2; exit 2; }
 done
 [[ -f "$chat/chat/.done" && -f "$chat/reports/chat_report.md" ]] || { echo "chat data not ready in $chat" >&2; exit 2; }

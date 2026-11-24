@@ -31,6 +31,12 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 
 ## Log
 
+### 2026-11-24 · Adi · W&B made optional, on-machine status
+- Did: W&B no longer required (`launch.sh`, `gpu_up.sh`, `check_setup.py` skip it when `WANDB_API_KEY` is empty; training and chain already logged to W&B only if a key exists). New `scripts/status.py` runs on the GPU machine (Jarvis web terminal), so progress can be checked with the Mac closed: stages, step/total, loss, tok/s, MFU, BPB, time and ₹ left, GPU use. `train.py` writes `plan.json` (total steps) per run; recipe unchanged.
+- Result: `pytest -q` 83 passed (eval tests excluded locally: no lm_eval); size gate OK.
+- Next: Adi puts `HF_TOKEN` + `JL_API_KEY` in the Mac `.env` (rotate both: they were pasted in chat), decides the LR test with partner, rents H200 Spot (PyTorch template) and hands over SSH + machine ID.
+- Notes for the other person: without W&B there are no phone alerts; a failure pauses the machine, visible in the Jarvis dashboard.
+
 <!-- Template:
 ### YYYY-MM-DD · Name · Session N
 - Did:

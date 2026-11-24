@@ -312,6 +312,9 @@ def run(a):
         signature["init_manifest"] = [(str(p), p.stat().st_size, p.stat().st_mtime_ns) for p in init_paths]
     # JSON normalizes tuples in the persisted signature.
     signature = json.loads(json.dumps(signature))
+    out.mkdir(parents=True, exist_ok=True)  # plan.json lets scripts/status.py show progress and time left
+    (out / "plan.json").write_text(json.dumps({"stage": a.stage, "steps": batches.steps,
+                                               "batch_tokens": a.batch_tokens}))
     checkpoints = sorted(out.glob("checkpoint-*.pt"))
     saved = torch.load(checkpoints[-1], map_location="cpu", weights_only=False) if checkpoints else None
     if saved and saved["signature"] != signature:

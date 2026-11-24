@@ -39,12 +39,16 @@ wb = os.getenv("WANDB_API_KEY", "")
 try:
     if a.local_only:
         raise RuntimeError("local-only")
+    if not wb:
+        raise LookupError("not configured")
     r = requests.post("https://api.wandb.ai/graphql", auth=("api", wb), timeout=20,
                       json={"query": "{ viewer { username entity } }"}).json()
     v = (r.get("data") or {}).get("viewer") or {}
     report("W&B key", bool(v), f"user={v.get('username')} entity={v.get('entity')}")
 except Exception as e:
-    if a.local_only:
+    if isinstance(e, LookupError):
+        print("[SKIP] W&B not configured (optional); metrics stay in each run's metrics.jsonl")
+    elif a.local_only:
         print("[SKIP] live W&B credential check (local-only)")
     else:
         report("W&B key", False, str(e))

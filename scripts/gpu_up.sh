@@ -9,12 +9,12 @@
 #   ~3m   speed sweep on the real model as soon as packages + first shards are in (GPU busy)
 #   ~15m  go/no-go on tokens/sec, wait for downloads, then the full chain (it pauses the machine itself)
 #         + a CPU-only rehearsal of the later stages (chat/evals/export) on spare cores, for early warning
-# Needs .env: HF_TOKEN WANDB_API_KEY WANDB_ENTITY WANDB_PROJECT JL_API_KEY JL_MACHINE_ID
-#             CHOTU_STORAGE GIT_NAME GIT_EMAIL   (optional: MIN_TOK_S, NO_STOP=1)
+# Needs .env: HF_TOKEN JL_API_KEY JL_MACHINE_ID CHOTU_STORAGE GIT_NAME GIT_EMAIL
+#             (optional: WANDB_API_KEY, MIN_TOK_S, NO_STOP=1). Progress: python scripts/status.py
 set -Eeuo pipefail
 cd "$(dirname "$0")/.."
 set -a; source .env; set +a
-for key in HF_TOKEN WANDB_API_KEY JL_API_KEY JL_MACHINE_ID CHOTU_STORAGE GIT_NAME GIT_EMAIL; do
+for key in HF_TOKEN JL_API_KEY JL_MACHINE_ID CHOTU_STORAGE GIT_NAME GIT_EMAIL; do
   [[ -n "${!key:-}" ]] || { echo "missing $key in .env" >&2; exit 2; }
 done
 S=$CHOTU_STORAGE
