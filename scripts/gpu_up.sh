@@ -26,7 +26,10 @@ mkdir -p "$LOGS" "$S/reports" "$S/logs"
 export HF_HOME=$S/hf-home TORCHINDUCTOR_CACHE_DIR=$S/cache/inductor TRITON_CACHE_DIR=$S/cache/triton
 
 # Live dashboard first (standard library only, so it is up within a second): port 6006.
-pgrep -f "scripts/dashboard.py" >/dev/null || nohup python scripts/dashboard.py --storage "$S" > "$LOGS/dashboard.log" 2>&1 &
+# Interactive tools/live_dashboard.py (classic page at /classic) when the venv exists, else the classic one.
+dash_py=$( [[ -x "$S/venv/bin/python" ]] && echo "$S/venv/bin/python" || echo python )
+dash=$( [[ -f tools/live_dashboard.py ]] && echo tools/live_dashboard.py || echo scripts/dashboard.py )
+pgrep -f "dashboard.py --storage" >/dev/null || nohup "$dash_py" "$dash" --storage "$S" > "$LOGS/dashboard.log" 2>&1 &
 
 # Our pins need Python >= 3.11; the Jarvis PyTorch template ships 3.10. Build a 3.12 venv on the
 # volume once (survives pause/resume), with the template's own torch build so CUDA matches the driver.

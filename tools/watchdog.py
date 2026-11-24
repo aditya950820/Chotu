@@ -79,7 +79,8 @@ class Watchdog:
             return
         self._balance_checked = time.time()
         try:
-            balance = float(self.client.account.balance()["balance"])
+            result = self.client.account.balance()
+            balance = float(result["balance"] if isinstance(result, dict) else result.balance)
         except Exception:
             return
         hours = balance / self.a.rupees_per_hour
