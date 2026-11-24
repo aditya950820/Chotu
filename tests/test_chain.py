@@ -206,6 +206,31 @@ def test_shards_counts_hashes_and_corruption(runner, monkeypatch):
         runner.shards()
 
 
+def test_shards_allow_literal_endoftext_but_not_missing_docs(runner, monkeypatch):
+    import huggingface_hub
+    runner.setup()
+    root = runner.storage / "shards"
+    root.mkdir()
+    monkeypatch.setattr(huggingface_hub, "hf_hub_download", lambda repo, name, **kwargs: runner.storage / name)
+
+    def check(train, docs):
+        np.asarray(train, dtype=np.uint16).tofile(root / "train_000.bin")
+        np.asarray([4, 0], dtype=np.uint16).tofile(root / "val_000.bin")
+        chain.atomic_json(root / "000.done", {"train_tokens": len(train), "val_tokens": 2, "docs": docs, "val_docs": 1})
+        files = {"shards/" + p.name: {"size": p.stat().st_size, "sha256": None} for p in root.iterdir()}
+        monkeypatch.setattr(runner, "shard_manifest", lambda: {"revision": "fixture", "files": files})
+        return runner.shards()
+
+    # one document whose text contained "<|endoftext|>": 3 separators for 2 train documents
+    result = check([1, 0, 2, 0, 3, 0], docs=3)
+    assert result["docs"] == {"train": 2, "val": 1}
+    assert result["literal_endoftext_in_text"] == {"shards/train_000.bin": 1}
+    with pytest.raises(ValueError, match="document count mismatch"):
+        check([1, 0, 2, 3, 0], docs=4)      # fewer separators than documents
+    with pytest.raises(ValueError, match="document count mismatch"):
+        check([1, 0, 2, 0, 3], docs=3)      # shard does not end with a separator
+
+
 def test_training_and_eval_shutdown_ownership(runner, monkeypatch):
     command = runner.train("test", "--stage", "pretrain", "--lr", ".003")
     assert "--no-auto-stop" in command and command[command.index("--model") + 1] == "tiny"

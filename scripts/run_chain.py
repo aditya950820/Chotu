@@ -334,7 +334,7 @@ class Chain:
                     digest = hashlib.file_digest(file, "sha256").hexdigest()
                 if digest != expected["sha256"]:
                     raise ValueError(f"shard SHA256 mismatch: {name}; remove corrupted local file and retry")
-        tokens, docs = {}, {}
+        tokens, docs, literal_eot = {}, {}, {}
         for name in manifest["files"]:
             if not name.endswith(".bin"):
                 continue
@@ -346,11 +346,17 @@ class Chain:
             array = np.memmap(path, mode="r", dtype=np.uint16)
             n_docs = sum(int(np.count_nonzero(array[i:i + 1_000_000] == 0)) for i in range(0, len(array), 1_000_000))
             expected_docs = counts["val_docs"] if split == "val" else counts["docs"] - counts["val_docs"]
-            if n_docs != expected_docs:
-                raise ValueError(f".done document count mismatch: {name}")
+            # A few web pages contain the literal text "<|endoftext|>", which the tokenizer turns into the
+            # end-of-text token, so a shard may hold slightly MORE separators than documents. Fewer, a
+            # missing final separator or more than 0.1% extra would mean a broken shard.
+            extra = n_docs - expected_docs
+            if extra < 0 or extra > max(10, expected_docs // 1000) or (len(array) and array[-1] != 0):
+                raise ValueError(f".done document count mismatch: {name} ({n_docs} separators, {expected_docs} documents)")
+            literal_eot[name] = extra
             tokens[split] = tokens.get(split, 0) + len(array)
-            docs[split] = docs.get(split, 0) + n_docs
+            docs[split] = docs.get(split, 0) + expected_docs
         result = dict(revision=manifest["revision"], tokens=tokens, docs=docs,
+                      literal_endoftext_in_text={k: v for k, v in literal_eot.items() if v},
                       outputs=[str(self.storage / name) for name in manifest["files"]],
                       verified_sizes={str(self.storage / name): info["size"] for name, info in manifest["files"].items()})
         atomic_json(self.reports / "shards.json", result)
