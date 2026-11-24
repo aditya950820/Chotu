@@ -9,7 +9,7 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - **Who's on what:**
   - Adi: parser fixes and agreed-decision documentation on PR #3; next: merge PR #2 into main, then integrate PR #3 into main, followed by cheap-GPU rehearsal using RUNBOOK.md
   - Partner: —
-- **Blocked on:** nothing
+- **Blocked on:** Adi: new HF/Jarvis keys in Mac `.env`, Jarvis top-up to ≥ ₹4,200, then rent H200 (150 GB)
 - **Paid resources running:** Jarvis Labs instance (GPU type: TODO), started 2026-10-24. Pause it when not in use. Status inherited; not checked this session. No paid resources started here.
 
 ## Next up
@@ -30,6 +30,12 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - No decision approvals pending: Aditya confirmed both people's agreement on 2026-11-19. Remaining GPU/quality/data checks are gates, not pending design approval.
 
 ## Log
+
+### 2026-11-24 · Adi · Live dashboard, HF backups, storage fix
+- Decided: keep the LR test (frozen decision unchanged). W&B not used.
+- Did: `scripts/dashboard.py` (standard library only, started at second 1 by `gpu_up.sh`, port 6006 published by Jarvis, key-protected; live charts/tables from the real run files; logs GPU/CPU/RAM/disk to `logs/system.jsonl` every 30 s). `scripts/backup.py` (private HF repo `<user>/chotu-run-backup`: logs every 10 min, newest checkpoint of the running stage every 60 min, full copy before each pause; `--restore` on a new instance + original shard mtimes so training resumes). Fixed disk checks (preflight demanded ~81 GiB *free* after the 20 GB of shards were already on disk, so 100 GB failed); HF/inductor/triton caches moved to the volume.
+- Result: `pytest -q` 87 passed (eval tests excluded locally); size gate OK; dashboard checked in a browser (404 without the key). Not yet run on a real H200 or against real HF.
+- Next: rotate HF + Jarvis keys and put them in the Mac `.env`; top up Jarvis to ≥ ₹4,200; rent H200 Spot, PyTorch template, 150 GB; send SSH + machine ID.
 
 ### 2026-11-24 · Adi · W&B made optional, on-machine status
 - Did: W&B no longer required (`launch.sh`, `gpu_up.sh`, `check_setup.py` skip it when `WANDB_API_KEY` is empty; training and chain already logged to W&B only if a key exists). New `scripts/status.py` runs on the GPU machine (Jarvis web terminal), so progress can be checked with the Mac closed: stages, step/total, loss, tok/s, MFU, BPB, time and ₹ left, GPU use. `train.py` writes `plan.json` (total steps) per run; recipe unchanged.

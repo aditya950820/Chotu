@@ -19,7 +19,12 @@ for key in HF_TOKEN JL_API_KEY JL_MACHINE_ID CHOTU_STORAGE GIT_NAME GIT_EMAIL; d
 done
 S=$CHOTU_STORAGE
 LOGS=$S/setup-logs
-mkdir -p "$LOGS" "$S/reports"
+mkdir -p "$LOGS" "$S/reports" "$S/logs"
+# Caches on the persistent volume: survive pause/resume and keep the small root disk free.
+export HF_HOME=$S/hf-home TORCHINDUCTOR_CACHE_DIR=$S/cache/inductor TRITON_CACHE_DIR=$S/cache/triton
+
+# Live dashboard first (standard library only, so it is up within a second): port 6006.
+pgrep -f "scripts/dashboard.py" >/dev/null || nohup python scripts/dashboard.py --storage "$S" > "$LOGS/dashboard.log" 2>&1 &
 MIN_TOK_S=${MIN_TOK_S:-180000}
 NCPU=$(nproc)
 export TOKENIZERS_PARALLELISM=false PYTHONUNBUFFERED=1
@@ -31,7 +36,8 @@ pause_machine() {
   python scripts/stop_machine.py || echo 'MACHINE PAUSE FAILED: PAUSE IT MANUALLY NOW' >&2
 }
 # Until the chain takes over, every exit (failure or no-go) pauses the GPU.
-trap 'code=$?; if (( ! handed_over )); then (( code == 0 )) || stamp "SETUP FAILED (exit $code); logs in $LOGS"; pause_machine; fi' EXIT
+final_backup() { timeout 900 python scripts/backup.py --once --storage "$S" >> "$LOGS/backup.log" 2>&1 || echo "final backup failed (see $LOGS/backup.log)"; }
+trap 'code=$?; if (( ! handed_over )); then (( code == 0 )) || stamp "SETUP FAILED (exit $code); logs in $LOGS"; final_backup; pause_machine; fi' EXIT
 
 stamp "checks"
 python - <<'EOF'
@@ -42,13 +48,22 @@ name = torch.cuda.get_device_name(0)
 print(f"GPU {name} | torch {torch.__version__} | CUDA {torch.version.cuda} | Python {sys.version.split()[0]}")
 if "H200" not in name:
     print(f"WARNING: tuned for H200, got {name}")
-free = shutil.disk_usage(os.environ["CHOTU_STORAGE"]).free / 2**30
-assert free >= 100, f"need >= 100 GiB free on the volume, have {free:.0f}"
+storage = os.environ["CHOTU_STORAGE"]
+free = shutil.disk_usage(storage).free / 2**30
+present = sum(os.path.getsize(os.path.join(d, f)) for d, _, fs in os.walk(storage) for f in fs
+              if not os.path.islink(os.path.join(d, f))) / 2**30
+# the chain needs ~81 GiB in total (shards, 10 checkpoints, exports, eval data, builds, 20% margin)
+assert free + present >= 100, f"need >= 100 GiB on the volume (free + already used by Chotu), have {free:.0f} + {present:.0f}"
+print(f"disk: {free:.0f} GiB free + {present:.0f} GiB already used by Chotu")
 EOF
 git config --global user.name "$GIT_NAME"     # check_setup refuses non-human identities
 git config --global user.email "$GIT_EMAIL"
 python -m pip install -q huggingface_hub==2.3.0 python-dotenv jarvislabs   # seconds; downloads need it now
 python scripts/stop_machine.py --dry-run >/dev/null || { echo "Jarvis key / machine id wrong" >&2; exit 2; }
+python scripts/backup.py --check --storage "$S" || { echo "HF token cannot create/verify the private backup repo (needs write)" >&2; exit 2; }
+stamp "restore from the HF backup if this is a new instance (no-op otherwise)"
+python scripts/backup.py --restore --storage "$S" 2>&1 | tee -a "$LOGS/backup.log"
+pgrep -f "scripts/backup.py --loop" >/dev/null || nohup nice -n 10 python scripts/backup.py --loop --storage "$S" >> "$LOGS/backup.log" 2>&1 &
 
 # --- parallel setup ----------------------------------------------------------------------------
 stamp "packages + llama.cpp prebuild (background)"
@@ -125,6 +140,7 @@ EOF
 stamp "waiting for remaining downloads, packages and chat data"
 wait_packages
 wait "$shards" || { tail -20 "$LOGS/shards.log"; exit 1; }
+python scripts/backup.py --apply-shard-mtimes --storage "$S"   # only acts after a restore
 wait "$chat" || { tail -20 "$LOGS/chat.log"; exit 1; }
 [[ -f "$S/chat/.done" ]] || { echo "chat data missing" >&2; exit 1; }
 

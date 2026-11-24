@@ -51,5 +51,8 @@ copy=$!
 echo "== start gpu_up.sh in tmux session 'chotu'"
 "${ssh_cmd[@]}" "cd '$remote_repo' && (tmux has-session -t chotu 2>/dev/null && echo 'already running; attach to watch') || tmux new -d -s chotu 'bash scripts/gpu_up.sh 2>&1 | tee -a $storage/gpu_up.log; exec bash'"
 
+sleep 3
+key=$("${ssh_cmd[@]}" "cat '$storage/dashboard/key' 2>/dev/null" || true)
+echo "== DASHBOARD (live, works with the Mac off): Jarvis dashboard -> this instance -> 'API' button, copy the URL, add /${key:-<key in $storage/dashboard/key>}/"
 wait "$copy" && echo "== chat data copied" || { echo "chat copy failed (see /tmp/chotu-chat-copy.log); the machine will prepare it itself after 40 min"; }
 echo "Watch: ssh -p $port $target -t tmux attach -t chotu"

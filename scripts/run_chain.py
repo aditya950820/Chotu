@@ -35,6 +35,20 @@ def metrics(path):
     return [json.loads(line) for line in Path(path).read_text().splitlines() if line.strip()]
 
 
+def used_bytes(root):
+    """Bytes of regular files under root (symlinks not followed, missing root = 0)."""
+    total = 0
+    for folder, _, files in os.walk(root):
+        for name in files:
+            path = Path(folder, name)
+            if not path.is_symlink():
+                try:
+                    total += path.stat().st_size
+                except OSError:
+                    pass
+    return total
+
+
 def disk_budget(shard_bytes, params):
     checkpoint = params * 12  # fp32 weights and two Adam moments
     parts = dict(shards=shard_bytes, checkpoints=checkpoint * 2 * 5,
@@ -220,6 +234,15 @@ class Chain:
         if self.a.no_stop:
             self.emit("pause_skipped", message="--no-stop: local/external shutdown owner")
             return True
+        if not self.a.rehearsal:
+            # Last full copy (logs, reports, newest checkpoint) to the private HF backup before pausing.
+            self.emit("final_backup")
+            try:
+                with (self.logs / "backup.log").open("a") as log:
+                    subprocess.run(self.command("backup.py", "--once", "--storage", self.storage), cwd=ROOT,
+                                   stdout=log, stderr=subprocess.STDOUT, timeout=1800)
+            except Exception as error:  # never let a backup problem block the pause
+                print(f"final backup failed: {error}", flush=True)
         self.emit("pausing", message="Jarvis shutdown owner")
         try:
             with (self.logs / "stop.log").open("a") as log:
@@ -287,10 +310,14 @@ class Chain:
                 params = sum(p.numel() for p in Qwen3ForCausalLM(tiny_config()).parameters())
         budget = disk_budget(shard_bytes, params)
         free = shutil.disk_usage(self.storage).free
-        atomic_json(self.reports / "preflight.json", dict(gpu=gpu, free_bytes=free, **budget))
-        if free < budget["required_bytes"]:
-            raise ValueError(f"need {budget['required_bytes'] / GIB:.1f} GiB free; have {free / GIB:.1f} GiB")
-        return dict(gpu=gpu, free_gib=free / GIB, need_gib=budget["required_bytes"] / GIB)
+        # Files already on the volume (shards, chat data, builds, checkpoints after a resume) are
+        # part of the budget, so count them as available rather than demanding it all free again.
+        present = used_bytes(self.storage) + (0 if self.cache.is_relative_to(self.storage) else used_bytes(self.cache))
+        atomic_json(self.reports / "preflight.json", dict(gpu=gpu, free_bytes=free, present_bytes=present, **budget))
+        if free + present < budget["required_bytes"]:
+            raise ValueError(f"need {budget['required_bytes'] / GIB:.1f} GiB (free + already present); "
+                             f"have {free / GIB:.1f} free + {present / GIB:.1f} present")
+        return dict(gpu=gpu, free_gib=free / GIB, present_gib=present / GIB, need_gib=budget["required_bytes"] / GIB)
 
     def shards(self):
         from huggingface_hub import hf_hub_download
