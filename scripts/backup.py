@@ -21,7 +21,7 @@ import shutil
 import sys
 import time
 
-SKIP_PARTS = {"shards", "chat", "cache", "hf-home", "backup-staging", "backup-restore", "__pycache__", ".cache"}
+SKIP_PARTS = {"shards", "chat", "cache", "hf-home", "backup-staging", "backup-restore", "__pycache__", ".cache", "venv", "uv-python"}
 SKIP_FILES = {"dashboard/key", "dashboard/backup-state.json"}
 STAGE_OF_RUN = {"speed": "speed", "lr-0.0015": "lr_test", "lr-0.003": "lr_test", "pretrain": "pretrain", "chat": "chat_tune"}
 BIG = 50 * 2**20

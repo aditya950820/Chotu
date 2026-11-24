@@ -25,6 +25,23 @@ export HF_HOME=$S/hf-home TORCHINDUCTOR_CACHE_DIR=$S/cache/inductor TRITON_CACHE
 
 # Live dashboard first (standard library only, so it is up within a second): port 6006.
 pgrep -f "scripts/dashboard.py" >/dev/null || nohup python scripts/dashboard.py --storage "$S" > "$LOGS/dashboard.log" 2>&1 &
+
+# Our pins need Python >= 3.11; the Jarvis PyTorch template ships 3.10. Build a 3.12 venv on the
+# volume once (survives pause/resume), with the template's own torch build so CUDA matches the driver.
+export UV_PYTHON_INSTALL_DIR=$S/uv-python UV_CACHE_DIR=$S/cache/uv UV_LINK_MODE=copy
+if ! python -c 'import sys; sys.exit(sys.version_info < (3, 11))'; then
+  if [[ ! -x "$S/venv/bin/python" ]] || ! "$S/venv/bin/python" -c 'import torch; assert torch.cuda.is_available()' 2>/dev/null; then
+    stamp "template Python $(python -V 2>&1 | cut -d' ' -f2) < 3.11: building Python 3.12 venv on the volume (once)"
+    torch_ver=$(python -c 'import torch; print(torch.__version__.split("+")[0])')
+    cuda_tag=$(python -c 'import torch; print("cu" + torch.version.cuda.replace(".", ""))')
+    command -v uv >/dev/null || python -m pip install -q uv
+    rm -rf "$S/venv"
+    uv venv --seed --python 3.12 "$S/venv"
+    uv pip install --python "$S/venv/bin/python" "torch==$torch_ver" --index-url "https://download.pytorch.org/whl/$cuda_tag"
+  fi
+  source "$S/venv/bin/activate"
+  stamp "using $(python -V) with torch $(python -c 'import torch; print(torch.__version__)')"
+fi
 MIN_TOK_S=${MIN_TOK_S:-180000}
 NCPU=$(nproc)
 export TOKENIZERS_PARALLELISM=false PYTHONUNBUFFERED=1
