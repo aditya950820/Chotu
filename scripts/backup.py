@@ -157,8 +157,11 @@ class Backup:
 
     def restore(self):
         from huggingface_hub import snapshot_download
-        if any((self.storage / "stages").glob("*.done.json")) or any((self.storage / "runs").glob("*/checkpoint-*.pt")):
-            print("local run state present; nothing restored")
+        # Restore only onto a brand-new volume. A paused-and-resumed instance keeps its volume, and
+        # its own files are newer than the backup.
+        if (any((self.storage / "stages").glob("*.done.json")) or any((self.storage / "runs").glob("*/checkpoint-*.pt"))
+                or any((self.storage / "shards").glob("*.bin"))):
+            print("this volume already has run data (resumed instance); nothing restored")
             return
         if not any(f == "backup-manifest.json" for f in self.api.list_repo_files(repo_id=self.repo, repo_type="model")):
             print("no backup yet; fresh start")
@@ -171,6 +174,8 @@ class Backup:
         for path in sorted((target / "storage").rglob("*")) if (target / "storage").exists() else []:
             if path.is_file():
                 dest = self.storage / path.relative_to(target / "storage")
+                if dest.exists():
+                    continue  # never overwrite a local file (e.g. a log being written right now)
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 os.replace(path, dest)
                 moved += 1
