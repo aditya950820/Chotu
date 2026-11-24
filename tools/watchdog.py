@@ -73,6 +73,20 @@ class Watchdog:
         self.repo = os.getenv("CHOTU_BACKUP_REPO") or f"{self.hf.whoami()['name']}/chotu-run-backup"
         self.resumes = []
 
+    def check_balance(self):
+        """Warn (at most hourly) when the balance covers fewer than --warn-hours of GPU time."""
+        if time.time() - getattr(self, "_balance_checked", 0) < 600:
+            return
+        self._balance_checked = time.time()
+        try:
+            balance = float(self.client.account.balance()["balance"])
+        except Exception:
+            return
+        hours = balance / self.a.rupees_per_hour
+        if hours < self.a.warn_hours and time.time() - getattr(self, "_balance_warned", 0) > 3600:
+            self._balance_warned = time.time()
+            log(f"LOW BALANCE: ₹{balance:,.0f} ≈ {hours:.1f} h of H200 left. Top up Jarvis now.", notify=True)
+
     def instance(self):
         rows = [i if isinstance(i, dict) else i.__dict__ for i in self.client.instances.list()]
         rows = [r for r in rows if r.get("gpu_type") == self.a.gpu] or rows
@@ -138,6 +152,7 @@ class Watchdog:
                     last_status = status
                 if status.lower() == "running":
                     waiting_human = None
+                    self.check_balance()
                 elif status.lower() == "paused" and waiting_human != inst.get("machine_id"):
                     time.sleep(20)  # let the chain's final backup land first
                     action, reason = decide(*self.backup_state())
@@ -172,6 +187,8 @@ def main():
     ap.add_argument("--gpu", default="H200")
     ap.add_argument("--storage-gb", type=int, default=150)
     ap.add_argument("--max-resumes", type=int, default=4, help="per 6 hours")
+    ap.add_argument("--rupees-per-hour", type=float, default=217)
+    ap.add_argument("--warn-hours", type=float, default=6, help="notify when the balance covers fewer hours")
     ap.add_argument("--on-demand", action="store_true", help="resume as on-demand instead of Spot (costs more)")
     Watchdog(ap.parse_args()).run()
 
