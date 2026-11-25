@@ -5,12 +5,12 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 
 ## Now
 
-- **Current session:** H200 run in progress, paused overnight on purpose at pretraining step 14,318 / 18,868 (76%). LR test done (3e-3). Resume tomorrow.
+- **Current session:** H200 run in progress again since 2026-11-25 11:09 UTC: resumed from pretraining step 14,318 / 18,868, then chat → evals → export → upload, ending with an automatic pause.
 - **Who's on what:**
-  - Adi: H200 chain (pretraining → chat → evals → export → upload); resume after Jarvis top-up
+  - Adi: H200 chain (pretraining → chat → evals → export → upload)
   - Partner: —
-- **Blocked on:** Jarvis top-up (balance ₹735, need ≈ ₹1,400 to finish)
-- **Paid resources running:** Jarvis H200 Spot instance 586332, **Paused** 2026-11-24 19:10 UTC, 150 GB storage still billed (~₹2/h). Private HF repo `magnateadi/chotu-run-backup` holds the checkpoint and logs.
+- **Blocked on:** nothing. Balance ≈ ₹1,440 vs ≈ ₹1,340 needed (thin margin; a small top-up is safer)
+- **Paid resources running:** Jarvis H200 Spot instance **587426** (Running, ~₹219/h, 150 GB storage). Watchdog on Adi's Mac guards it. Private HF repo `magnateadi/chotu-run-backup` holds the checkpoint and logs.
 
 ## Next up
 
@@ -30,6 +30,12 @@ Newest entries go at the top of the log. Never rewrite someone else's entry; add
 - No decision approvals pending: Aditya confirmed both people's agreement on 2026-11-19. Remaining GPU/quality/data checks are gates, not pending design approval.
 
 ## Log
+
+### 2026-11-25 · Adi · H200 run resumed
+- Did: resumed the paused instance after the top-up (balance ₹1,560). The first wait loop crashed on a Mac network drop, so it was rewritten to survive one. Two resumes came up but could not be reached: the Mac's Wi-Fi blocked outgoing SSH to unknown hosts (GitHub was allowed) and intercepted port 80. Both machines were paused again (about ₹100 lost). After a Wi-Fi switch, the third resume worked: instance 587426.
+- Results: `RESUME step=14318 stage=short`; loss continuous (3.04 at 14,317 → 2.96–3.05 at 14,369–14,372), 185k tok/s, MFU 29.7%, grad norm ~0.07. Dashboard 200 with key, 404 without. Watchdog hold file removed; watchdog sees 587426.
+- Next: decay from step 15,095 (~35 min after resume), 8k switch at 17,648, pretraining done ≈ 3.5 h after resume, then chat/evals/export/upload ≈ 2.6 h, then automatic pause.
+- Notes for the other person: before resuming, test that SSH gets out (`nc -z test.rebex.net 22`); some Wi-Fi networks block it, and the watchdog's relaunch needs SSH too. The no-code-changes rule still holds until the run ends.
 
 ### 2026-11-24 · Adi · H200 run: LR test done, pretraining 76% done, paused overnight
 - Did: launched the full chain on a Jarvis H200 Spot (150 GB). Fixed on the way: template Python 3.10 → Python 3.12 venv on the volume (template torch 2.11 cu130); pause script follows Jarvis's new machine id after each resume; gradient pre-check before the sweep; shard check allows a literal `<|endoftext|>` inside 2 documents (SHA-256 of all shards matched); restore never overwrites a live volume. Added `tools/watchdog.py` (Mac: auto-resume after Spot interruptions, never after deliberate stops, low-balance alert) and `tools/live_dashboard.py` (interactive, validation loss in nats, LR panel, phases, balance; classic page at `/classic`).
