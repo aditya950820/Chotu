@@ -70,6 +70,10 @@ if ! "$S/venv/bin/python" -c 'import torch; assert torch.cuda.is_available()' 2>
   uv pip install --python "$S/venv/bin/python" "torch==$TORCH" --index-url "https://download.pytorch.org/whl/$tag"
 fi
 source "$S/venv/bin/activate"
+# Triton (torch.compile, the fused loss) compiles a small C helper against Python.h. uv may build the
+# venv on the system Python, which on Ubuntu ships without headers: install them if missing.
+python -c 'import os, sys, sysconfig; sys.exit(not os.path.exists(sysconfig.get_paths()["include"] + "/Python.h"))' ||
+  { stamp "installing Python headers for Triton"; sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "python3.$(python -c 'import sys; print(sys.version_info.minor)')-dev" >/dev/null; }
 python -m pip install -q huggingface_hub==2.3.0 python-dotenv
 python - <<'EOF'
 import os, shutil, sys, torch
