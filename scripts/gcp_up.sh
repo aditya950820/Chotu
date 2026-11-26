@@ -55,7 +55,9 @@ nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader
 stamp "Python 3.12 venv with torch $TORCH on the disk (once)"
 export UV_PYTHON_INSTALL_DIR=$S/uv-python UV_CACHE_DIR=$S/cache/uv UV_LINK_MODE=copy PATH=$HOME/.local/bin:$PATH
 if ! "$S/venv/bin/python" -c 'import torch; assert torch.cuda.is_available()' 2>/dev/null; then
-  command -v uv >/dev/null || python3 -m pip install -q --user uv
+  # pip --user works on the GCP image; Ubuntu 24.04 (Nebius) refuses it, so fall back to uv's own installer.
+  command -v uv >/dev/null || python3 -m pip install -q --user uv 2>/dev/null ||
+    curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="$HOME/.local/bin" UV_NO_MODIFY_PATH=1 sh
   # The torch build must not need a newer CUDA than the host driver supports.
   cuda=$(nvidia-smi | grep -o 'CUDA Version: [0-9.]*' | grep -o '[0-9.]*$')
   tag=$(python3 -c 'import sys; v=tuple(map(int, sys.argv[1].split("."))); print("cu130" if v >= (13,0) else "cu128" if v >= (12,8) else "cu126")' "$cuda")

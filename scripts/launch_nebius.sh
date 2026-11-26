@@ -60,7 +60,7 @@ nebius compute instance create --format json \\
   --boot-disk-managed-disk-name $NAME-boot --boot-disk-managed-disk-type network_ssd \\
   --boot-disk-managed-disk-size-gibibytes $DISK_GB --boot-disk-managed-disk-source-image-id $image \\
   --network-interfaces '[{"name":"eth0","subnet_id":"$subnet","ip_address":{},"public_ip_address":{}}]' \\
-  --follows-spot-price --preemptible-on-preemption STOP \\
+  --follows-spot-price --preemptible-on-preemption STOP --recovery-policy fail \\
   --cloud-init-user-data "\$(cat $STATE/cloud-init.yaml)"
 EOF
   echo "== cloud-init ($STATE/cloud-init.yaml):"; cat "$STATE/cloud-init.yaml"
