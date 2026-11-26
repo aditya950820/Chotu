@@ -226,6 +226,44 @@ def events(models, key, mode, text, temperature, max_new):
             yield send(ev="answer", t=piece)
 
 
+BASE_TRANSCRIPT = "The following is a conversation between a user and a helpful, accurate assistant.\n\n"
+CONTEXT = 8192
+
+
+def conversation_prompt(models, key, messages, system, max_new):
+    """Whole history as one prompt; oldest turns dropped if it would not fit in 8,192 tokens."""
+    dropped = 0
+    while True:
+        if key == "chat":
+            turns = ([{"role": "system", "content": system}] if system else []) + messages
+            prompt = render_conversation(turns) + "<|im_start|>assistant\n"
+        else:  # the base model never saw ChatML, so use a plain transcript
+            lines = [f"{'User' if m['role'] == 'user' else 'Assistant'}: {m['content']}" for m in messages]
+            prompt = (system + "\n\n" if system else BASE_TRANSCRIPT) + "\n".join(lines) + "\nAssistant:"
+        if len(models.tok(prompt)["input_ids"]) + max_new <= CONTEXT or len(messages) <= 1:
+            return prompt, dropped
+        messages, dropped = messages[2:], dropped + 2
+
+
+def converse(models, key, messages, system, temperature, max_new):
+    messages = [{"role": m["role"], "content": str(m["content"])} for m in messages
+                if m.get("role") in ("user", "assistant")]
+    max_new = max(1, min(int(max_new), 512))
+    prompt, dropped = conversation_prompt(models, key, messages, system.strip(), max_new)
+    yield {"ev": "prompt", "text": prompt, "dropped": dropped}
+    stops = ["\nUser:", "\nAssistant:"] if key == "base" else None
+    shown, stats = "", None
+    for piece in models.generate(key, prompt, max_new, temperature, stops, key == "chat"):
+        if isinstance(piece, dict):
+            stats = piece
+            continue
+        shown += piece
+        yield {"ev": "text", "t": piece}
+    if stops:
+        yield {"ev": "final", "text": trim_stops(shown, stops).strip()}
+    yield {"ev": "stats", **stats, "context": CONTEXT}
+
+
 # ---------------------------------------------------------------- page
 
 PAGE = r"""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -253,31 +291,72 @@ details{margin-top:10px;font-size:12.5px;color:var(--mute)}details pre{white-spa
 .call{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:var(--code);padding:6px 8px;border-radius:6px;margin-top:4px;white-space:pre-wrap;word-break:break-all}
 .res{font-size:13px;margin-top:4px}.res a{color:var(--accent)}.bad{color:var(--warn);font-size:13px}.ok{color:var(--chat);font-size:13px}
 .note{font-size:13px;color:var(--mute)}
+.hide{display:none!important}
+.thread{display:flex;flex-direction:column;gap:8px;max-height:62vh;overflow-y:auto;padding-right:4px}
+.b{max-width:92%;padding:8px 11px;border-radius:12px;white-space:pre-wrap;word-wrap:break-word}
+.b.u{align-self:flex-end;background:var(--code);border-bottom-right-radius:4px}
+.b.a{align-self:flex-start;border-bottom-left-radius:4px}.base .b.a{background:var(--basebg)}.chat .b.a{background:var(--chatbg)}
+.b .meta{display:block;font-size:11.5px;color:var(--mute);margin-top:4px}
+.meter{height:6px;background:var(--code);border-radius:3px;margin:8px 0 2px;overflow:hidden}.meter i{display:block;height:100%;width:0;background:var(--accent)}
+.mtext{font-size:12px;color:var(--mute)}
+#sysrow input{flex:1;min-width:220px;font:inherit;font-size:14px;padding:6px 9px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
 </style></head><body><main>
 <h1>Chotu: before and after chat tuning</h1><p class="sub">Same question, two versions of our 181M model, running on this Mac's CPU.</p>
-<div class="card"><div class="modes"><button data-m="chat" class="on">Chat</button><button data-m="tools">Tools + web search</button><button data-m="continue">Continue text</button></div>
+<div class="card"><div class="modes"><button data-m="conv" class="on">Conversation</button><button data-m="chat">One question</button><button data-m="tools">Tools + web search</button><button data-m="continue">Continue text</button></div>
 <div class="explain" id="explain"></div>
 <textarea id="t"></textarea><div class="chips" id="chips"></div>
 <div class="row"><label>Temperature <input id="temp" type="range" min="0" max="1.2" step="0.05" value="0.3"><span id="tv">0.30</span></label>
 <label>Max tokens <input id="mx" type="range" min="20" max="400" step="10" value="160"><span id="mv">160</span></label>
-<button class="go" id="go">Ask both</button><button id="stop">Stop</button></div></div>
-<div class="cols">
+<button class="go" id="go">Ask both</button><button id="stop">Stop</button><button id="reset" class="hide">New conversation</button></div>
+<div class="row hide" id="sysrow"><label for="sys">System prompt (optional)</label><input id="sys" placeholder="e.g. You are a friendly tutor. Keep answers short."></div></div>
+<div class="cols hide" id="conv">
+ <div class="card col base"><h2>Before: pretrained only</h2><div class="tag">BASE_LABEL · plain "User:/Assistant:" transcript</div><div class="thread" id="th-base"><span class="note">Say something below. Both models get the same messages, but each remembers its own replies.</span></div>
+  <div class="meter"><i id="mb-base"></i></div><div class="mtext" id="mt-base">memory used: 0 / 8,192 tokens</div><div id="px-base"></div></div>
+ <div class="card col chat"><h2>After: chat-tuned</h2><div class="tag">CHAT_LABEL · ChatML turns</div><div class="thread" id="th-chat"><span class="note">Say something below. Both models get the same messages, but each remembers its own replies.</span></div>
+  <div class="meter"><i id="mb-chat"></i></div><div class="mtext" id="mt-chat">memory used: 0 / 8,192 tokens</div><div id="px-chat"></div></div>
+</div>
+<div class="cols" id="single">
  <div class="card col base"><h2>Before: pretrained only</h2><div class="tag">BASE_LABEL</div><div class="out" id="o-base"><span class="note">waiting…</span></div><div class="stat" id="s-base"></div><div id="x-base"></div></div>
  <div class="card col chat"><h2>After: chat-tuned</h2><div class="tag">CHAT_LABEL</div><div class="out" id="o-chat"><span class="note">waiting…</span></div><div class="stat" id="s-chat"></div><div id="x-chat"></div></div>
 </div>
 <p class="note">Highlighted text is what the model wrote. "Exact prompt" shows the tokens each model really saw. Tools really run: web_search queries Wikipedia, get_weather queries Open-Meteo; only your search words or city leave this Mac.</p>
 </main><script>
-const $=id=>document.getElementById(id);let mode="chat",ctls=[];
-const EX={chat:["What is the capital of Japan?","Give me three tips for studying better.","Why is the sky blue?","Write a two-line poem about the monsoon."],
+const $=id=>document.getElementById(id);let mode="conv",ctls=[],hist={base:[],chat:[]};
+const EX={conv:["My name is Riya, I live in Pune and my favourite number is 42.","What is my favourite number?","Where do I live?","Tell me a long story about a dragon.","What is my name, and what have I told you about myself?","Summarise our conversation so far."],
+chat:["What is the capital of Japan?","Give me three tips for studying better.","Why is the sky blue?","Write a two-line poem about the monsoon."],
 tools:["Search the web for ISRO's Gaganyaan mission.","What's the weather in Noida right now?","Who founded the Indian Space Research Organisation?","Is it raining in Mumbai, in celsius?"],
 continue:["The water cycle is the process by which","In 1969, the first humans to walk on the Moon","A good way to learn programming is"]};
-const EXPLAIN={chat:"Before: the base model only continues text, so it gets two example Q&A pairs first (its best shot). After: the chat model gets a real chat turn and stops on its own. Watch which one answers and stops.",
+const EXPLAIN={conv:"A back-and-forth chat. Every turn, the whole conversation so far is fed in again (the model has no other memory), up to 8,192 tokens; the bar shows how full that is. Recall test: tell it facts, chat about something else to put distance in between, then ask for the facts back. Click the suggestions in order.",
+chat:"Before: the base model only continues text, so it gets two example Q&A pairs first (its best shot). After: the chat model gets a real chat turn and stops on its own. Watch which one answers and stops.",
 tools:"Both see the same two tools in the chat format. A valid tool call is really executed; the chat model then answers from the results in a second turn. The base model never saw tool calls in training. What does it write instead? Temperature starts at 0 (always the most likely token, like our tool evals); raise it and watch tool choice get less reliable.",
 continue:"Both models get the raw text and just continue it. Did chat tuning keep the base model's writing ability, or change its style?"};
 function setMode(m){mode=m;document.querySelectorAll(".modes button").forEach(b=>b.classList.toggle("on",b.dataset.m==m));$("explain").textContent=EXPLAIN[m];
 $("t").placeholder=m=="continue"?"Start a passage…":"Ask something…";$("chips").innerHTML="";
 EX[m].forEach(s=>{const b=document.createElement("button");b.textContent=s;b.onclick=()=>{$("t").value=s;run()};$("chips").appendChild(b)});
-const t=m=="continue"?0.7:m=="tools"?0:0.3;$("temp").value=t;$("tv").textContent=t.toFixed(2)}
+const t=m=="continue"?0.7:m=="tools"?0:0.3;$("temp").value=t;$("tv").textContent=t.toFixed(2);
+const c=m=="conv";$("conv").classList.toggle("hide",!c);$("single").classList.toggle("hide",c);$("reset").classList.toggle("hide",!c);$("sysrow").classList.toggle("hide",!c);
+$("go").textContent=c?"Send":"Ask both";$("t").style.minHeight=c?"60px":"84px";if(c){$("mx").value=200;$("mv").textContent=200}}
+function bubble(key,cls,text){const th=$("th-"+key);const n=th.querySelector(".note");if(n)n.remove();const b=el("div","b "+cls,text);th.append(b);th.scrollTop=th.scrollHeight;return b}
+function resetConv(){ctls.forEach(c=>c.abort());hist={base:[],chat:[]};["base","chat"].forEach(k=>{$("th-"+k).innerHTML='<span class="note">New conversation. Both models have forgotten everything.</span>';
+$("mb-"+k).style.width="0";$("mt-"+k).textContent="memory used: 0 / 8,192 tokens";$("px-"+k).innerHTML=""})}
+$("reset").onclick=resetConv;
+async function convOne(key,ctl){const b=bubble(key,"a","");const txt=el("span");const meta=el("span","meta","thinking…");b.append(txt,meta);
+// Reserve this reply's place in the history now, so a message sent mid-reply can't land before it.
+const msgs=hist[key].slice(),entry={role:"assistant",content:""};hist[key].push(entry);
+try{const r=await fetch("api/converse",{method:"POST",signal:ctl.signal,body:JSON.stringify({model:key,messages:msgs,system:$("sys").value,temperature:+$("temp").value,max_new_tokens:+$("mx").value})});
+const rd=r.body.getReader(),dec=new TextDecoder();let buf="";
+for(;;){const {value,done}=await rd.read();if(done)break;buf+=dec.decode(value,{stream:true});let i;
+while((i=buf.indexOf("\n"))>=0){const line=buf.slice(0,i);buf=buf.slice(i+1);if(!line)continue;const m=JSON.parse(line);
+if(m.ev=="prompt"){$("px-"+key).innerHTML="";$("px-"+key).append(details("Exact prompt for this turn",m.text));if(m.dropped)meta.textContent=`oldest ${m.dropped} messages dropped to fit 8,192 tokens · thinking…`}
+else if(m.ev=="text"){txt.textContent+=m.t;$("th-"+key).scrollTop=$("th-"+key).scrollHeight}
+else if(m.ev=="final")txt.textContent=m.text;
+else if(m.ev=="stats"){const used=m.prompt_tokens+m.tokens;meta.textContent=`${m.tokens} tokens · ${(m.tokens/Math.max(m.seconds,1e-6)).toFixed(0)} tok/s`+(m.tokens>=+$("mx").value?" · hit max tokens":"");
+$("mb-"+key).style.width=Math.min(100,100*used/m.context)+"%";$("mt-"+key).textContent=`memory used: ${used.toLocaleString()} / ${m.context.toLocaleString()} tokens (${(100*used/m.context).toFixed(1)}%)`}
+else if(m.ev=="error")meta.textContent="error: "+m.message}}}
+catch(e){meta.textContent=e.name=="AbortError"?"stopped":"error: "+e}
+entry.content=txt.textContent.trim()}
+function convSend(text){ctls.forEach(c=>c.abort());ctls=[new AbortController(),new AbortController()];
+["base","chat"].forEach((k,i)=>{hist[k].push({role:"user",content:text});bubble(k,"u",text);convOne(k,ctls[i])});$("t").value=""}
 document.querySelectorAll(".modes button").forEach(b=>b.onclick=()=>setMode(b.dataset.m));
 $("temp").oninput=e=>$("tv").textContent=(+e.target.value).toFixed(2);$("mx").oninput=e=>$("mv").textContent=e.target.value;
 $("stop").onclick=()=>ctls.forEach(c=>c.abort());$("go").onclick=run;$("t").addEventListener("keydown",e=>{if(e.key=="Enter"&&(e.metaKey||e.ctrlKey))run()});
@@ -306,9 +385,9 @@ else if(m.ev=="answer")ans.g.textContent+=m.t;
 else if(m.ev=="answer_stats")x.append(el("div","stat","answer: "+stat(m)));
 else if(m.ev=="error")$("s-"+key).textContent="error: "+m.message}}}
 catch(e){$("s-"+key).textContent=e.name=="AbortError"?"stopped":"error: "+e}}
-function run(){const text=$("t").value.trim();if(!text)return;ctls.forEach(c=>c.abort());ctls=[new AbortController(),new AbortController()];
+function run(){const text=$("t").value.trim();if(!text)return;if(mode=="conv")return convSend(text);ctls.forEach(c=>c.abort());ctls=[new AbortController(),new AbortController()];
 one("base",text,ctls[0]);one("chat",text,ctls[1])}
-setMode("chat");
+setMode("conv");
 </script></body></html>"""
 
 
@@ -327,18 +406,23 @@ def handler(models):
             self.wfile.write(body)
 
         def do_POST(self):
-            if self.path.rstrip("/") != "/api/generate":
+            path = self.path.rstrip("/")
+            if path not in ("/api/generate", "/api/converse"):
                 return self.send_error(404)
             req = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
             key, mode = req.get("model"), req.get("mode")
-            if key not in models.models or mode not in ("chat", "tools", "continue"):
+            if key not in models.models or (path == "/api/generate" and mode not in ("chat", "tools", "continue")):
                 return self.send_error(400, "unknown model or mode")
+            temperature, max_new = float(req.get("temperature", 0.3)), req.get("max_new_tokens", 160)
+            if path == "/api/converse":
+                stream = converse(models, key, req.get("messages", []), str(req.get("system", "")), temperature, max_new)
+            else:
+                stream = events(models, key, mode, str(req.get("text", "")), temperature, max_new)
             self.send_response(200)
             self.send_header("Content-Type", "application/x-ndjson")
             self.end_headers()
             try:
-                for event in events(models, key, mode, str(req.get("text", "")),
-                                    float(req.get("temperature", 0.3)), req.get("max_new_tokens", 160)):
+                for event in stream:
                     self.wfile.write((json.dumps(event, ensure_ascii=False) + "\n").encode())
                     self.wfile.flush()
             except (BrokenPipeError, ConnectionResetError):
