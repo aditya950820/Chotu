@@ -35,7 +35,11 @@ while true; do
   [[ "$s" == RUNNING || "$s" == STARTING ]] && seen_running=$(date +%s)
   if [[ "$s" == GONE ]]; then log "VM no longer exists; exiting"; exit 0; fi
   if [[ "$s" == STOPPED && ! -f "$STATE/hold" ]]; then
-    if (( $(last_exit) >= seen_running - 300 )); then
+    # gcp_up.sh writes CHOTU_DELIBERATE_EXIT to the serial console right before it powers off.
+    console=$(nebius compute instance logs --id "$ID" --limit 400 2>/dev/null | grep -m1 CHOTU_DELIBERATE_EXIT |
+      grep -o '20[0-9-]*T[0-9:]*Z' | head -1)
+    console_t=$( [[ -n "$console" ]] && date -j -u -f "%Y-%m-%dT%H:%M:%SZ" "$console" +%s 2>/dev/null || echo 0)
+    if (( console_t >= seen_running - 300 )) || (( $(last_exit) >= seen_running - 300 )); then
       log "stopped on purpose (gcp_up.sh recorded an exit): not restarting; exiting"
       osascript -e 'display notification "Nebius VM stopped (finished or failed on purpose)" with title "Chotu"' 2>/dev/null || true
       exit 0

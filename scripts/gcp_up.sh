@@ -31,6 +31,9 @@ finish() {
   trap - EXIT
   (( code == 0 )) || echo "GCP RUN STOPPED (exit $code) during: $step; logs in $LOGS"
   date -u +"%Y-%m-%dT%H:%M:%SZ exit=$code step=$step" >> "$S/dashboard/gcp-exits.log"
+  # Also to the serial console (kept by the cloud even while the VM is off), so a watchdog can tell a
+  # deliberate power-off from a Spot preemption even when this exit happened before any HF backup.
+  echo "CHOTU_DELIBERATE_EXIT $(date -u +%Y-%m-%dT%H:%M:%SZ) exit=$code" | sudo tee /dev/kmsg >/dev/null 2>&1 || true
   if [[ -x "$S/venv/bin/python" ]]; then
     timeout 1800 "$S/venv/bin/python" scripts/backup.py --once --storage "$S" >> "$LOGS/backup.log" 2>&1 \
       || echo "final backup failed (see $LOGS/backup.log)"
