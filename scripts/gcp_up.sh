@@ -36,7 +36,7 @@ finish() {
       || echo "final backup failed (see $LOGS/backup.log)"
   fi
   if [[ "${NO_STOP:-0}" == 1 ]]; then
-    stamp "NO_STOP=1: VM left running"
+    stamp "NO_STOP=1: not powering off (on Vertex AI the job ending releases the machine)"
   else
     stamp "powering the VM off (GPU billing stops; disk kept)"
     sudo shutdown -h now
@@ -56,8 +56,10 @@ stamp "Python 3.12 venv with torch $TORCH on the disk (once)"
 export UV_PYTHON_INSTALL_DIR=$S/uv-python UV_CACHE_DIR=$S/cache/uv UV_LINK_MODE=copy PATH=$HOME/.local/bin:$PATH
 if ! "$S/venv/bin/python" -c 'import torch; assert torch.cuda.is_available()' 2>/dev/null; then
   command -v uv >/dev/null || python3 -m pip install -q --user uv
-  cuda_major=$(nvidia-smi | grep -o 'CUDA Version: [0-9]*' | grep -o '[0-9]*$')
-  tag=$( (( cuda_major >= 13 )) && echo cu130 || echo cu128 )
+  # The torch build must not need a newer CUDA than the host driver supports.
+  cuda=$(nvidia-smi | grep -o 'CUDA Version: [0-9.]*' | grep -o '[0-9.]*$')
+  tag=$(python3 -c 'import sys; v=tuple(map(int, sys.argv[1].split("."))); print("cu130" if v >= (13,0) else "cu128" if v >= (12,8) else "cu126")' "$cuda")
+  stamp "driver supports CUDA $cuda: torch $TORCH+$tag"
   rm -rf "$S/venv"
   uv venv --seed --python 3.12 "$S/venv"
   uv pip install --python "$S/venv/bin/python" "torch==$TORCH" --index-url "https://download.pytorch.org/whl/$tag"
@@ -78,7 +80,9 @@ git config --global user.email "$GIT_EMAIL"
 stamp "restore from the HF backup if this disk is new (no-op otherwise)"
 python scripts/backup.py --check --storage "$S"
 python scripts/backup.py --restore --storage "$S" 2>&1 | tee -a "$LOGS/backup.log"
-pgrep -f "scripts/backup.py --loop" >/dev/null || nohup nice -n 10 python scripts/backup.py --loop --storage "$S" >> "$LOGS/backup.log" 2>&1 &
+# Newest checkpoint to HF every BACKUP_CHECKPOINT_MIN minutes (Vertex sets 20: its disk vanishes with the job).
+pgrep -f "scripts/backup.py --loop" >/dev/null || nohup nice -n 10 python scripts/backup.py --loop --storage "$S" \
+  --checkpoint-min "${BACKUP_CHECKPOINT_MIN:-60}" >> "$LOGS/backup.log" 2>&1 &
 
 stamp "packages + llama.cpp prebuild (background)"
 (
