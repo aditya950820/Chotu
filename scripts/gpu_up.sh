@@ -137,7 +137,20 @@ chat=$!
 # --- speed sweep as soon as possible -----------------------------------------------------------
 gpu=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -1)
 sweep_ok() { python -c 'import json,sys; sys.exit(not (json.load(open(sys.argv[1])).get("best") or {}).get("tokens_per_second"))' "$S/reports/speed-sweep.json" 2>/dev/null; }
-if sweep_ok && [[ "$(cat "$S/reports/speed-sweep.gpu" 2>/dev/null)" == "$gpu" ]]; then
+if [[ -f "$S/stages/pretrain.done.json" ]]; then
+  # The sweep and the tokens/s go/no-go exist to size and gate pretraining. Once it is done, a
+  # different (cheaper) GPU for the later stages must not rerun them or fail the 180k bar.
+  stamp "pretraining done: no speed sweep or tokens/s gate; checking the fused loss on this GPU ($gpu)"
+  wait_packages
+  until [[ -f "$LOGS/first-shards.ready" ]]; do
+    kill -0 "$shards" 2>/dev/null || { tail -20 "$LOGS/shards.log"; exit 1; }
+    sleep 2
+  done
+  [[ -f "$S/reports/loss-check.H200.json" ]] || cp "$S/reports/loss-check.json" "$S/reports/loss-check.H200.json" 2>/dev/null || true
+  python scripts/check_loss.py --storage "$S" > "$LOGS/loss-check.log" 2>&1 || echo "fused loss failed its check on $gpu; training uses the safe fallback"
+  grep -E '"(fused_ce|cosine)"' "$LOGS/loss-check.log" || true
+  MIN_TOK_S=0
+elif sweep_ok && [[ "$(cat "$S/reports/speed-sweep.gpu" 2>/dev/null)" == "$gpu" ]]; then
   stamp "speed sweep already done on this GPU type; skipping"
 else
   rm -f "$S/reports/speed-sweep.json"
@@ -157,7 +170,7 @@ else
   [[ -f "$S/reports/speed-sweep.json" ]] || { echo "sweep wrote no report" >&2; exit 1; }
   echo "$gpu" > "$S/reports/speed-sweep.gpu"
 fi
-python - "$S/reports/speed-sweep.json" "$MIN_TOK_S" <<'EOF'
+(( MIN_TOK_S == 0 )) || python - "$S/reports/speed-sweep.json" "$MIN_TOK_S" <<'EOF'
 import json, sys
 best = json.load(open(sys.argv[1]))["best"]
 if not best or best["tokens_per_second"] < float(sys.argv[2]):
